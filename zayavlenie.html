@@ -184,7 +184,7 @@
 
   <div class="form-group">
     <label>Адрес</label>
-    <input type="text" id="address" placeholder="г. Гомель, ул. Космонавтов, 64">
+    <input type="text" id="address" placeholder="г.Гомель, ул. Космонавтов, 64">
   </div>
 
   <div class="form-group">
@@ -474,46 +474,57 @@ function showPreview() {
   const phoneFormatted = d.phone ? d.phone.replace(/(\+375)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5") : "+375 ___-__-__";
 
   const html = `
-    <div style="font-size:13px;line-height:1.6;">
-      <div>Директору государственного</div>
-      <div>учреждения образования</div>
-      <div>«Средняя школа №12 г. Гомеля»</div>
-      <div>Антоненко В. В.</div>
-      <div style="margin-top:12px;">
-        ${d.parentName || "____________________________"}
+    <div style="font-size:13px;line-height:1.8;">
+
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div style="flex:0 0 40%;">
+          <div style="font-style:italic;font-weight:700;">Заявление</div>
+          <div style="margin-top:4px;">
+            <span style="display:inline-block;min-width:120px;">${d.claimNum || ""}</span>№
+            <span style="display:inline-block;min-width:60px;"></span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div>Директору государственного</div>
+          <div>учреждения образования</div>
+          <div>«Средняя школа №12 г. Гомеля»</div>
+          <div>Антоненко В. В.</div>
+          <div style="margin-top:8px;">${d.parentName || ""}</div>
+          <div>прож. по адресу: ${d.address || "г.Гомель, ____________________________"}</div>
+          <div style="margin-top:4px;">
+            ${d.phone ? d.phone.replace(/(\+375)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5") : "+375___-__-__"}
+          </div>
+        </div>
       </div>
-      <div>
-        прож. по адресу: ${d.address || "___________________________"}
+
+      <div style="margin-top:40px;padding-left:40px;">
+        Прошу разрешить отсутствовать на учебных занятиях моему ребенку
+        ${d.childName || "_______________________________"},
+        учащейся(гося) ${d.className || "_____"} класса, с
+        ${d.dateFrom || "________"}
+        по
+        ${d.dateTo || "________"}
+        в связи
+        ${d.reasonGen || "________________________"}.
       </div>
-      <div style="margin-top:8px;">
-        ${d.phone ? d.phone.replace(/(\+375)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5") : "+375___-__-__"}
+
+      <div style="margin-top:16px;padding-left:40px;">
+        На время отсутствия моего ребенка ответственность за сохранность жизни и его здоровья возлагаю на себя.
       </div>
-    </div>
 
-    <div class="center" style="margin:24px 0 16px;font-size:16px;font-weight:700;">Заявление</div>
-    <div class="center" style="font-size:13px;">№ ${d.claimNum || "_____"} от ${d.dateWrite || "___"}</div>
+      <div style="margin-top:16px;padding-left:40px;">
+        Пропущенный материал обязуемся отработать самостоятельно.
+      </div>
 
-    <div class="indent">
-      Прошу разрешить отсутствовать на учебных занятиях моему ребенку
-      ${d.childName || "_______________"},
-      учащейся(гося) ${d.className || "_____"} класса,
-      с ${d.dateFrom || "_____"} по ${d.dateTo || "_____"}
-      в связи ${d.reasonGen ? d.reasonGen : " "}.
-    </div>
-
-    <div class="indent" style="margin-top:12px;">
-      На время отсутствия моего ребенка ответственность за сохранность жизни и его здоровья возлагаю на себя.
-    </div>
-
-    <div class="indent" style="margin-top:12px;">
-      Пропущенный материал обязуемся отработать самостоятельно.
-    </div>
-
-    <div style="margin-top:40px;display:flex;justify-content:space-between;align-items:flex-end;">
-      <div>${d.dateWrite || "__.__.____"}</div>
-      <div style="text-align:center;">
-        <div style="min-width:200px;border-bottom:1px solid #000;padding-bottom:4px;">${parentShort || " "}</div>
-        <div style="font-size:11px;color:#888;margin-top:4px;">подпись</div>
+      <div style="margin-top:50px;display:flex;justify-content:space-between;align-items:flex-end;">
+        <div>${d.dateWrite || "____.____.2026"}</div>
+        <div style="text-align:center;">
+          <span style="display:inline-block;min-width:200px;border-bottom:1px solid #000;"></span>
+        </div>
+        <div style="text-align:center;">
+          <span>ФИО</span>
+          <span style="display:inline-block;min-width:160px;border-bottom:1px solid #000;">${parentShort || ""}</span>
+        </div>
       </div>
     </div>
   `;
