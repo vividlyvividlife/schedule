@@ -144,13 +144,26 @@
     background: var(--active-bg);
     border-left: 3px solid var(--accent);
   }
-  .lesson.past { opacity: 0.5; }
+  .lesson.past { opacity: 0.45; }
+  .lesson.future { border-left: 3px solid var(--line); }
+  .lesson.next { border-left: 3px solid var(--accent); background: var(--active-bg); }
   .lesson-body {
     flex: 1;
     padding: 12px 14px;
     display: flex;
-    gap: 12px;
+    gap: 10px;
     align-items: flex-start;
+  }
+  .lesson-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--active-bg);
+    border-radius: 8px;
   }
   .lesson-num {
     font-size: 13px;
@@ -323,6 +336,21 @@ const SUN_MESSAGES = [
   { emoji: "🤷", text: "Завтра понедельник. Бывает.", anim: "" },
 ];
 
+const ICONS = {
+  "Белорусская литература": "📖",
+  "Белорусский язык": "💬",
+  "ФКиЗ": "⚽",
+  "Русская литература": "📚",
+  "Русский язык": "✏️",
+  "Математика": "🔢",
+  "Трудовое обучение": "🔧",
+  "ОБЖ": "🛡️",
+  "Музыка": "🎵",
+  "Человек и мир": "🌍",
+  "Изобразительное искусство": "🎨",
+  "Факультатив": "⭐",
+};
+
 const SCHEDULE = [
   {
     name: "Понедельник", short: "ПН",
@@ -441,12 +469,14 @@ function countdown(targetMin) {
 }
 
 function renderLesson(l, state) {
-  const cls = state === "current" ? " current" : state === "past" ? " past" : "";
+  const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
   const startMin = parseTime(l.time);
   const cd = state === "next" ? countdown(startMin) : "";
+  const icon = ICONS[l.subj] || "📋";
   return `
     <div class="lesson${cls}">
       <div class="lesson-body">
+        <div class="lesson-icon">${icon}</div>
         <div class="lesson-num">${l.n}</div>
         <div class="lesson-info">
           <div class="lesson-time">${l.time}</div>
