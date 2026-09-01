@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Расписание — 2 «А»</title>
 <style>
   :root {
@@ -82,7 +85,7 @@
   .day-tabs::-webkit-scrollbar { display: none; }
   .day-tab {
     flex-shrink: 0;
-    padding: 8px 16px;
+    padding: 8px 14px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
@@ -96,10 +99,15 @@
     -webkit-tap-highlight-color: transparent;
   }
   .day-tab.active {
-    background: var(--accent);
     color: #fff;
-    border-color: var(--accent);
   }
+  .day-tab[data-day="0"].active { background: #5b7abf; border-color: #5b7abf; }
+  .day-tab[data-day="1"].active { background: #7b6abf; border-color: #7b6abf; }
+  .day-tab[data-day="2"].active { background: #9b6abf; border-color: #9b6abf; }
+  .day-tab[data-day="3"].active { background: #c46b8a; border-color: #c46b8a; }
+  .day-tab[data-day="4"].active { background: #5aaf8a; border-color: #5aaf8a; }
+  .day-tab[data-day="5"].active { background: #e8a84c; border-color: #e8a84c; }
+  .day-tab[data-day="6"].active { background: #d45555; border-color: #d45555; }
   .day-tab.today { border-color: var(--accent); }
 
   .day-content {
@@ -151,6 +159,37 @@
     margin-top: 2px;
   }
 
+  .weekend-msg {
+    text-align: center;
+    padding: 32px 20px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .weekend-msg .emoji {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .weekend-msg .sub {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+  .animate-float .emoji { animation: float 3s ease-in-out infinite; }
+  .animate-pulse .emoji { animation: pulse 2s ease-in-out infinite; }
+
   @media (min-width: 768px) {
     .day-tabs { display: none; }
     .day-content { padding: 0 24px 40px; }
@@ -177,7 +216,8 @@
     .diary-day:nth-child(3) .diary-day-name { background: #9b6abf; }
     .diary-day:nth-child(4) .diary-day-name { background: #c46b8a; }
     .diary-day:nth-child(5) .diary-day-name { background: #5aaf8a; }
-    .diary-day:nth-child(6) .diary-day-name { background: #e8a84c; color: #fff; }
+    .diary-day:nth-child(6) .diary-day-name { background: #e8a84c; }
+    .diary-day:nth-child(7) .diary-day-name { background: #d45555; }
     .empty-day {
       text-align: center;
       padding: 40px 0;
@@ -227,9 +267,55 @@
 <div class="day-content" id="dayContent"></div>
 
 <script>
+const SAT_MESSAGES = [
+  { emoji: "🎉", text: "Наконец-то выходной!", anim: "float" },
+  { emoji: "🍕", text: "Суббота! Можно ничего не делать", anim: "" },
+  { emoji: "🎮", text: "Свободный день — играем!", anim: "" },
+  { emoji: "☀️", text: "Выходной и солнце — идеально", anim: "pulse" },
+  { emoji: "🧸", text: "Суббота — день приключений", anim: "" },
+  { emoji: "🍦", text: "Выходной = мороженое", anim: "" },
+  { emoji: "📚", text: "Можно почитать что хочется!", anim: "" },
+  { emoji: "⚽", text: "Суббота — лучший день для игр", anim: "float" },
+  { emoji: "🎨", text: "Рисуем, лепим, творим!", anim: "" },
+  { emoji: "🌳", text: "Выходной — гуляем на свежем воздухе", anim: "" },
+  { emoji: "😴", text: "Спим сколько хочется!", anim: "" },
+  { emoji: "🎪", text: "Суббота — как маленький праздник", anim: "pulse" },
+  { emoji: "🐕", text: "Выходной — время для любимых дел", anim: "" },
+  { emoji: "🧹", text: "Суббота: сначала убираемся, потом веселимся", anim: "" },
+  { emoji: "🎯", text: "День для своих планов!", anim: "" },
+  { emoji: "🌈", text: "Выходной — мир прекрасен", anim: "float" },
+  { emoji: "🍳", text: "Субботнее утро = завтрак от шефа", anim: "" },
+  { emoji: "🚴", text: "Катаемся, бегаем, прыгаем!", anim: "" },
+  { emoji: "🎵", text: "Суббота — день музыки и танцев", anim: "pulse" },
+  { emoji: "🧩", text: "Собираем пазлы и играем в настолки", anim: "" },
+];
+
+const SUN_MESSAGES = [
+  { emoji: "😱", text: "Ой, завтра понедельник...", anim: "" },
+  { emoji: "😩", text: "Почему воскресенье такое короткое?", anim: "" },
+  { emoji: "😅", text: "Завтра в школу... но ещё есть время!", anim: "" },
+  { emoji: "🤢", text: "О нет, завтра снова вставать рано!", anim: "" },
+  { emoji: "😤", text: "Воскресенье — последний шанс отдохнуть!", anim: "" },
+  { emoji: "😈", text: "Завтра понедельник, а я ещё не готов", anim: "" },
+  { emoji: "🙈", text: "Домашку сделали? ...я тоже нет", anim: "" },
+  { emoji: "😬", text: "Завтра 8:00... это рано...", anim: "" },
+  { emoji: "🤞", text: "Надеюсь, завтра будет легко", anim: "" },
+  { emoji: "💫", text: "Воскресенье — день восстановления", anim: "float" },
+  { emoji: "☕", text: "Наслаждаемся последним днём каникул", anim: "" },
+  { emoji: "📋", text: "Проверяем рюкзак на завтра!", anim: "" },
+  { emoji: "😅", text: "Дышим... завтра снова в бой", anim: "" },
+  { emoji: "🌙", text: "Вечер воскресенья — самое грустное время", anim: "" },
+  { emoji: "💪", text: "Ничего, справимся и завтра!", anim: "pulse" },
+  { emoji: "🫣", text: "Смотрю на будильник... 6:30... кошмар", anim: "" },
+  { emoji: "🎈", text: "Но сегодня ещёoliday!", anim: "" },
+  { emoji: "🫡", text: "Готовимся к новой неделе!", anim: "" },
+  { emoji: "😴", text: "Ложимся рано... или не ложимся?", anim: "" },
+  { emoji: "🤷", text: "Завтра понедельник. Бывает.", anim: "" },
+];
+
 const SCHEDULE = [
   {
-    name: "Понедельник",
+    name: "Понедельник", short: "ПН",
     lessons: [
       { n: 1, time: "8:00–8:45", subj: "Белорусская литература" },
       { n: 2, time: "9:00–9:45", subj: "Белорусский язык" },
@@ -239,7 +325,7 @@ const SCHEDULE = [
     ]
   },
   {
-    name: "Вторник",
+    name: "Вторник", short: "ВТ",
     lessons: [
       { n: 1, time: "8:00–8:45", subj: "Русская литература" },
       { n: 2, time: "9:00–9:45", subj: "Математика" },
@@ -248,7 +334,7 @@ const SCHEDULE = [
     ]
   },
   {
-    name: "Среда",
+    name: "Среда", short: "СР",
     lessons: [
       { n: 1, time: "8:00–8:45", subj: "ФКиЗ" },
       { n: 2, time: "9:00–9:45", subj: "Математика" },
@@ -257,7 +343,7 @@ const SCHEDULE = [
     ]
   },
   {
-    name: "Четверг",
+    name: "Четверг", short: "ЧТ",
     lessons: [
       { n: 1, time: "8:00–8:45", subj: "ОБЖ" },
       { n: 2, time: "9:00–9:45", subj: "Математика" },
@@ -267,7 +353,7 @@ const SCHEDULE = [
     ]
   },
   {
-    name: "Пятница",
+    name: "Пятница", short: "ПТ",
     lessons: [
       { n: 1, time: "8:00–8:45", subj: "Человек и мир" },
       { n: 2, time: "9:00–9:45", subj: "Математика" },
@@ -275,12 +361,37 @@ const SCHEDULE = [
       { n: 4, time: "10:55–11:40", subj: "Изобразительное искусство" },
     ]
   },
-  { name: "Суббота", lessons: [] }
+  {
+    name: "Суббота", short: "СБ",
+    lessons: []
+  },
+  {
+    name: "Воскресенье", short: "ВС",
+    lessons: []
+  }
 ];
 
 let currentDayIdx = -1;
 let touchStartX = 0;
 let touchStartY = 0;
+
+function getWeekSeed() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  const week = Math.floor(((now - start) / 86400000 + start.getDay() + 1) / 7);
+  return week;
+}
+
+function getDaySeed() {
+  const now = new Date();
+  return now.getFullYear() * 1000 + now.getMonth() * 50 + now.getDate();
+}
+
+function getWeekendMessage(dayIdx) {
+  const seed = getDaySeed();
+  const msgs = dayIdx === 5 ? SAT_MESSAGES : SUN_MESSAGES;
+  return msgs[seed % msgs.length];
+}
 
 function parseTime(t) {
   const [h, m] = t.split("–")[0].split(":").map(Number);
@@ -289,7 +400,7 @@ function parseTime(t) {
 
 function getTodayIndex() {
   const d = new Date().getDay();
-  return d === 0 ? 5 : d - 1;
+  return d === 0 ? 6 : d - 1;
 }
 
 function getCurrentLesson(day) {
@@ -335,6 +446,17 @@ function renderLesson(l, state) {
     </div>`;
 }
 
+function renderWeekendMsg(dayIdx) {
+  const msg = getWeekendMessage(dayIdx);
+  const animCls = msg.anim ? ` animate-${msg.anim}` : "";
+  return `
+    <div class="weekend-msg${animCls}">
+      <span class="emoji">${msg.emoji}</span>
+      ${msg.text}
+      <div class="sub">${dayIdx === 5 ? "Суббота" : "Воскресенье"}</div>
+    </div>`;
+}
+
 function renderStatus() {
   const el = document.getElementById("status");
   const today = getTodayIndex();
@@ -343,7 +465,15 @@ function renderStatus() {
   const now = new Date();
   const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 
-  if (!info || day.lessons.length === 0) {
+  if (day.lessons.length === 0) {
+    const msg = getWeekendMessage(today);
+    const tip = today === 5
+      ? "Отдыхай — ты заслужил!"
+      : "Завтра школа — подготовь рюкзак!";
+    el.innerHTML = `${msg.emoji} ${msg.text}<br><span style="font-size:12px;color:var(--muted)">${tip}</span>`;
+    return;
+  }
+  if (!info) {
     el.innerHTML = `${day.name} · ${timeStr} · Уроков больше нет`;
     return;
   }
@@ -377,7 +507,7 @@ function renderTabs() {
   const today = getTodayIndex();
   wrap.innerHTML = SCHEDULE.map((d, i) => {
     const cls = i === today ? " active today" : "";
-    return `<div class="day-tab${cls}" onclick="switchDay(${i})">${d.name.slice(0, 3)}</div>`;
+    return `<div class="day-tab${cls}" data-day="${i}" onclick="switchDay(${i})">${d.short}</div>`;
   }).join("");
 }
 
@@ -396,9 +526,9 @@ function handleSwipe() {
   const diff = touchStartX - touchEndX;
   if (Math.abs(diff) < 50) return;
   if (diff > 0) {
-    switchDay(currentDayIdx + 1);
+    switchDay(Math.min(currentDayIdx + 1, SCHEDULE.length - 1));
   } else {
-    switchDay(currentDayIdx - 1);
+    switchDay(Math.max(currentDayIdx - 1, 0));
   }
 }
 
@@ -422,6 +552,9 @@ function renderAll() {
 
   if (isMobile) {
     content.innerHTML = SCHEDULE.map((d, i) => {
+      if (d.lessons.length === 0) {
+        return `<div class="day-panel${i === today ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
+      }
       const info = getCurrentLesson(d);
       const lessons = d.lessons.map((l, li) => {
         let st = "future";
@@ -431,12 +564,19 @@ function renderAll() {
         }
         return renderLesson(l, st);
       }).join("");
-      return `<div class="day-panel${i === today ? ' active' : ''}">${lessons || '<div class="empty-day">Выходной</div>'}</div>`;
+      return `<div class="day-panel${i === today ? ' active' : ''}">${lessons}</div>`;
     }).join("");
   } else {
-    const left = SCHEDULE.slice(0, 3);
-    const right = SCHEDULE.slice(3);
+    const left = SCHEDULE.slice(0, 4);
+    const right = SCHEDULE.slice(4);
     const renderSide = (days) => days.map(d => {
+      if (d.lessons.length === 0) {
+        return `
+          <div class="diary-day">
+            <div class="diary-day-name">${d.name}</div>
+            ${renderWeekendMsg(SCHEDULE.indexOf(d))}
+          </div>`;
+      }
       const info = getCurrentLesson(d);
       const lessons = d.lessons.map((l, li) => {
         let st = "future";
@@ -449,7 +589,7 @@ function renderAll() {
       return `
         <div class="diary-day">
           <div class="diary-day-name">${d.name}</div>
-          ${lessons || '<div class="empty-day">Выходной</div>'}
+          ${lessons}
         </div>`;
     }).join("");
     content.innerHTML = `
