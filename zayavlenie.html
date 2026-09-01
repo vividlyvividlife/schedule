@@ -22,8 +22,23 @@
     transition: border-color 0.2s;
     outline: none;
   }
-  .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .form-group input:focus,   .form-group textarea:focus { border-color: var(--accent); }
   .form-group textarea { resize: vertical; min-height: 60px; }
+  .form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--card);
+    color: var(--text);
+    transition: border-color 0.2s;
+    outline: none;
+    cursor: pointer;
+  }
+  .form-group select:focus { border-color: var(--accent); }
+  .dark .form-group select { background: var(--card); color: var(--text); }
   .form-row { display: flex; gap: 12px; }
   .form-row .form-group { flex: 1; }
 
@@ -206,7 +221,17 @@
 
   <div class="form-group">
     <label>Причина отсутствия</label>
-    <textarea id="reason" placeholder="отъезд в отпуск, болезнь и т.д."></textarea>
+    <select id="reasonSelect" onchange="onReasonChange()">
+      <option value="">— Выберите причину —</option>
+      <option value="Болезнь ребенка (не более 3 дней, без справки)">Болезнь ребенка (не более 3 дней, без справки)</option>
+      <option value="Пребывание на домашнем режиме по рекомендации врача">Пребывание на домашнем режиме по рекомендации врача</option>
+      <option value="Отпуск родителей (законных представителей)">Отпуск родителей (законных представителей)</option>
+      <option value="Непредвиденные семейные обстоятельства (переезд, болезнь близких родственников)">Непредвиденные семейные обстоятельства (переезд, болезнь близких родственников)</option>
+      <option value="Служебная командировка родителей">Служебная командировка родителей</option>
+      <option value="Выходные дни родителей (в т.ч. при сменном или гибком графике)">Выходные дни родителей (в т.ч. при сменном или гибком графике)</option>
+      <option value="custom">Другое (указать свою причину)...</option>
+    </select>
+    <textarea id="reason" placeholder="Укажите причину" style="display:none;margin-top:8px;"></textarea>
   </div>
 
   <div class="form-group">
@@ -239,6 +264,18 @@
 const STORAGE_KEY = "zayavlenie";
 let activePicker = null;
 
+function onReasonChange() {
+  const select = document.getElementById("reasonSelect");
+  const textarea = document.getElementById("reason");
+  if (select.value === "custom") {
+    textarea.style.display = "block";
+    textarea.focus();
+  } else {
+    textarea.style.display = "none";
+    textarea.value = select.value;
+  }
+}
+
 function loadForm() {
   try {
     const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -251,6 +288,14 @@ function loadForm() {
       document.getElementById("dateFrom").value = data.dateFrom || "";
       document.getElementById("dateTo").value = data.dateTo || "";
       document.getElementById("reason").value = data.reason || "";
+      const reasonSelect = document.getElementById("reasonSelect");
+      const options = Array.from(reasonSelect.options).map(o => o.value);
+      if (options.includes(data.reason)) {
+        reasonSelect.value = data.reason;
+      } else if (data.reason) {
+        reasonSelect.value = "custom";
+        document.getElementById("reason").style.display = "block";
+      }
       document.getElementById("dateWrite").value = data.dateWrite || "";
     }
   } catch (e) {}
@@ -265,7 +310,7 @@ function saveForm() {
     className: document.getElementById("className").value,
     dateFrom: document.getElementById("dateFrom").value,
     dateTo: document.getElementById("dateTo").value,
-    reason: document.getElementById("reason").value,
+    reason: document.getElementById("reasonSelect").value === "custom" ? document.getElementById("reason").value : document.getElementById("reasonSelect").value,
     dateWrite: document.getElementById("dateWrite").value,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -404,7 +449,7 @@ function showPreview() {
     className: document.getElementById("className").value.trim(),
     dateFrom: document.getElementById("dateFrom").value.trim(),
     dateTo: document.getElementById("dateTo").value.trim(),
-    reason: document.getElementById("reason").value.trim(),
+    reason: document.getElementById("reasonSelect").value === "custom" ? document.getElementById("reason").value.trim() : document.getElementById("reasonSelect").value,
     dateWrite: document.getElementById("dateWrite").value.trim(),
   };
 
