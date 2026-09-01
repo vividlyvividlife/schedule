@@ -223,12 +223,12 @@
     <label>Причина отсутствия</label>
     <select id="reasonSelect" onchange="onReasonChange()">
       <option value="">— Выберите причину —</option>
-      <option value="Болезнь ребенка" data-short="Болезнь ребенка">Болезнь ребенка (не более 3 дней, без справки)</option>
-      <option value="Пребывание на домашнем режиме по рекомендации врача" data-short="Пребывание на домашнем режиме по рекомендации врача">Пребывание на домашнем режиме по рекомендации врача</option>
-      <option value="Отпуск родителей" data-short="Отпуск родителей">Отпуск родителей (законных представителей)</option>
-      <option value="Непредвиденные семейные обстоятельства" data-short="Непредвиденные семейные обстоятельства">Непредвиденные семейные обстоятельства (переезд, болезнь близких родственников)</option>
-      <option value="Служебная командировка родителей" data-short="Служебная командировка родителей">Служебная командировка родителей</option>
-      <option value="Выходные дни родителей" data-short="Выходные дни родителей">Выходные дни родителей (в т.ч. при сменном или гибком графике)</option>
+      <option value="Болезнь ребенка" data-short="болезнь ребенка" data-gen="болезнью ребенка">Болезнь ребенка (не более 3 дней, без справки)</option>
+      <option value="Пребывание на домашнем режиме" data-short="пребывание на домашнем режиме по рекомендации врача" data-gen="пребыванием на домашнем режиме по рекомендации врача">Пребывание на домашнем режиме по рекомендации врача</option>
+      <option value="Отпуск родителей" data-short="отпуск родителей" data-gen="отпуском родителей (законных представителей)">Отпуск родителей (законных представителей)</option>
+      <option value="Непредвиденные семейные обстоятельства" data-short="непредвиденные семейные обстоятельства" data-gen="непредвиденными семейными обстоятельствами (переезд, болезнь близких родственников)">Непредвиденные семейные обстоятельства (переезд, болезнь близких родственников)</option>
+      <option value="Служебная командировка родителей" data-short="служебная командировка родителей" data-gen="служебной командировкой родителей">Служебная командировка родителей</option>
+      <option value="Выходные дни родителей" data-short="выходные дни родителей" data-gen="выходными днями родителей (в т.ч. при сменном или гибком графике)">Выходные дни родителей (в т.ч. при сменном или гибком графике)</option>
       <option value="custom">Другое (указать свою причину)...</option>
     </select>
     <textarea id="reason" placeholder="Укажите причину" style="margin-top:8px;"></textarea>
@@ -271,8 +271,7 @@ function onReasonChange() {
     textarea.value = "";
     textarea.focus();
   } else {
-    const short = select.options[select.selectedIndex].getAttribute("data-short");
-    textarea.value = short || select.value;
+    textarea.value = select.options[select.selectedIndex].getAttribute("data-short") || "";
   }
 }
 
@@ -289,10 +288,15 @@ function loadForm() {
       document.getElementById("dateTo").value = data.dateTo || "";
       document.getElementById("reason").value = data.reason || "";
       const reasonSelect = document.getElementById("reasonSelect");
-      const options = Array.from(reasonSelect.options).map(o => o.value);
-      if (options.includes(data.reason)) {
-        reasonSelect.value = data.reason;
-      } else if (data.reason) {
+      let matched = false;
+      for (const opt of reasonSelect.options) {
+        if (opt.value === data.reason || opt.getAttribute("data-short") === data.reason) {
+          reasonSelect.value = opt.value;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched && data.reason) {
         reasonSelect.value = "custom";
         document.getElementById("reason").style.display = "block";
       }
@@ -453,6 +457,10 @@ function showPreview() {
     dateWrite: document.getElementById("dateWrite").value.trim(),
   };
 
+  const reasonSelect = document.getElementById("reasonSelect");
+  const selectedOpt = reasonSelect.options[reasonSelect.selectedIndex];
+  d.reasonGen = selectedOpt.getAttribute("data-gen") || d.reason;
+
   const parentShort = d.parentName.split(" ").map((w, i) => i === 0 ? w : w[0] + ".").join(" ");
   const phoneFormatted = d.phone ? d.phone.replace(/(\+375)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5") : "+375 ___-__-__";
 
@@ -480,7 +488,7 @@ function showPreview() {
       ${d.childName || "_______________"},
       учащейся(гося) ${d.className || "_____"} класса,
       с ${d.dateFrom || "_____"} по ${d.dateTo || "_____"}
-      в связи ${d.reason ? d.reason : " "}.
+      в связи ${d.reasonGen ? d.reasonGen : " "}.
     </div>
 
     <div class="indent" style="margin-top:12px;">
