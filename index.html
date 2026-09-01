@@ -33,9 +33,9 @@
     line-height: 1.5;
     min-height: 100vh;
     transition: background 0.3s, color 0.3s;
+    overflow-x: hidden;
   }
 
-  /* HEADER */
   .header {
     max-width: 900px;
     margin: 0 auto;
@@ -55,10 +55,11 @@
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: background 0.2s;
+    color: var(--text);
+    flex-shrink: 0;
   }
   .theme-btn:hover { background: var(--active-bg); }
 
-  /* STATUS BAR */
   .status {
     max-width: 900px;
     margin: 0 auto;
@@ -66,12 +67,8 @@
     font-size: 13px;
     color: var(--muted);
   }
-  .status .highlight {
-    color: var(--accent);
-    font-weight: 600;
-  }
+  .status .highlight { color: var(--accent); font-weight: 600; }
 
-  /* MOBILE: day tabs */
   .day-tabs {
     display: flex;
     gap: 6px;
@@ -95,21 +92,21 @@
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
   .day-tab.active {
     background: var(--accent);
     color: #fff;
     border-color: var(--accent);
   }
-  .day-tab.today {
-    border-color: var(--accent);
-  }
+  .day-tab.today { border-color: var(--accent); }
 
-  /* LESSONS */
   .day-content {
     max-width: 900px;
     margin: 0 auto;
     padding: 0 16px 32px;
+    touch-action: pan-y;
   }
   .day-panel { display: none; }
   .day-panel.active { display: block; }
@@ -130,10 +127,6 @@
     border-left: 3px solid var(--accent);
   }
   .lesson.past { opacity: 0.5; }
-  .lesson-bar {
-    width: 4px;
-    flex-shrink: 0;
-  }
   .lesson-body {
     flex: 1;
     padding: 12px 14px;
@@ -158,7 +151,6 @@
     margin-top: 2px;
   }
 
-  /* DESKTOP: diary spread */
   @media (min-width: 768px) {
     .day-tabs { display: none; }
     .day-content { padding: 0 24px 40px; }
@@ -168,7 +160,6 @@
       grid-template-columns: 1fr 1fr;
       gap: 32px;
     }
-    .diary-side {}
     .diary-day { margin-bottom: 28px; }
     .diary-day-name {
       font-size: 14px;
@@ -196,7 +187,6 @@
     }
   }
 
-  /* PROGRESS */
   .progress-wrap {
     max-width: 900px;
     margin: 0 auto;
@@ -287,6 +277,10 @@ const SCHEDULE = [
   },
   { name: "Суббота", lessons: [] }
 ];
+
+let currentDayIdx = -1;
+let touchStartX = 0;
+let touchStartY = 0;
 
 function parseTime(t) {
   const [h, m] = t.split("–")[0].split(":").map(Number);
@@ -388,6 +382,8 @@ function renderTabs() {
 }
 
 function switchDay(idx) {
+  if (idx < 0 || idx >= SCHEDULE.length) return;
+  currentDayIdx = idx;
   document.querySelectorAll(".day-tab").forEach((t, i) => {
     t.classList.toggle("active", i === idx);
   });
@@ -396,10 +392,32 @@ function switchDay(idx) {
   });
 }
 
+function handleSwipe() {
+  const diff = touchStartX - touchEndX;
+  if (Math.abs(diff) < 50) return;
+  if (diff > 0) {
+    switchDay(currentDayIdx + 1);
+  } else {
+    switchDay(currentDayIdx - 1);
+  }
+}
+
+document.addEventListener("touchstart", (e) => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener("touchend", (e) => {
+  const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+  const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+  if (dx > dy && dx > 50) {
+    handleSwipe();
+  }
+}, { passive: true });
+
 function renderAll() {
   const today = getTodayIndex();
   const content = document.getElementById("dayContent");
-
   const isMobile = window.innerWidth < 768;
 
   if (isMobile) {
@@ -410,17 +428,14 @@ function renderAll() {
         if (info) {
           if (li < info.idx) st = "past";
           else if (li === info.idx) st = info.type;
-          else st = "future";
         }
         return renderLesson(l, st);
       }).join("");
       return `<div class="day-panel${i === today ? ' active' : ''}">${lessons || '<div class="empty-day">Выходной</div>'}</div>`;
     }).join("");
   } else {
-    // Desktop: diary spread
     const left = SCHEDULE.slice(0, 3);
     const right = SCHEDULE.slice(3);
-
     const renderSide = (days) => days.map(d => {
       const info = getCurrentLesson(d);
       const lessons = d.lessons.map((l, li) => {
@@ -428,7 +443,6 @@ function renderAll() {
         if (info) {
           if (li < info.idx) st = "past";
           else if (li === info.idx) st = info.type;
-          else st = "future";
         }
         return renderLesson(l, st);
       }).join("");
@@ -438,7 +452,6 @@ function renderAll() {
           ${lessons || '<div class="empty-day">Выходной</div>'}
         </div>`;
     }).join("");
-
     content.innerHTML = `
       <div class="diary">
         <div class="diary-side">${renderSide(left)}</div>
@@ -454,12 +467,12 @@ function toggleTheme() {
   localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
 }
 
-// init
 if (localStorage.getItem("theme") === "dark") {
   document.body.classList.add("dark");
   document.querySelector(".theme-btn").textContent = "☾";
 }
 
+currentDayIdx = getTodayIndex();
 renderTabs();
 renderAll();
 renderStatus();
