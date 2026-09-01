@@ -223,15 +223,15 @@
     <label>Причина отсутствия</label>
     <select id="reasonSelect" onchange="onReasonChange()">
       <option value="">— Выберите причину —</option>
-      <option value="Болезнь ребенка (не более 3 дней, без справки)">Болезнь ребенка (не более 3 дней, без справки)</option>
-      <option value="Пребывание на домашнем режиме по рекомендации врача">Пребывание на домашнем режиме по рекомендации врача</option>
-      <option value="Отпуск родителей (законных представителей)">Отпуск родителей (законных представителей)</option>
-      <option value="Непредвиденные семейные обстоятельства (переезд, болезнь близких родственников)">Непредвиденные семейные обстоятельства (переезд, болезнь близких родственников)</option>
-      <option value="Служебная командировка родителей">Служебная командировка родителей</option>
-      <option value="Выходные дни родителей (в т.ч. при сменном или гибком графике)">Выходные дни родителей (в т.ч. при сменном или гибком графике)</option>
+      <option value="Болезнь ребенка" data-short="Болезнь ребенка">Болезнь ребенка (не более 3 дней, без справки)</option>
+      <option value="Пребывание на домашнем режиме по рекомендации врача" data-short="Пребывание на домашнем режиме по рекомендации врача">Пребывание на домашнем режиме по рекомендации врача</option>
+      <option value="Отпуск родителей" data-short="Отпуск родителей">Отпуск родителей (законных представителей)</option>
+      <option value="Непредвиденные семейные обстоятельства" data-short="Непредвиденные семейные обстоятельства">Непредвиденные семейные обстоятельства (переезд, болезнь близких родственников)</option>
+      <option value="Служебная командировка родителей" data-short="Служебная командировка родителей">Служебная командировка родителей</option>
+      <option value="Выходные дни родителей" data-short="Выходные дни родителей">Выходные дни родителей (в т.ч. при сменном или гибком графике)</option>
       <option value="custom">Другое (указать свою причину)...</option>
     </select>
-    <textarea id="reason" placeholder="Укажите причину" style="display:none;margin-top:8px;"></textarea>
+    <textarea id="reason" placeholder="Укажите причину" style="margin-top:8px;"></textarea>
   </div>
 
   <div class="form-group">
@@ -268,11 +268,11 @@ function onReasonChange() {
   const select = document.getElementById("reasonSelect");
   const textarea = document.getElementById("reason");
   if (select.value === "custom") {
-    textarea.style.display = "block";
+    textarea.value = "";
     textarea.focus();
   } else {
-    textarea.style.display = "none";
-    textarea.value = select.value;
+    const short = select.options[select.selectedIndex].getAttribute("data-short");
+    textarea.value = short || select.value;
   }
 }
 
@@ -310,7 +310,7 @@ function saveForm() {
     className: document.getElementById("className").value,
     dateFrom: document.getElementById("dateFrom").value,
     dateTo: document.getElementById("dateTo").value,
-    reason: document.getElementById("reasonSelect").value === "custom" ? document.getElementById("reason").value : document.getElementById("reasonSelect").value,
+    reason: document.getElementById("reason").value,
     dateWrite: document.getElementById("dateWrite").value,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));

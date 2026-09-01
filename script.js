@@ -280,7 +280,7 @@ function renderStatus() {
     return;
   }
   if (!info) {
-    el.innerHTML = `${day.name} · ${timeStr} · Уроков больше нет`;
+    el.innerHTML = `${day.name} · ${timeStr} · Уроков на сегодня нет`;
     return;
   }
   const l = day.lessons[info.idx];
@@ -289,7 +289,7 @@ function renderStatus() {
   } else if (info.type === "next") {
     el.innerHTML = `Следующий: <span class="highlight">${l.subj}</span> · ${l.time} · ${countdown(parseTime(l.time))}`;
   } else {
-    el.innerHTML = `${day.name} · ${timeStr} · Уроков больше нет`;
+    el.innerHTML = `${day.name} · ${timeStr} · Уроков на сегодня нет`;
   }
 }
 
