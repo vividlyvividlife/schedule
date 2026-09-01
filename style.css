@@ -257,6 +257,42 @@ body {
   transition: width 0.5s;
 }
 
+.countdowns {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 16px 16px;
+}
+.countdown-item {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s, border-color 0.2s;
+}
+.countdown-item.holiday-today {
+  border-color: #e8a84c;
+  background: #fff8ee;
+  font-weight: 700;
+}
+.dark .countdown-item.holiday-today {
+  background: #2a2520;
+  border-color: #e8a84c;
+}
+.countdown-item.active-holiday {
+  border-color: #5aaf8a;
+  background: #eef8f3;
+}
+.dark .countdown-item.active-holiday {
+  background: #1a2a22;
+  border-color: #5aaf8a;
+}
+
 @media (min-width: 768px) {
   .day-tabs { display: none; }
   .day-content { padding: 0 24px 40px; }

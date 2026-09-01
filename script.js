@@ -61,6 +61,7 @@ const ICONS = {
 
 let SCHEDULE = [];
 let EXTENDED = [];
+let HOLIDAYS = null;
 let extendedOn = localStorage.getItem("extended") === "true";
 let currentDayIdx = -1;
 let touchStartX = 0;
@@ -112,6 +113,101 @@ function countdown(targetMin) {
   const m = diff % 60;
   if (h > 0) return `через ${h} ч ${m} мин`;
   return `через ${m} мин`;
+}
+
+function daysBetween(date1, date2) {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  const diff = d2 - d1;
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+function isDateInRange(date, start, end) {
+  const d = new Date(date);
+  const s = new Date(start);
+  const e = new Date(end);
+  return d >= s && d <= e;
+}
+
+function getNextHoliday() {
+  if (!HOLIDAYS) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (const h of HOLIDAYS.schoolHolidays) {
+    const start = new Date(h.start);
+    const end = new Date(h.end);
+    if (today >= start && today <= end) {
+      return { type: "current", name: h.name, emoji: h.emoji, end: h.end };
+    }
+    if (today < start) {
+      return { type: "upcoming", name: h.name, emoji: h.emoji, start: h.start };
+    }
+  }
+  return null;
+}
+
+function getPublicHolidayToday() {
+  if (!HOLIDAYS) return null;
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+
+  const allHolidays = [
+    ...(HOLIDAYS.publicHolidays2026 || []),
+    ...(HOLIDAYS.publicHolidays2027 || [])
+  ];
+
+  return allHolidays.find(h => h.date === todayStr);
+}
+
+function renderCountdowns() {
+  if (!HOLIDAYS) return;
+  const el = document.getElementById("countdowns");
+  if (!el) return;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+
+  let html = "";
+
+  const publicHoliday = getPublicHolidayToday();
+  if (publicHoliday) {
+    html += `<div class="countdown-item holiday-today">${publicHoliday.emoji} Сегодня ${publicHoliday.name}!</div>`;
+  }
+
+  const nextHoliday = getNextHoliday();
+  if (nextHoliday) {
+    if (nextHoliday.type === "current") {
+      const daysLeft = daysBetween(todayStr, nextHoliday.end) + 1;
+      html += `<div class="countdown-item active-holiday">${nextHoliday.emoji} ${nextHoliday.name} — осталось ${daysLeft} дн.</div>`;
+    } else if (nextHoliday.type === "upcoming") {
+      const daysUntil = daysBetween(todayStr, nextHoliday.start);
+      html += `<div class="countdown-item">${nextHoliday.emoji} До ${nextHoliday.name} — ${daysUntil} дн.</div>`;
+    }
+  }
+
+  const newYear = new Date("2027-01-01");
+  if (today < newYear) {
+    const daysToNY = daysBetween(todayStr, "2027-01-01");
+    html += `<div class="countdown-item">🎄 До Нового года — ${daysToNY} дн.</div>`;
+  }
+
+  const startStr = HOLIDAYS.schoolYearStart || "2026-09-01";
+  const daysPassed = daysBetween(startStr, todayStr);
+  const endStr = HOLIDAYS.schoolYearEnd || "2027-05-31";
+  const totalDays = daysBetween(startStr, endStr);
+  const pct = Math.min(100, Math.max(0, Math.round((daysPassed / totalDays) * 100)));
+
+  html += `<div class="countdown-item">📚 Уже прошли ${daysPassed} дн. от 1 сентября (${pct}% учебного года)</div>`;
+
+  el.innerHTML = html;
 }
 
 function renderLesson(l, state) {
@@ -362,12 +458,16 @@ document.addEventListener("touchend", (e) => {
 
 async function init() {
   try {
-    const res = await fetch("schedule.json?" + Date.now());
-    const data = await res.json();
-    SCHEDULE = data.schedule;
-    EXTENDED = data.extended;
+    const [scheduleRes, holidaysRes] = await Promise.all([
+      fetch("schedule.json?" + Date.now()),
+      fetch("holidays.json?" + Date.now())
+    ]);
+    const scheduleData = await scheduleRes.json();
+    SCHEDULE = scheduleData.schedule;
+    EXTENDED = scheduleData.extended;
+    HOLIDAYS = await holidaysRes.json();
   } catch (e) {
-    console.error("Failed to load schedule.json:", e);
+    console.error("Failed to load data:", e);
     return;
   }
 
@@ -387,8 +487,9 @@ async function init() {
   renderAll();
   renderStatus();
   renderProgress();
+  renderCountdowns();
 
-  setInterval(() => { renderDate(); renderStatus(); renderProgress(); }, 30000);
+  setInterval(() => { renderDate(); renderStatus(); renderProgress(); renderCountdowns(); }, 30000);
   window.addEventListener("resize", renderAll);
 }
 
