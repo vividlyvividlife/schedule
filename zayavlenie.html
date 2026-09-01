@@ -202,6 +202,11 @@
     <input type="text" id="className" placeholder='1 "А"'>
   </div>
 
+  <div class="form-group">
+    <label>№ заявления</label>
+    <input type="text" id="claimNum" placeholder="1">
+  </div>
+
   <div class="form-row">
     <div class="form-group">
       <label>Дата начала отсутствия</label>
@@ -284,6 +289,7 @@ function loadForm() {
       document.getElementById("phone").value = data.phone || "";
       document.getElementById("childName").value = data.childName || "";
       document.getElementById("className").value = data.className || "";
+      document.getElementById("claimNum").value = data.claimNum || "";
       document.getElementById("dateFrom").value = data.dateFrom || "";
       document.getElementById("dateTo").value = data.dateTo || "";
       document.getElementById("reason").value = data.reason || "";
@@ -312,6 +318,7 @@ function saveForm() {
     phone: document.getElementById("phone").value,
     childName: document.getElementById("childName").value,
     className: document.getElementById("className").value,
+    claimNum: document.getElementById("claimNum").value,
     dateFrom: document.getElementById("dateFrom").value,
     dateTo: document.getElementById("dateTo").value,
     reason: document.getElementById("reason").value,
@@ -324,6 +331,7 @@ function resetForm() {
   if (!confirm("Сбросить все данные?")) return;
   localStorage.removeItem(STORAGE_KEY);
   document.querySelectorAll("input, textarea").forEach(el => { el.value = ""; });
+  document.getElementById("reasonSelect").value = "";
 }
 
 function formatDate(d) {
@@ -451,6 +459,7 @@ function showPreview() {
     phone: document.getElementById("phone").value.trim(),
     childName: document.getElementById("childName").value.trim(),
     className: document.getElementById("className").value.trim(),
+    claimNum: document.getElementById("claimNum").value.trim(),
     dateFrom: document.getElementById("dateFrom").value.trim(),
     dateTo: document.getElementById("dateTo").value.trim(),
     reason: document.getElementById("reason").value.trim(),
@@ -471,7 +480,7 @@ function showPreview() {
       <div>«Средняя школа №12 г. Гомеля»</div>
       <div>Антоненко В. В.</div>
       <div style="margin-top:12px;">
-        <span style="display:inline-block;min-width:220px;border-bottom:1px solid #000;">${d.parentName || ""}</span>
+        ${d.parentName || "____________________________"}
       </div>
       <div>
         прож. по адресу: ${d.address || "___________________________"}
@@ -481,7 +490,8 @@ function showPreview() {
       </div>
     </div>
 
-    <div class="center" style="margin:24px 0 16px;font-size:16px;font-weight:700;">Заявление директору<br>на освобождение от уроков</div>
+    <div class="center" style="margin:24px 0 16px;font-size:16px;font-weight:700;">Заявление</div>
+    <div class="center" style="font-size:13px;">№ ${d.claimNum || "_____"} от ${d.dateWrite || "___"}</div>
 
     <div class="indent">
       Прошу разрешить отсутствовать на учебных занятиях моему ребенку
