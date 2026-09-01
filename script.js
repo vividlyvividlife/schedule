@@ -160,6 +160,13 @@ function renderWeekendMsg(dayIdx) {
     </div>`;
 }
 
+function renderDate() {
+  const el = document.getElementById("dateDisplay");
+  const now = new Date();
+  const opts = { weekday: "long", day: "numeric", month: "long" };
+  el.textContent = now.toLocaleDateString("ru-RU", opts);
+}
+
 function renderStatus() {
   const el = document.getElementById("status");
   const today = getTodayIndex();
@@ -375,12 +382,13 @@ async function init() {
   }
 
   currentDayIdx = getTodayIndex();
+  renderDate();
   renderTabs();
   renderAll();
   renderStatus();
   renderProgress();
 
-  setInterval(() => { renderStatus(); renderProgress(); }, 30000);
+  setInterval(() => { renderDate(); renderStatus(); renderProgress(); }, 30000);
   window.addEventListener("resize", renderAll);
 }
 
