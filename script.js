@@ -282,9 +282,9 @@ function renderAll() {
   if (isMobile) {
     content.innerHTML = SCHEDULE.map((d, i) => {
       if (d.lessons.length === 0) {
-        return `<div class="day-panel${i === todayIdx ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
+        return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
       }
-      return `<div class="day-panel${i === todayIdx ? ' active' : ''}">${renderDayLessons(d, i)}</div>`;
+      return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderDayLessons(d, i)}</div>`;
     }).join("");
   } else {
     const left = SCHEDULE.slice(0, 3);
@@ -343,7 +343,8 @@ document.addEventListener("touchend", (e) => {
   const dx = endX - touchStartX;
   const dy = Math.abs(endY - touchStartY);
   const dt = Date.now() - touchStartTime;
-  if (Math.abs(dx) > 40 && dy < 80 && dt < 500) {
+  const isHorizontal = dy < Math.abs(dx) * 0.5 && dy < 30;
+  if (Math.abs(dx) > 40 && isHorizontal && dt < 500) {
     if (dx < 0) {
       switchDay(Math.min(currentDayIdx + 1, SCHEDULE.length - 1));
     } else {
