@@ -120,6 +120,54 @@
   .day-tab[data-day="6"].active { background: #d45555; border-color: #d45555; }
   .day-tab.today { border-color: var(--accent); }
 
+  .toggle-row {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .toggle-row label { cursor: pointer; user-select: none; }
+  .toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--line);
+    border-radius: 12px;
+    transition: background 0.3s;
+    cursor: pointer;
+  }
+  .toggle-slider::before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .toggle input:checked + .toggle-slider { background: var(--accent); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+  .extended-label {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-left: auto;
+  }
+
   .day-content {
     max-width: 900px;
     margin: 0 auto;
@@ -279,6 +327,15 @@
   <button class="theme-btn" onclick="toggleTheme()" title="Тёмная тема">☀</button>
 </div>
 
+<div class="toggle-row">
+  <label class="toggle">
+    <input type="checkbox" id="extendedToggle" onchange="toggleExtended()">
+    <span class="toggle-slider"></span>
+  </label>
+  <label for="extendedToggle">Группа продлённого дня</label>
+  <span class="extended-label" id="extendedLabel"></span>
+</div>
+
 <div class="status" id="status"></div>
 
 <div class="progress-wrap">
@@ -350,6 +407,27 @@ const ICONS = {
   "Изобразительное искусство": "🎨",
   "Факультатив": "⭐",
 };
+
+const EXTENDED = [
+  { time: "11:40–12:00", subj: "Приём в группу", icon: "🎒" },
+  { time: "12:00–12:45", subj: "Занятия по интересам", icon: "🎯" },
+  { time: "12:45–13:00", subj: "Обед", icon: "🍽️" },
+  { time: "13:00–14:00", subj: "На открытом воздухе", icon: "🌤️" },
+  { time: "14:00–14:30", subj: "Свободная игра", icon: "🎮" },
+  { time: "14:30–15:45", subj: "Самоподготовка", icon: "📝" },
+  { time: "15:45–16:00", subj: "Полдник", icon: "🍎" },
+  { time: "16:00–16:45", subj: "Занятие в помещении", icon: "🏫" },
+  { time: "16:45–17:40", subj: "Занятия по интересам, уход", icon: "🏠" },
+];
+
+let extendedOn = localStorage.getItem("extended") === "true";
+
+function toggleExtended() {
+  extendedOn = document.getElementById("extendedToggle").checked;
+  localStorage.setItem("extended", extendedOn);
+  document.getElementById("extendedLabel").textContent = extendedOn ? "ВКЛ" : "";
+  renderAll();
+}
 
 const SCHEDULE = [
   {
@@ -487,6 +565,36 @@ function renderLesson(l, state) {
     </div>`;
 }
 
+function renderExtendedItem(item, state) {
+  const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
+  const cd = state === "next" ? countdown(parseTime(item.time)) : "";
+  return `
+    <div class="lesson${cls}">
+      <div class="lesson-body">
+        <div class="lesson-icon">${item.icon}</div>
+        <div class="lesson-num" style="color:var(--accent);font-size:11px;">⏰</div>
+        <div class="lesson-info">
+          <div class="lesson-time">${item.time}</div>
+          <div class="lesson-subject">${item.subj}</div>
+          ${cd ? `<div class="lesson-countdown">${cd}</div>` : ""}
+        </div>
+      </div>
+    </div>`;
+}
+
+function getExtendedState(itemIdx, dayIdx) {
+  if (dayIdx < today) return "past";
+  if (dayIdx > today) return "future";
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const item = EXTENDED[itemIdx];
+  const s = parseTime(item.time);
+  const e = s + parseInt(item.time.split("–")[1].split(":")[0]) * 60 + parseInt(item.time.split("–")[1].split(":")[1]) - s;
+  if (cur >= s && cur < s + 20) return "current";
+  if (cur < s) return "next";
+  return "past";
+}
+
 function renderWeekendMsg(dayIdx) {
   const msg = getWeekendMessage(dayIdx);
   const animCls = msg.anim ? ` animate-${msg.anim}` : "";
@@ -585,13 +693,13 @@ document.addEventListener("touchend", (e) => {
 }, { passive: true });
 
 function renderAll() {
-  const today = getTodayIndex();
+  const todayIdx = getTodayIndex();
   const content = document.getElementById("dayContent");
   const isMobile = window.innerWidth < 768;
 
   function getLessonState(dayIdx, lessonIdx, day) {
-    if (dayIdx < today) return "past";
-    if (dayIdx > today) return "future";
+    if (dayIdx < todayIdx) return "past";
+    if (dayIdx > todayIdx) return "future";
     const info = getCurrentLesson(day);
     if (!info) {
       if (day.lessons.length && Date.now() / 60000 > parseTime(day.lessons[day.lessons.length - 1].time) + 45) return "past";
@@ -602,15 +710,34 @@ function renderAll() {
     return "future";
   }
 
+  function getExtState(itemIdx, dayIdx) {
+    if (dayIdx < todayIdx) return "past";
+    if (dayIdx > todayIdx) return "future";
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const item = EXTENDED[itemIdx];
+    const s = parseTime(item.time);
+    if (cur >= s && cur < s + 20) return "current";
+    if (cur < s) return "next";
+    return "past";
+  }
+
+  function renderDayLessons(d, dayIdx) {
+    let html = d.lessons.map((l, li) => renderLesson(l, getLessonState(dayIdx, li, d))).join("");
+    if (extendedOn && d.lessons.length > 0) {
+      const lastLessonEnd = parseTime(d.lessons[d.lessons.length - 1].time) + 45;
+      const filtered = EXTENDED.filter(ext => parseTime(ext.time) >= lastLessonEnd);
+      html += filtered.map((ext, ei) => renderExtendedItem(ext, getExtState(EXTENDED.indexOf(ext), dayIdx))).join("");
+    }
+    return html;
+  }
+
   if (isMobile) {
     content.innerHTML = SCHEDULE.map((d, i) => {
       if (d.lessons.length === 0) {
-        return `<div class="day-panel${i === today ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
+        return `<div class="day-panel${i === todayIdx ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
       }
-      const lessons = d.lessons.map((l, li) => {
-        return renderLesson(l, getLessonState(i, li, d));
-      }).join("");
-      return `<div class="day-panel${i === today ? ' active' : ''}">${lessons}</div>`;
+      return `<div class="day-panel${i === todayIdx ? ' active' : ''}">${renderDayLessons(d, i)}</div>`;
     }).join("");
   } else {
     const left = SCHEDULE.slice(0, 3);
@@ -624,13 +751,10 @@ function renderAll() {
           </div>`;
       }
       const dayIdx = SCHEDULE.indexOf(d);
-      const lessons = d.lessons.map((l, li) => {
-        return renderLesson(l, getLessonState(dayIdx, li, d));
-      }).join("");
       return `
         <div class="diary-day">
           <div class="diary-day-name">${d.name}</div>
-          ${lessons}
+          ${renderDayLessons(d, dayIdx)}
         </div>`;
     }).join("");
 
