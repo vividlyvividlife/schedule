@@ -163,6 +163,17 @@ function getPublicHolidayToday() {
   return allHolidays.find(h => h.date === todayStr);
 }
 
+function getGenitive(name) {
+  const map = {
+    "Осенние каникулы": "осенних каникул",
+    "Зимние каникулы": "зимних каникул",
+    "Зимние каникулы (доп. для I–II кл.)": "зимних каникул",
+    "Весенние каникулы": "весенних каникул",
+    "Летние каникулы": "летних каникул",
+  };
+  return map[name] || name;
+}
+
 function renderCountdowns() {
   if (!HOLIDAYS) return;
   const el = document.getElementById("countdowns");
@@ -189,7 +200,7 @@ function renderCountdowns() {
       html += `<div class="countdown-item active-holiday">${nextHoliday.emoji} ${nextHoliday.name} — осталось ${daysLeft} дн.</div>`;
     } else if (nextHoliday.type === "upcoming") {
       const daysUntil = daysBetween(todayStr, nextHoliday.start);
-      html += `<div class="countdown-item">${nextHoliday.emoji} До ${nextHoliday.name} — ${daysUntil} дн.</div>`;
+      html += `<div class="countdown-item">${nextHoliday.emoji} До ${getGenitive(nextHoliday.name)} — ${daysUntil} дн.</div>`;
     }
   }
 
@@ -205,7 +216,13 @@ function renderCountdowns() {
   const totalDays = daysBetween(startStr, endStr);
   const pct = Math.min(100, Math.max(0, Math.round((daysPassed / totalDays) * 100)));
 
-  html += `<div class="countdown-item">📚 Уже прошли ${daysPassed} дн. от 1 сентября (${pct}% учебного года)</div>`;
+  html += `
+    <div class="countdown-item countdown-progress">
+      <span>📚 Уже прошли ${daysPassed} дн. от 1 сентября (${pct}% учебного года)</span>
+      <div class="mini-progress">
+        <div class="mini-progress-fill" style="width:${pct}%"></div>
+      </div>
+    </div>`;
 
   el.innerHTML = html;
 }

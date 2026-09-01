@@ -292,6 +292,23 @@ body {
   background: #1a2a22;
   border-color: #5aaf8a;
 }
+.countdown-progress {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.mini-progress {
+  height: 6px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.mini-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.5s;
+}
 
 @media (min-width: 768px) {
   .day-tabs { display: none; }
