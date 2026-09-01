@@ -216,9 +216,17 @@ function renderCountdowns() {
   const totalDays = daysBetween(startStr, endStr);
   const pct = Math.min(100, Math.max(0, Math.round((daysPassed / totalDays) * 100)));
 
+  const phrases = [
+    `📚 Стали умнее на ${daysPassed} дн. от 1 сентября`,
+    `📚 Прошли ${daysPassed} дн. школьной жизни`,
+    `📚 Уже ${daysPassed} дн. за партами`,
+    `📚 ${daysPassed} дн. обучения (${pct}% учебного года)`,
+  ];
+  const phrase = phrases[Math.floor(pct / 25) % phrases.length];
+
   html += `
     <div class="countdown-item countdown-progress">
-      <span>📚 Уже прошли ${daysPassed} дн. от 1 сентября (${pct}% учебного года)</span>
+      <span>${phrase} (${pct}%)</span>
       <div class="mini-progress">
         <div class="mini-progress-fill" style="width:${pct}%"></div>
       </div>

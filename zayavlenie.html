@@ -175,7 +175,7 @@
   <div style="margin-bottom:16px;">
     <a href="index.html" style="font-size:14px;color:var(--accent);text-decoration:none;">← Расписание</a>
   </div>
-  <h2>Заявление директору</h2>
+  <h2>Заявление директору на освобождение от уроков</h2>
 
   <div class="form-group">
     <label>ФИО родителя / законного представителя</label>
@@ -457,21 +457,27 @@ function showPreview() {
   const phoneFormatted = d.phone ? d.phone.replace(/(\+375)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5") : "+375 ___-__-__";
 
   const html = `
-    <div class="right" style="font-size:13px;">
-      Директору государственного<br>
-      учреждения образования<br>
-      «Средняя школа №12 г. Гомеля»<br>
-      Антоненко В. В.<br>
-      ${d.parentName || "____________________________"}<br>
-      ${d.address ? "г. " + d.address : "г. ____________________________"}<br>
-      ${phoneFormatted}
+    <div style="font-size:13px;line-height:1.6;">
+      <div>Директору государственного</div>
+      <div>учреждения образования</div>
+      <div>«Средняя школа №12 г. Гомеля»</div>
+      <div>Антоненко В. В.</div>
+      <div style="margin-top:12px;">
+        <span style="display:inline-block;min-width:220px;border-bottom:1px solid #000;">${d.parentName || ""}</span>
+      </div>
+      <div>
+        прож. по адресу: ${d.address || "___________________________"}
+      </div>
+      <div style="margin-top:8px;">
+        ${d.phone ? d.phone.replace(/(\+375)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5") : "+375___-__-__"}
+      </div>
     </div>
 
-    <div class="center" style="margin:24px 0 16px;font-size:16px;font-weight:700;">Заявление</div>
+    <div class="center" style="margin:24px 0 16px;font-size:16px;font-weight:700;">Заявление директору<br>на освобождение от уроков</div>
 
     <div class="indent">
       Прошу разрешить отсутствовать на учебных занятиях моему ребенку
-      <span class="underline">${d.childName || " "}</span>,
+      ${d.childName || "_______________"},
       учащейся(гося) ${d.className || "_____"} класса,
       с ${d.dateFrom || "_____"} по ${d.dateTo || "_____"}
       в связи ${d.reason ? d.reason : " "}.
