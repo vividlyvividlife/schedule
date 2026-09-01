@@ -144,8 +144,8 @@
     background: var(--active-bg);
     border-left: 3px solid var(--accent);
   }
-  .lesson.past { opacity: 0.45; }
-  .lesson.future { border-left: 3px solid var(--line); }
+  .lesson.past { opacity: 0.4; }
+  .lesson.future { border-left: 3px solid transparent; background: var(--card); }
   .lesson.next { border-left: 3px solid var(--accent); background: var(--active-bg); }
   .lesson-body {
     flex: 1;
@@ -589,26 +589,32 @@ function renderAll() {
   const content = document.getElementById("dayContent");
   const isMobile = window.innerWidth < 768;
 
+  function getLessonState(dayIdx, lessonIdx, day) {
+    if (dayIdx < today) return "past";
+    if (dayIdx > today) return "future";
+    const info = getCurrentLesson(day);
+    if (!info) {
+      if (day.lessons.length && Date.now() / 60000 > parseTime(day.lessons[day.lessons.length - 1].time) + 45) return "past";
+      return "future";
+    }
+    if (lessonIdx < info.idx) return "past";
+    if (lessonIdx === info.idx) return info.type;
+    return "future";
+  }
+
   if (isMobile) {
     content.innerHTML = SCHEDULE.map((d, i) => {
       if (d.lessons.length === 0) {
         return `<div class="day-panel${i === today ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
       }
-      const info = getCurrentLesson(d);
       const lessons = d.lessons.map((l, li) => {
-        let st = "future";
-        if (info) {
-          if (li < info.idx) st = "past";
-          else if (li === info.idx) st = info.type;
-        }
-        return renderLesson(l, st);
+        return renderLesson(l, getLessonState(i, li, d));
       }).join("");
       return `<div class="day-panel${i === today ? ' active' : ''}">${lessons}</div>`;
     }).join("");
   } else {
     const left = SCHEDULE.slice(0, 3);
     const right = SCHEDULE.slice(3, 5);
-    const weekend = { name: "Выходные", lessons: [], isWeekend: true };
     const renderSide = (days) => days.map(d => {
       if (d.lessons.length === 0) {
         return `
@@ -617,14 +623,9 @@ function renderAll() {
             ${renderWeekendMsg(SCHEDULE.indexOf(d))}
           </div>`;
       }
-      const info = getCurrentLesson(d);
+      const dayIdx = SCHEDULE.indexOf(d);
       const lessons = d.lessons.map((l, li) => {
-        let st = "future";
-        if (info) {
-          if (li < info.idx) st = "past";
-          else if (li === info.idx) st = info.type;
-        }
-        return renderLesson(l, st);
+        return renderLesson(l, getLessonState(dayIdx, li, d));
       }).join("");
       return `
         <div class="diary-day">
