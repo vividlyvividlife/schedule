@@ -567,8 +567,9 @@ function renderAll() {
       return `<div class="day-panel${i === today ? ' active' : ''}">${lessons}</div>`;
     }).join("");
   } else {
-    const left = SCHEDULE.slice(0, 4);
-    const right = SCHEDULE.slice(4);
+    const left = SCHEDULE.slice(0, 3);
+    const right = SCHEDULE.slice(3, 5);
+    const weekend = { name: "Выходные", lessons: [], isWeekend: true };
     const renderSide = (days) => days.map(d => {
       if (d.lessons.length === 0) {
         return `
@@ -592,10 +593,29 @@ function renderAll() {
           ${lessons}
         </div>`;
     }).join("");
+
+    const satMsg = getWeekendMessage(5);
+    const sunMsg = getWeekendMessage(6);
+    const satAnim = satMsg.anim ? ` animate-${satMsg.anim}` : "";
+    const sunAnim = sunMsg.anim ? ` animate-${sunMsg.anim}` : "";
+    const weekendBlock = `
+      <div class="diary-day">
+        <div class="diary-day-name" style="background:#e8a84c;">Суббота</div>
+        <div class="weekend-msg${satAnim}">
+          <span class="emoji">${satMsg.emoji}</span>
+          ${satMsg.text}
+        </div>
+        <div class="diary-day-name" style="background:#d45555;">Воскресенье</div>
+        <div class="weekend-msg${sunAnim}">
+          <span class="emoji">${sunMsg.emoji}</span>
+          ${sunMsg.text}
+        </div>
+      </div>`;
+
     content.innerHTML = `
       <div class="diary">
         <div class="diary-side">${renderSide(left)}</div>
-        <div class="diary-side">${renderSide(right)}</div>
+        <div class="diary-side">${renderSide(right)}${weekendBlock}</div>
       </div>`;
   }
 }
