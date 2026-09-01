@@ -449,7 +449,7 @@ function showPreview() {
     className: document.getElementById("className").value.trim(),
     dateFrom: document.getElementById("dateFrom").value.trim(),
     dateTo: document.getElementById("dateTo").value.trim(),
-    reason: document.getElementById("reasonSelect").value === "custom" ? document.getElementById("reason").value.trim() : document.getElementById("reasonSelect").value,
+    reason: document.getElementById("reason").value.trim(),
     dateWrite: document.getElementById("dateWrite").value.trim(),
   };
 
@@ -473,8 +473,7 @@ function showPreview() {
       Прошу разрешить отсутствовать на учебных занятиях моему ребенку
       <span class="underline">${d.childName || " "}</span>,
       учащейся(гося) ${d.className || "_____"} класса,
-      с <span class="underline-short">${d.dateFrom || " "}</span>
-      по <span class="underline-short">${d.dateTo || " "}</span>
+      с ${d.dateFrom || "_____"} по ${d.dateTo || "_____"}
       в связи ${d.reason ? d.reason : " "}.
     </div>
 
@@ -486,10 +485,10 @@ function showPreview() {
       Пропущенный материал обязуемся отработать самостоятельно.
     </div>
 
-    <div style="margin-top:40px;display:flex;justify-content:space-between;">
+    <div style="margin-top:40px;display:flex;justify-content:space-between;align-items:flex-end;">
       <div>${d.dateWrite || "__.__.____"}</div>
       <div style="text-align:center;">
-        <div class="underline" style="min-width:200px;">${parentShort}</div>
+        <div style="min-width:200px;border-bottom:1px solid #000;padding-bottom:4px;">${parentShort || " "}</div>
         <div style="font-size:11px;color:#888;margin-top:4px;">подпись</div>
       </div>
     </div>
