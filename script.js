@@ -228,11 +228,12 @@ function renderCountdowns() {
   const pct = Math.min(100, Math.round(pctRaw * 10) / 10);
   const pctDisplay = pct % 1 === 0 ? pct : pct.toFixed(1);
 
+  const dayWord = daysPassed === 1 ? "день" : (daysPassed >= 2 && daysPassed <= 4 ? "дня" : "дней");
   const phrases = [
-    `📚 Стали умнее на ${daysPassed} дн.`,
-    `📚 Уже ${daysPassed} дн. за партами`,
-    `📚 Прошли ${daysPassed} дн. школьной жизни`,
-    `📚 ${daysPassed} дн. обучения`,
+    `📚 ${daysPassed} ${dayWord} учебы — ${pctDisplay}% пути`,
+    `📚 ${daysPassed} ${dayWord} за партами — ${pctDisplay}% пути`,
+    `📚 Прошли ${pctDisplay}% пути — ${daysPassed} ${dayWord}`,
+    `📚 ${daysPassed} ${dayWord} обучения — ${pctDisplay}% пути`,
   ];
   const phrase = phrases[Math.floor(pct / 25) % phrases.length];
 
