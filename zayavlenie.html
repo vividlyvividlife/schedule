@@ -166,6 +166,29 @@
     width: 300px; background: var(--card); border: 1.5px solid var(--line);
     border-radius: 12px; padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     font-size: 13px; line-height: 1.6; color: var(--text);
+    transition: max-height 0.3s, padding 0.3s, opacity 0.3s;
+    max-height: 300px; overflow: hidden;
+  }
+  .info-panel.collapsed {
+    max-height: 40px; padding: 10px 16px; opacity: 0.7;
+  }
+  .info-panel h3 {
+    margin: 0 0 8px 0; cursor: pointer; display: flex;
+    justify-content: space-between; align-items: center;
+  }
+  .info-panel h3::after { content: "▾"; font-size: 12px; color: var(--muted); }
+  .info-panel.collapsed h3::after { content: "▸"; }
+  .info-panel.collapsed p, .info-panel.collapsed .warn { display: none; }
+  .info-panel p { margin-bottom: 8px; color: var(--muted); }
+  .info-panel .warn {
+    background: #fff8ee; border: 1px solid #e8a84c; border-radius: 8px;
+    padding: 8px 10px; margin-top: 8px; font-size: 12px; color: #8a6a2a;
+  }
+  .dark .info-panel .warn { background: #2a2520; color: #c8a84c; border-color: #8a6a2a; }
+  @media (min-width: 1100px) {
+    .info-panel.collapsed { max-height: 300px; padding: 16px; opacity: 1; }
+    .info-panel.collapsed p, .info-panel.collapsed .warn { display: block; }
+    .info-panel.collapsed h3::after { content: ""; }
   }
   .info-panel h3 { font-size: 14px; margin-bottom: 8px; }
   .info-panel p { margin-bottom: 8px; color: var(--muted); }
@@ -192,7 +215,7 @@
   <h2>Заявление директору на освобождение от уроков</h2>
 
   <div class="info-panel" id="infoPanel">
-    <h3>Как заполнить</h3>
+    <h3 onclick="toggleInfoPanel()">Как заполнить</h3>
     <p>Заполните все поля формы, выберите причину и даты отсутствия. Нажмите «Просмотр» — откроется готовое заявление.</p>
     <p>При необходимости отредактируйте текст причины отсутствия вручную. Нажмите «Печать» для сохранения в PDF или отправки на печать.</p>
     <div class="warn">
@@ -294,6 +317,10 @@
 <script>
 const STORAGE_KEY = "zayavlenie";
 let activePicker = null;
+
+function toggleInfoPanel() {
+  document.getElementById("infoPanel").classList.toggle("collapsed");
+}
 
 function onReasonChange() {
   const select = document.getElementById("reasonSelect");
