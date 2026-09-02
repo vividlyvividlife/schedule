@@ -91,10 +91,10 @@
   <div class="subtitle">2 «А» класс · СОШ №12 · 2026–2027</div>
 
   <div class="toggle-row">
-    <span><span class="dot dot-personal"></span> Личные занятия</span>
+    <span><span class="dot dot-personal"></span> Личные</span>
     <span><span class="dot dot-extended"></span> Продлёнка</span>
     <span><span class="dot dot-overlap"></span> Пересечение</span>
-    <span style="margin-left:auto;"><kbd>/</kbd> показать/скрыть продлёнку</span>
+    <button id="extToggle" onclick="toggleExtended()" style="margin-left:auto;background:var(--active-bg);border:1.5px solid var(--line);border-radius:6px;padding:4px 12px;font-size:13px;color:var(--text);cursor:pointer;">Показать продлёнку</button>
   </div>
 
   <div class="day-tabs" id="dayTabs"></div>
@@ -272,13 +272,11 @@ function selectDay(i) {
   renderSchedule();
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "/") {
-    e.preventDefault();
-    showExtended = !showExtended;
-    renderSchedule();
-  }
-});
+function toggleExtended() {
+  showExtended = !showExtended;
+  document.getElementById("extToggle").textContent = showExtended ? "Скрыть продлёнку" : "Показать продлёнку";
+  renderSchedule();
+}
 
 renderTabs();
 renderSchedule();
