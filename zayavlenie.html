@@ -161,6 +161,30 @@
   .preview-paper .sig-place { text-align: right; }
   .preview-paper .sig-label { font-size: 12px; color: #888; margin-top: 2px; }
 
+  .info-toggle {
+    position: fixed; top: 16px; right: 16px; z-index: 150;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--card); border: 1.5px solid var(--line);
+    font-size: 18px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    transition: background 0.2s; color: var(--text);
+  }
+  .info-toggle:hover { background: var(--active-bg); }
+  .info-panel {
+    display: none; position: fixed; top: 60px; right: 16px; z-index: 150;
+    width: 300px; background: var(--card); border: 1.5px solid var(--line);
+    border-radius: 12px; padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    font-size: 13px; line-height: 1.6; color: var(--text);
+  }
+  .info-panel.open { display: block; }
+  .info-panel h3 { font-size: 14px; margin-bottom: 8px; }
+  .info-panel p { margin-bottom: 8px; color: var(--muted); }
+  .info-panel .warn {
+    background: #fff8ee; border: 1px solid #e8a84c; border-radius: 8px;
+    padding: 8px 10px; margin-top: 8px; font-size: 12px; color: #8a6a2a;
+  }
+  .dark .info-panel .warn { background: #2a2520; color: #c8a84c; border-color: #8a6a2a; }
+
   @media print {
     body * { visibility: hidden; }
     .preview-paper, .preview-paper * { visibility: visible; }
@@ -176,6 +200,16 @@
     <a href="index.html" style="font-size:14px;color:var(--accent);text-decoration:none;">← Расписание</a>
   </div>
   <h2>Заявление директору на освобождение от уроков</h2>
+
+  <button class="info-toggle" onclick="toggleInfo()" title="Информация">ℹ</button>
+  <div class="info-panel" id="infoPanel">
+    <h3>Как заполнить</h3>
+    <p>Заполните все поля формы, выберите причину и даты отсутствия. Нажмите «Просмотр» — откроется готовое заявление.</p>
+    <p>При необходимости отредактируйте текст вручную. Нажмите «Печать» для сохранения в PDF или отправки на печать.</p>
+    <div class="warn">
+      🔒 Данные не отправляются в интернет. Вся информация хранится только в памяти браузера на вашем устройстве. Для очистки нажмите «Сбросить».
+    </div>
+  </div>
 
   <div class="form-group">
     <label>ФИО родителя / законного представителя</label>
@@ -271,6 +305,10 @@
 <script>
 const STORAGE_KEY = "zayavlenie";
 let activePicker = null;
+
+function toggleInfo() {
+  document.getElementById("infoPanel").classList.toggle("open");
+}
 
 function onReasonChange() {
   const select = document.getElementById("reasonSelect");
