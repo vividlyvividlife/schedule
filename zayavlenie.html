@@ -477,22 +477,27 @@ function showPreview() {
     <div style="font-size:13px;line-height:1.8;">
 
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div style="flex:0 0 40%;">
+        <div style="flex:0 0 45%;">
           <div style="font-style:italic;font-weight:700;">Заявление</div>
-          <div style="margin-top:4px;">
-            <span style="display:inline-block;min-width:120px;">${d.claimNum || ""}</span>№
-            <span style="display:inline-block;min-width:60px;"></span>
+          <div style="margin-top:6px;">
+            <span style="display:inline-block;min-width:100px;border-bottom:1px solid #000;"></span>№
+            <span style="display:inline-block;min-width:100px;border-bottom:1px solid #000;"></span>
           </div>
         </div>
-        <div style="text-align:right;">
+        <div style="text-align:right;flex:1;">
           <div>Директору государственного</div>
           <div>учреждения образования</div>
           <div>«Средняя школа №12 г. Гомеля»</div>
           <div>Антоненко В. В.</div>
-          <div style="margin-top:8px;">${d.parentName || ""}</div>
-          <div>прож. по адресу: ${d.address || "г.Гомель, ____________________________"}</div>
+          <div style="margin-top:8px;">
+            <span style="display:inline-block;min-width:240px;border-bottom:1px solid #000;">${d.parentName || ""}</span>
+          </div>
           <div style="margin-top:4px;">
-            ${d.phone ? d.phone.replace(/(\+375)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5") : "+375___-__-__"}
+            прож. по адресу:
+            <span style="display:inline-block;min-width:200px;border-bottom:1px solid #000;">${d.address || ""}</span>
+          </div>
+          <div style="margin-top:4px;">
+            ${d.phone ? d.phone.replace(/(\+375)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5") : "+375 ___-__-__"}
           </div>
         </div>
       </div>
