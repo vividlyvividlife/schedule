@@ -4,112 +4,251 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Расписание Николь</title>
-<link rel="stylesheet" href="../style.css">
 <style>
-  .page { max-width: 900px; margin: 0 auto; padding: 20px 16px; }
-  .page h1 { font-size: 22px; margin-bottom: 4px; }
-  .page .subtitle { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
-
-  .toggle-row {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 16px; font-size: 13px; color: var(--muted);
+:root {
+  --bg: #f5f5f0;
+  --card: #ffffff;
+  --text: #1a1a2e;
+  --muted: #8a8a9a;
+  --accent: #5b6abf;
+  --line: #e8e8e3;
+  --active-bg: #f0f1f8;
+  --shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.dark {
+  --bg: #111118;
+  --card: #1a1a24;
+  --text: #e8e8ed;
+  --muted: #8888a0;
+  --accent: #7b8ad4;
+  --line: #2a2a35;
+  --active-bg: #1e2236;
+  --shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  line-height: 1.5; min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+  overflow-x: hidden;
+}
+.header {
+  max-width: 900px; margin: 0 auto; padding: 20px 16px 12px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.header h1 { font-size: 22px; font-weight: 700; }
+.header .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.header .date { font-size: 13px; color: var(--accent); font-weight: 600; margin-top: 4px; }
+.theme-btn {
+  background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  width: 40px; height: 40px; font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s; color: var(--text); flex-shrink: 0;
+}
+.theme-btn:hover { background: var(--active-bg); }
+.toggle-row {
+  max-width: 900px; margin: 0 auto; padding: 0 16px 12px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--muted);
+}
+.toggle-row label { cursor: pointer; user-select: none; }
+.toggle {
+  position: relative; width: 44px; height: 24px; flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--line);
+  border-radius: 12px; transition: background 0.3s; cursor: pointer;
+}
+.toggle-slider::before {
+  content: ""; position: absolute; width: 18px; height: 18px;
+  left: 3px; top: 3px; background: #fff; border-radius: 50%;
+  transition: transform 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+.extended-label {
+  font-size: 11px; color: var(--accent); font-weight: 600; margin-left: auto;
+}
+.status {
+  max-width: 900px; margin: 0 auto; padding: 0 16px 16px;
+  font-size: 13px; color: var(--muted);
+}
+.status .highlight { color: var(--accent); font-weight: 600; }
+.day-tabs {
+  display: flex; gap: 6px; max-width: 900px; margin: 0 auto;
+  padding: 0 16px 16px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.day-tabs::-webkit-scrollbar { display: none; }
+.day-tab {
+  flex-shrink: 0; padding: 8px 14px; border-radius: 20px;
+  font-size: 13px; font-weight: 600; border: 1.5px solid var(--line);
+  background: var(--card); color: var(--text); cursor: pointer;
+  transition: all 0.2s; white-space: nowrap; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.day-tab.active { color: #fff; }
+.day-tab[data-day="0"].active { background: #5b7abf; border-color: #5b7abf; }
+.day-tab[data-day="1"].active { background: #7b6abf; border-color: #7b6abf; }
+.day-tab[data-day="2"].active { background: #9b6abf; border-color: #9b6abf; }
+.day-tab[data-day="3"].active { background: #c46b8a; border-color: #c46b8a; }
+.day-tab[data-day="4"].active { background: #5aaf8a; border-color: #5aaf8a; }
+.day-tab[data-day="5"].active { background: #e8a84c; border-color: #e8a84c; }
+.day-tab[data-day="6"].active { background: #d45555; border-color: #d45555; }
+.day-tab.today { border-color: var(--accent); }
+.day-content {
+  max-width: 900px; margin: 0 auto; padding: 0 16px 32px;
+  touch-action: pan-y;
+}
+.day-panel { display: none; }
+.day-panel.active { display: block; }
+.lesson {
+  display: flex; align-items: stretch;
+  background: var(--card); border-radius: 10px; margin-bottom: 8px;
+  box-shadow: var(--shadow); overflow: hidden;
+  transition: background 0.2s, transform 0.15s;
+}
+.lesson:active { transform: scale(0.98); }
+.lesson.current { background: var(--active-bg); border-left: 3px solid var(--accent); }
+.lesson.past { opacity: 0.4; }
+.lesson.future { border-left: 3px solid transparent; background: var(--card); }
+.lesson.next { border-left: 3px solid var(--accent); background: var(--active-bg); }
+.lesson.personal-mark { border-left: 3px solid #e8a84c; }
+.lesson.extended-mark { border-left: 3px solid #5aaf8a; }
+.lesson.overlap-mark { border-left: 3px solid #ed7d31; }
+.lesson-body {
+  flex: 1; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start;
+}
+.lesson-icon {
+  font-size: 22px; flex-shrink: 0; width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--active-bg); border-radius: 8px;
+}
+.lesson-num {
+  font-size: 13px; font-weight: 700; color: var(--muted);
+  min-width: 20px; padding-top: 1px;
+}
+.lesson-info { flex: 1; }
+.lesson-time { font-size: 12px; color: var(--muted); }
+.lesson-subject { font-size: 15px; font-weight: 500; }
+.lesson-countdown { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+.lesson-overlap-hint { font-size: 11px; color: #ed7d31; font-weight: 600; margin-top: 2px; }
+.weekend-msg {
+  text-align: center; padding: 32px 20px; font-size: 18px;
+  font-weight: 600; color: var(--text); line-height: 1.6;
+}
+.weekend-msg .emoji { font-size: 48px; display: block; margin-bottom: 12px; }
+.weekend-msg .sub { font-size: 14px; font-weight: 400; color: var(--muted); margin-top: 8px; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+.animate-float .emoji { animation: float 3s ease-in-out infinite; }
+.animate-pulse .emoji { animation: pulse 2s ease-in-out infinite; }
+@media (min-width: 768px) {
+  .day-tabs { display: none; }
+  .day-content { padding: 0 24px 40px; }
+  .day-panel { display: block !important; }
+  .diary { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .diary-day { margin-bottom: 28px; }
+  .diary-day-name {
+    font-size: 14px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 5px 14px; border-radius: 5px;
+    display: inline-block; margin-bottom: 12px; color: #fff;
   }
-  .toggle-row kbd {
-    background: var(--active-bg); border: 1px solid var(--line);
-    border-radius: 4px; padding: 2px 6px; font-size: 12px; font-family: inherit;
-  }
-  .toggle-row .dot {
-    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
-  }
-  .dot-personal { background: #5b9bd5; }
-  .dot-extended { background: #70ad47; }
-  .dot-overlap { background: #ed7d31; }
-
-  .day-tabs {
-    display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;
-  }
-  .day-tab {
-    padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
-    border: 1.5px solid var(--line); background: var(--card); color: var(--text);
-    cursor: pointer; transition: all 0.2s;
-  }
-  .day-tab:hover { background: var(--active-bg); }
-  .day-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .day-tab .dot-indicator {
-    width: 6px; height: 6px; border-radius: 50%; display: inline-block;
-    margin-left: 4px; vertical-align: middle;
-  }
-
-  .schedule-list { display: flex; flex-direction: column; gap: 8px; }
-  .lesson-row {
-    display: flex; align-items: stretch; border-radius: 10px;
-    border: 1.5px solid var(--line); background: var(--card); overflow: hidden;
-    transition: all 0.25s;
-  }
-  .lesson-row:hover { border-color: var(--accent); }
-  .lesson-time {
-    min-width: 100px; padding: 12px 14px; font-size: 13px; font-weight: 600;
-    color: var(--muted); display: flex; align-items: center;
-    border-right: 1px solid var(--line);
-  }
-  .lesson-info { padding: 10px 14px; flex: 1; display: flex; align-items: center; gap: 10px; }
-  .lesson-icon { font-size: 20px; }
-  .lesson-subj { font-size: 15px; font-weight: 600; }
-  .lesson-extra { font-size: 12px; color: var(--muted); }
-
-  .lesson-row.personal { border-left: 3px solid #5b9bd5; }
-  .lesson-row.extended { border-left: 3px solid #70ad47; }
-  .lesson-row.overlap { border-left: 3px solid #ed7d31; }
-  .lesson-row.school { border-left: 3px solid var(--accent); }
-
-  .lesson-row.hidden-ext { opacity: 0.3; }
-
+  .diary-day:nth-child(1) .diary-day-name { background: #5b7abf; }
+  .diary-day:nth-child(2) .diary-day-name { background: #7b6abf; }
+  .diary-day:nth-child(3) .diary-day-name { background: #9b6abf; }
+  .diary-day:nth-child(4) .diary-day-name { background: #c46b8a; }
+  .diary-day:nth-child(5) .diary-day-name { background: #5aaf8a; }
+  .diary-day:nth-child(6) .diary-day-name { background: #e8a84c; }
+  .diary-day:nth-child(7) .diary-day-name { background: #d45555; }
   .empty-day {
-    text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px;
+    text-align: center; padding: 40px 0; color: var(--muted);
+    font-size: 14px; font-style: italic;
   }
-
-  .now-badge {
-    display: inline-block; background: var(--accent); color: #fff;
-    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
-    margin-left: 8px; vertical-align: middle;
-  }
-
-  @media (max-width: 600px) {
-    .lesson-time { min-width: 80px; font-size: 12px; padding: 10px 8px; }
-    .lesson-subj { font-size: 14px; }
-    .day-tab { padding: 6px 10px; font-size: 12px; }
-  }
+}
 </style>
 </head>
 <body>
 
-<div class="page">
-  <div style="margin-bottom:16px;">
-    <a href="../" style="font-size:14px;color:var(--accent);text-decoration:none;">← Основное расписание</a>
+<div class="header">
+  <div>
+    <h1>Расписание Николь</h1>
+    <div class="sub">2 «А» · СОШ №12 · 2026–2027</div>
+    <div class="date" id="dateDisplay"></div>
+    <a href="../" style="font-size:12px;color:var(--accent);text-decoration:none;margin-top:4px;display:inline-block;">← Основное расписание</a>
   </div>
-  <h1>Расписание Николь</h1>
-  <div class="subtitle">2 «А» класс · СОШ №12 · 2026–2027</div>
-
-  <div class="toggle-row">
-    <span><span class="dot dot-personal"></span> Личные</span>
-    <span><span class="dot dot-extended"></span> Продлёнка</span>
-    <span><span class="dot dot-overlap"></span> Пересечение</span>
-    <button id="extToggle" onclick="toggleExtended()" style="margin-left:auto;background:var(--active-bg);border:1.5px solid var(--line);border-radius:6px;padding:4px 12px;font-size:13px;color:var(--text);cursor:pointer;">Показать продлёнку</button>
-  </div>
-
-  <div class="day-tabs" id="dayTabs"></div>
-  <div class="schedule-list" id="scheduleList"></div>
+  <button class="theme-btn" onclick="toggleTheme()" title="Тёмная тема">☀</button>
 </div>
 
+<div class="toggle-row">
+  <label class="toggle">
+    <input type="checkbox" id="extendedToggle" onchange="toggleExtended()">
+    <span class="toggle-slider"></span>
+  </label>
+  <label for="extendedToggle">Продлёнка</label>
+  <span class="extended-label" id="extendedLabel"></span>
+</div>
+
+<div class="status" id="status"></div>
+
+<div class="day-tabs" id="dayTabs"></div>
+<div class="day-content" id="dayContent"></div>
+
 <script>
+const SAT_MESSAGES = [
+  { emoji:"🎉", text:"Выходной — личные занятия!", anim:"" },
+  { emoji:"🤸", text:"Суббота: гимнастика + шахматы", anim:"float" },
+  { emoji:"♟️", text:"Шахматный день!", anim:"" },
+  { emoji:"☀️", text:"Суббота и спорт — идеально", anim:"pulse" },
+  { emoji:"💪", text:"Субботняя форма!", anim:"" },
+  { emoji:"🎵", text:"Суббота — день музыки и спорта", anim:"float" },
+  { emoji:"🤸", text:"Гимнастика утром — весь день свободен", anim:"" },
+  { emoji:"♟️", text:"Шахматы — тренируем мышление", anim:"pulse" },
+  { emoji:"🌈", text:"Прекрасная суббота!", anim:"float" },
+  { emoji:"☕", text:"Субботнее утро и гимнастика", anim:"" },
+  { emoji:"🎯", text:"День для своих дел!", anim:"" },
+  { emoji:"🏃", text:"Суббота — день активности", anim:"float" },
+  { emoji:"🤸", text:"Растяжка и шахматы — отличный план", anim:"" },
+  { emoji:"♟️", text:"Шахматы — лучший способ провести субботу", anim:"" },
+  { emoji:"☀️", text:"Выходной день — наслаждаемся!", anim:"pulse" },
+  { emoji:"💪", text:"Спортивная суббота!", anim:"" },
+  { emoji:"🎵", text:"Музыка и спорт — наш стиль", anim:"float" },
+  { emoji:"🤸", text:"Гимнастика — заряжаемся энергией", anim:"" },
+  { emoji:"♟️", text:"Шахматы — развиваем стратегическое мышление", anim:"" },
+  { emoji:"🌈", text:"Суббота — день возможностей!", anim:"pulse" },
+];
+const SUN_MESSAGES = [
+  { emoji:"😱", text:"Завтра понедельник...", anim:"" },
+  { emoji:"😩", text:"Воскресенье заканчивается...", anim:"" },
+  { emoji:"😅", text:"Ещё один день отдыха!", anim:"" },
+  { emoji:"🤢", text:"Завтра снова в школу!", anim:"" },
+  { emoji:"😤", text:"Воскресенье — восстанавливаем силы!", anim:"" },
+  { emoji:"♟️", text:"Воскресенье: шахматы вечером", anim:"float" },
+  { emoji:"🙈", text:"Завтра понедельник... кошмар", anim:"" },
+  { emoji:"😬", text:"Последний день свободы!", anim:"" },
+  { emoji:"🤞", text:"Надеюсь, завтра будет легко", anim:"" },
+  { emoji:"💫", text:"Воскресенье — день восстановления", anim:"float" },
+  { emoji:"☕", text:"Наслаждаемся выходным", anim:"" },
+  { emoji:"📋", text:"Готовим рюкзак на завтра!", anim:"" },
+  { emoji:"😅", text:"Дышим... завтра снова в бой", anim:"" },
+  { emoji:"🌙", text:"Вечер воскресенья — самое грустное время", anim:"" },
+  { emoji:"💪", text:"Ничего, справимся и завтра!", anim:"pulse" },
+  { emoji:"🫣", text:"Будильник на 6:30... кошмар", anim:"" },
+  { emoji:"🎈", text:"Но сегодня ещё выходной!", anim:"" },
+  { emoji:"🫡", text:"Готовимся к новой неделе!", anim:"" },
+  { emoji:"♟️", text:"Вечером шахматы — закрепляем стратегию", anim:"float" },
+  { emoji:"🤷", text:"Завтра понедельник. Бывает.", anim:"" },
+];
+
 const SCHOOL = [
   { n:1, time:"8:00–8:45", subj:"Белорусская литература", icon:"📖" },
   { n:2, time:"9:00–9:45", subj:"Белорусский язык", icon:"💬" },
   { n:3, time:"10:00–10:45", subj:"ФКиЗ", icon:"⚽" },
   { n:4, time:"10:55–11:40", subj:"Русская литература", icon:"📖" },
-  { n:5, time:"12:00–12:45", subj:"Факультатив", icon:"📚" }
+  { n:5, time:"12:00–12:45", subj:"Факультатив", icon:"⭐" }
 ];
-
 const EXTENDED = [
   { time:"11:40–12:00", subj:"Приём в группу", icon:"🎒" },
   { time:"12:00–12:45", subj:"Занятия по интересам", icon:"🎯" },
@@ -124,162 +263,298 @@ const EXTENDED = [
 
 const PERSONAL = {
   0: [
-    { time:"15:00–17:15", subj:"Гимнастика", icon:"🤸", type:"personal" }
+    { time:"15:00–17:15", subj:"Гимнастика", icon:"🤸" }
   ],
   1: [
-    { time:"13:15–14:00", subj:"Вокал", icon:"🎤", type:"personal" },
-    { time:"14:05–14:50", subj:"Фортепиано", icon:"🎹", type:"personal" },
-    { time:"18:15–19:50", subj:"Сводный хор (30 кл)", icon:"🎶", type:"personal" }
+    { time:"13:15–14:00", subj:"Вокал", icon:"🎤" },
+    { time:"14:05–14:50", subj:"Фортепиано", icon:"🎹" },
+    { time:"18:15–19:50", subj:"Сводный хор (30 кл)", icon:"🎶" }
   ],
   2: [
-    { time:"14:55–15:40", subj:"Сольфеджио", icon:"🎵", type:"personal" },
-    { time:"16:00–18:15", subj:"Шахматы", icon:"♟️", type:"personal" },
-    { time:"16:35–18:05", subj:"Гимнастика", icon:"🤸", type:"personal" }
+    { time:"14:55–15:40", subj:"Сольфеджио", icon:"🎵" },
+    { time:"16:00–18:15", subj:"Шахматы", icon:"♟️" },
+    { time:"16:35–18:05", subj:"Гимнастика", icon:"🤸" }
   ],
   3: [
-    { time:"14:05–14:50", subj:"Фортепиано", icon:"🎹", type:"personal" },
-    { time:"15:00–16:30", subj:"Гимнастика", icon:"🤸", type:"personal" },
-    { time:"17:50–20:00", subj:"Шахматы", icon:"♟️", type:"personal" }
+    { time:"14:05–14:50", subj:"Фортепиано", icon:"🎹" },
+    { time:"15:00–16:30", subj:"Гимнастика", icon:"🤸" },
+    { time:"17:50–20:00", subj:"Шахматы", icon:"♟️" }
   ],
   4: [
-    { time:"11:20–12:55", subj:"Хор (29 кл)", icon:"🎶", type:"personal" },
-    { time:"16:35–18:05", subj:"Гимнастика", icon:"🤸", type:"personal" }
+    { time:"11:20–12:55", subj:"Хор (29 кл)", icon:"🎶" },
+    { time:"16:35–18:05", subj:"Гимнастика", icon:"🤸" }
   ],
   5: [
-    { time:"8:50–10:20", subj:"Гимнастика", icon:"🤸", type:"personal" },
-    { time:"11:40–13:35", subj:"Шахматы", icon:"♟️", type:"personal" }
+    { time:"8:50–10:20", subj:"Гимнастика", icon:"🤸" },
+    { time:"11:40–13:35", subj:"Шахматы", icon:"♟️" }
   ],
   6: [
-    { time:"16:15–18:30", subj:"Шахматы", icon:"♟️", type:"personal" }
+    { time:"16:15–18:30", subj:"Шахматы", icon:"♟️" }
   ]
 };
 
 const DAYS = ["ПН","ВТ","СР","ЧТ","ПТ","СБ","ВС"];
 const DAY_NAMES = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
 
-let showExtended = false;
-let activeDay = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+let extendedOn = localStorage.getItem("nikol_extended") === "true";
+let currentDayIdx = -1;
 
 function parseTime(t) {
-  const [h, m] = t.split(":").map(Number);
+  const [h, m] = t.split("–")[0].split(":").map(Number);
   return h * 60 + m;
 }
-
-function timeNow() {
-  const d = new Date();
-  return d.getHours() * 60 + d.getMinutes();
+function getTodayIndex() {
+  const d = new Date().getDay();
+  return d === 0 ? 6 : d - 1;
 }
-
+function getDaySeed() {
+  const now = new Date();
+  return now.getFullYear() * 1000 + now.getMonth() * 50 + now.getDate();
+}
+function getWeekendMessage(dayIdx) {
+  const seed = getDaySeed();
+  const msgs = dayIdx === 5 ? SAT_MESSAGES : SUN_MESSAGES;
+  return msgs[seed % msgs.length];
+}
+function getCurrentLesson(items) {
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  for (let i = 0; i < items.length; i++) {
+    const s = parseTime(items[i].time);
+    const dur = items[i].dur || 45;
+    const end = s + dur;
+    if (cur >= s && cur < end) return { idx: i, type: "current" };
+    if (cur < s) return { idx: i, type: "next" };
+  }
+  if (items.length && cur >= parseTime(items[items.length - 1].time) + (items[items.length - 1].dur || 45)) {
+    return { idx: items.length - 1, type: "past" };
+  }
+  return null;
+}
+function countdown(targetMin) {
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const diff = targetMin - cur;
+  if (diff <= 0) return "";
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  if (h > 0) return `через ${h} ч ${m} мин`;
+  return `через ${m} мин`;
+}
 function isOverlap(a, b) {
   const [aS, aE] = a.time.split("–").map(parseTime);
   const [bS, bE] = b.time.split("–").map(parseTime);
   return aS < bE && bS < aE;
 }
 
-function hasPersonal(dayIdx) {
-  return PERSONAL[dayIdx] && PERSONAL[dayIdx].length > 0;
+function getLessonState(dayIdx, lessonIdx, totalItems) {
+  const todayIdx = getTodayIndex();
+  if (dayIdx < todayIdx) return "past";
+  if (dayIdx > todayIdx) return "future";
+  return "future";
 }
 
-function hasOverlap(dayIdx) {
-  if (!hasPersonal(dayIdx)) return false;
-  return PERSONAL[dayIdx].some(p =>
-    EXTENDED.some(e => isOverlap(p, e))
-  );
+function renderLesson(l, state, markClass) {
+  const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
+  const mc = markClass ? ` ${markClass}` : "";
+  const cd = state === "next" ? countdown(parseTime(l.time)) : "";
+  return `
+    <div class="lesson${cls}${mc}">
+      <div class="lesson-body">
+        <div class="lesson-icon">${l.icon}</div>
+        <div class="lesson-num">${l.n || "⭐"}</div>
+        <div class="lesson-info">
+          <div class="lesson-time">${l.time}</div>
+          <div class="lesson-subject">${l.subj}</div>
+          ${cd ? `<div class="lesson-countdown">${cd}</div>` : ""}
+          ${l.overlapHint ? `<div class="lesson-overlap-hint">${l.overlapHint}</div>` : ""}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderWeekendMsg(dayIdx) {
+  const msg = getWeekendMessage(dayIdx);
+  const animCls = msg.anim ? ` animate-${msg.anim}` : "";
+  return `
+    <div class="weekend-msg${animCls}">
+      <span class="emoji">${msg.emoji}</span>
+      ${msg.text}
+      <div class="sub">${DAY_NAMES[dayIdx]}</div>
+    </div>`;
+}
+
+function renderDate() {
+  const el = document.getElementById("dateDisplay");
+  const now = new Date();
+  el.textContent = now.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
+}
+
+function renderStatus() {
+  const el = document.getElementById("status");
+  const todayIdx = getTodayIndex();
+  const dayItems = getMergedItems(todayIdx);
+  const info = getCurrentLesson(dayItems);
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+
+  if (dayItems.length === 0) {
+    const msg = getWeekendMessage(todayIdx);
+    el.innerHTML = `${msg.emoji} ${msg.text}`;
+    return;
+  }
+  if (!info) {
+    el.innerHTML = `${DAY_NAMES[todayIdx]} · ${timeStr} · Занятий на сегодня нет`;
+    return;
+  }
+  const l = dayItems[info.idx];
+  if (info.type === "current") {
+    el.innerHTML = `Сейчас: <span class="highlight">${l.subj}</span> · ${l.time} · ${timeStr}`;
+  } else if (info.type === "next") {
+    el.innerHTML = `Следующее: <span class="highlight">${l.subj}</span> · ${l.time} · ${countdown(parseTime(l.time))}`;
+  } else {
+    el.innerHTML = `${DAY_NAMES[todayIdx]} · ${timeStr} · Занятий на сегодня нет`;
+  }
+}
+
+function getMergedItems(dayIdx) {
+  const school = SCHOOL.map(s => ({...s, type:"school"}));
+  const personal = (PERSONAL[dayIdx] || []).map(p => ({...p, type:"personal"}));
+  const extended = EXTENDED.map(e => ({...e, type:"extended"}));
+
+  if (dayIdx >= 5) {
+    return personal;
+  }
+
+  let items = [...school];
+
+  personal.forEach(p => {
+    const overlapping = extended.filter(e => isOverlap(p, e));
+    if (overlapping.length > 0) {
+      items.push({...p, type:"overlap", overlapHint: `пересечение с: ${overlapping.map(o => o.subj).join(", ")}`});
+    } else {
+      items.push(p);
+    }
+  });
+
+  if (extendedOn) {
+    extended.forEach(e => {
+      const coveredByPersonal = personal.some(p => isOverlap(p, e));
+      if (!coveredByPersonal) {
+        items.push(e);
+      }
+    });
+  }
+
+  items.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  return items;
+}
+
+function renderAll() {
+  const todayIdx = getTodayIndex();
+  const content = document.getElementById("dayContent");
+  const isMobile = window.innerWidth < 768;
+
+  function renderDayItems(dayIdx) {
+    const items = getMergedItems(dayIdx);
+    if (items.length === 0 && dayIdx >= 5) {
+      return renderWeekendMsg(dayIdx);
+    }
+    return items.map(l => {
+      let markClass = "";
+      if (l.type === "personal") markClass = "personal-mark";
+      else if (l.type === "overlap") markClass = "overlap-mark";
+      else if (l.type === "extended") markClass = "extended-mark";
+
+      let state = "future";
+      if (dayIdx < todayIdx) state = "past";
+      else if (dayIdx === todayIdx) {
+        const now = new Date();
+        const cur = now.getHours() * 60 + now.getMinutes();
+        const s = parseTime(l.time);
+        const dur = l.dur || 45;
+        if (cur >= s && cur < s + dur) state = "current";
+        else if (cur < s) state = "next";
+        else state = "past";
+      }
+
+      return renderLesson(l, state, markClass);
+    }).join("");
+  }
+
+  if (isMobile) {
+    content.innerHTML = DAYS.map((d, i) => {
+      return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderDayItems(i)}</div>`;
+    }).join("");
+  } else {
+    const left = DAYS.slice(0, 3);
+    const right = DAYS.slice(3);
+    const renderSide = (days, startIdx) => days.map((d, i) => {
+      const dayIdx = startIdx + i;
+      return `
+        <div class="diary-day">
+          <div class="diary-day-name">${d}</div>
+          ${renderDayItems(dayIdx)}
+        </div>`;
+    }).join("");
+
+    content.innerHTML = `
+      <div class="diary">
+        <div>${renderSide(left, 0)}</div>
+        <div>${renderSide(right, 3)}</div>
+      </div>`;
+  }
 }
 
 function renderTabs() {
-  const tabs = document.getElementById("dayTabs");
-  tabs.innerHTML = DAYS.map((d, i) => {
-    let dot = "";
-    if (hasOverlap(i)) dot = `<span class="dot-indicator" style="background:#ed7d31;"></span>`;
-    else if (hasPersonal(i)) dot = `<span class="dot-indicator" style="background:#5b9bd5;"></span>`;
-    return `<button class="day-tab${i === activeDay ? " active" : ""}" onclick="selectDay(${i})">${d}${dot}</button>`;
+  const wrap = document.getElementById("dayTabs");
+  const todayIdx = getTodayIndex();
+  wrap.innerHTML = DAYS.map((d, i) => {
+    const cls = i === todayIdx ? " active today" : "";
+    return `<div class="day-tab${cls}" data-day="${i}" onclick="switchDay(${i})">${d}</div>`;
   }).join("");
 }
 
-function renderSchedule() {
-  const list = document.getElementById("scheduleList");
-  const dayIdx = activeDay;
-
-  const school = SCHOOL.map(s => ({...s, type:"school"}));
-  const personal = PERSONAL[dayIdx] || [];
-  const extended = EXTENDED.map(e => ({...e, type:"extended"}));
-
-  let items = [];
-
-  if (personal.length === 0 && !showExtended) {
-    items = school;
-  } else if (personal.length === 0 && showExtended) {
-    items = [...school, ...extended];
-  } else {
-    items = [...school];
-    personal.forEach(p => {
-      const overlapping = extended.filter(e => isOverlap(p, e));
-      if (overlapping.length > 0) {
-        items.push({...p, type:"overlap", overlapWith: overlapping});
-      } else {
-        items.push(p);
-      }
-    });
-    if (showExtended) {
-      extended.forEach(e => {
-        const coveredByPersonal = personal.some(p => isOverlap(p, e));
-        if (!coveredByPersonal) {
-          items.push(e);
-        }
-      });
-    }
-  }
-
-  items.sort((a, b) => {
-    const aTime = parseTime(a.time.split("–")[0]);
-    const bTime = parseTime(b.time.split("–")[0]);
-    return aTime - bTime;
+function switchDay(idx) {
+  if (idx < 0 || idx >= 7) return;
+  currentDayIdx = idx;
+  document.querySelectorAll(".day-tab").forEach((t, i) => {
+    t.classList.toggle("active", i === idx);
   });
-
-  const now = timeNow();
-  list.innerHTML = items.map(item => {
-    const [s, e] = item.time.split("–").map(parseTime);
-    const isNow = now >= s && now < e;
-    const isPast = now >= e;
-    const typeClass = item.type || "school";
-    const hiddenClass = !showExtended && item.type === "extended" ? " hidden-ext" : "";
-    const nowBadge = isNow ? `<span class="now-badge">сейчас</span>` : "";
-    const pastStyle = isPast ? "opacity:0.45;" : "";
-
-    let extra = "";
-    if (item.type === "overlap" && item.overlapWith) {
-      extra = `<div class="lesson-extra">пересечение с: ${item.overlapWith.map(o => o.subj).join(", ")}</div>`;
-    }
-
-    return `
-      <div class="lesson-row ${typeClass}${hiddenClass}" style="${pastStyle}">
-        <div class="lesson-time">${item.time}${nowBadge}</div>
-        <div class="lesson-info">
-          <span class="lesson-icon">${item.icon}</span>
-          <div>
-            <div class="lesson-subj">${item.subj}</div>
-            ${extra}
-          </div>
-        </div>
-      </div>`;
-  }).join("");
-}
-
-function selectDay(i) {
-  activeDay = i;
-  renderTabs();
-  renderSchedule();
+  document.querySelectorAll(".day-panel").forEach((p, i) => {
+    p.classList.toggle("active", i === idx);
+  });
 }
 
 function toggleExtended() {
-  showExtended = !showExtended;
-  document.getElementById("extToggle").textContent = showExtended ? "Скрыть продлёнку" : "Показать продлёнку";
-  renderSchedule();
+  extendedOn = document.getElementById("extendedToggle").checked;
+  localStorage.setItem("nikol_extended", extendedOn);
+  document.getElementById("extendedLabel").textContent = extendedOn ? "ВКЛ" : "";
+  renderAll();
 }
 
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+  const btn = document.querySelector(".theme-btn");
+  btn.textContent = document.body.classList.contains("dark") ? "☾" : "☀";
+  localStorage.setItem("nikol_theme", document.body.classList.contains("dark") ? "dark" : "light");
+}
+
+if (localStorage.getItem("nikol_theme") === "dark") {
+  document.body.classList.add("dark");
+  document.querySelector(".theme-btn").textContent = "☾";
+}
+if (extendedOn) {
+  document.getElementById("extendedToggle").checked = true;
+  document.getElementById("extendedLabel").textContent = "ВКЛ";
+}
+
+currentDayIdx = getTodayIndex();
+renderDate();
 renderTabs();
-renderSchedule();
+renderAll();
+renderStatus();
+setInterval(renderStatus, 60000);
 </script>
 </body>
 </html>
