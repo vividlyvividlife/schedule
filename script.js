@@ -200,8 +200,10 @@ function renderCountdowns() {
       html += `<div class="countdown-item active-holiday">${nextHoliday.emoji} ${nextHoliday.name} — осталось ${daysLeft} дн.</div>`;
     } else if (nextHoliday.type === "upcoming") {
       const daysUntil = daysBetween(todayStr, nextHoliday.start);
-      const totalPrep = daysBetween(todayStr, nextHoliday.start);
-      const pctHoliday = totalPrep > 0 ? Math.min(100, Math.round((1 - daysUntil / Math.max(totalPrep, 1)) * 100)) : 0;
+      const schoolStart = HOLIDAYS.schoolYearStart || "2026-09-01";
+      const totalToHoliday = daysBetween(schoolStart, nextHoliday.start);
+      const elapsedToHoliday = daysBetween(schoolStart, todayStr);
+      const pctHoliday = totalToHoliday > 0 ? Math.min(100, Math.round(elapsedToHoliday / totalToHoliday * 100)) : 0;
       html += `<div class="countdown-item countdown-progress">
         <span>${nextHoliday.emoji} До ${getGenitive(nextHoliday.name)} — ${daysUntil} дн.</span>
         <div class="mini-progress"><div class="mini-progress-fill" style="width:${pctHoliday}%"></div></div>
@@ -224,23 +226,21 @@ function renderCountdowns() {
   const totalDays = daysBetween(startStr, endStr);
   const pct = Math.min(100, Math.max(0, Math.round((daysPassed / totalDays) * 100)));
 
-  if (pct > 0) {
-    const phrases = [
-      `📚 Стали умнее на ${daysPassed} дн.`,
-      `📚 Уже ${daysPassed} дн. за партами`,
-      `📚 Прошли ${daysPassed} дн. школьной жизни`,
-      `📚 ${daysPassed} дн. обучения`,
-    ];
-    const phrase = phrases[Math.floor(pct / 25) % phrases.length];
+  const phrases = [
+    `📚 Стали умнее на ${daysPassed} дн.`,
+    `📚 Уже ${daysPassed} дн. за партами`,
+    `📚 Прошли ${daysPassed} дн. школьной жизни`,
+    `📚 ${daysPassed} дн. обучения`,
+  ];
+  const phrase = phrases[Math.floor(pct / 25) % phrases.length];
 
-    html += `
-      <div class="countdown-item countdown-progress">
-        <span>${phrase} — ${pct}% учебного года</span>
-        <div class="mini-progress">
-          <div class="mini-progress-fill" style="width:${pct}%"></div>
-        </div>
-      </div>`;
-  }
+  html += `
+    <div class="countdown-item countdown-progress">
+      <span>${phrase} — ${pct}% учебного года</span>
+      <div class="mini-progress">
+        <div class="mini-progress-fill" style="width:${pct}%"></div>
+      </div>
+    </div>`;
 
   el.innerHTML = html;
 }
