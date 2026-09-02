@@ -410,6 +410,19 @@ function countdownSec(targetMin) {
   if (m > 0) return `через ${m} мин ${s} сек`;
   return `через ${s} сек`;
 }
+function remainingSec(endMin) {
+  const now = new Date();
+  const curSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const targetSec = endMin * 60;
+  const diff = targetSec - curSec;
+  if (diff <= 0) return "";
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  if (h > 0) return `ещё ${h} ч ${m} мин`;
+  if (m > 0) return `ещё ${m} мин ${s} сек`;
+  return `ещё ${s} сек`;
+}
 function timeRangeOverlap(a, b) {
   const [aS, aE] = a.time.split("–").map(parseTime);
   const [bS, bE] = b.time.split("–").map(parseTime);
@@ -487,9 +500,9 @@ function renderSingle(item, dayIdx) {
   const num = item.type === "school" ? item.n : "⭐";
   const startTime = parseTime(item.time);
   const endTime = parseTime(item.time.split("–")[1]);
-  const cdAttr = (state === "next" || state === "current") ? `data-cd="${startTime}"` : "";
-  const cdText = (state === "next" || state === "current") ? countdownSec(startTime) : "";
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
+  const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
+  const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   return `
     <div class="${cls}" ${progressAttr}>
       <div class="lesson-body">
@@ -518,8 +531,8 @@ function renderMerge(group, dayIdx) {
     const itemStart = parseTime(item.time);
     const itemEnd = parseTime(item.time.split("–")[1]);
     const itemState = getCardState(dayIdx, item.time);
-    const cdAttr = (itemState === "next" || itemState === "current") ? `data-cd="${itemStart}"` : "";
-    const cdText = (itemState === "next" || itemState === "current") ? countdownSec(itemStart) : "";
+    const cdAttr = itemState === "next" ? `data-cd="${itemStart}"` : itemState === "current" ? `data-cd-end="${itemEnd}"` : "";
+    const cdText = itemState === "next" ? countdownSec(itemStart) : itemState === "current" ? remainingSec(itemEnd) : "";
     return `
       <div class="merge-row">
         <div class="merge-icon ${item.type}">${item.icon}</div>
@@ -674,6 +687,10 @@ function updateCountdowns() {
   document.querySelectorAll("[data-cd]").forEach(el => {
     const target = parseInt(el.getAttribute("data-cd"));
     el.textContent = countdownSec(target);
+  });
+  document.querySelectorAll("[data-cd-end]").forEach(el => {
+    const target = parseInt(el.getAttribute("data-cd-end"));
+    el.textContent = remainingSec(target);
   });
   document.querySelectorAll("[data-progress]").forEach(el => {
     const start = parseInt(el.getAttribute("data-progress"));
