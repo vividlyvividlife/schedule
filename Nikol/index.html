@@ -106,6 +106,10 @@ body {
 .lesson.past { opacity: 0.4; }
 .lesson.future { border-left: 3px solid transparent; background: var(--card); }
 .lesson.next { border-left: 3px solid var(--accent); background: var(--active-bg); }
+.lesson.current {
+  border-left: 3px solid var(--accent);
+  background: linear-gradient(to right, var(--active-bg) 0%, var(--active-bg) var(--progress, 0%), var(--card) var(--progress, 0%), var(--card) 100%);
+}
 .lesson-body {
   flex: 1; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start;
 }
@@ -129,7 +133,9 @@ body {
   box-shadow: var(--shadow); overflow: hidden;
   border-left: 3px solid #ed7d31;
 }
-.merge-card.current { background: var(--active-bg); }
+.merge-card.current {
+  background: linear-gradient(to right, var(--active-bg) 0%, var(--active-bg) var(--progress, 0%), var(--card) var(--progress, 0%), var(--card) 100%);
+}
 .merge-card.past { opacity: 0.4; }
 .merge-card.next { background: var(--active-bg); }
 .merge-row {
@@ -443,10 +449,12 @@ function renderSingle(item, dayIdx) {
   const cls = `lesson ${state}`;
   const num = item.type === "school" ? item.n : "⭐";
   const startTime = parseTime(item.time);
+  const endTime = parseTime(item.time.split("–")[1]);
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : "";
+  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   return `
-    <div class="${cls}">
+    <div class="${cls}" ${progressAttr}>
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num">${num}</div>
@@ -465,11 +473,13 @@ function renderMerge(group, dayIdx) {
   const earliestE = Math.max(...times.map(t => t[1]));
   const state = getCardState(dayIdx, `${Math.floor(earliestS/60)}:${String(earliestS%60).padStart(2,"0")}–${Math.floor(earliestE/60)}:${String(earliestE%60).padStart(2,"0")}`);
   const cls = `merge-card ${state}`;
+  const progressAttr = state === "current" ? `data-progress="${earliestS}" data-end="${earliestE}"` : "";
 
   const rows = group.items.map(item => {
     const labelCls = item.type;
     const labelText = item.type === "school" ? "Урок" : item.type === "personal" ? "Занятие" : "Продлёнка";
     const itemStart = parseTime(item.time);
+    const itemEnd = parseTime(item.time.split("–")[1]);
     const itemState = getCardState(dayIdx, item.time);
     const cdAttr = itemState === "next" ? `data-cd="${itemStart}"` : "";
     const cdText = itemState === "next" ? countdownSec(itemStart) : "";
@@ -485,7 +495,7 @@ function renderMerge(group, dayIdx) {
       </div>`;
   }).join("");
 
-  return `<div class="${cls}">${rows}</div>`;
+  return `<div class="${cls}" ${progressAttr}>${rows}</div>`;
 }
 
 function renderWeekendMsg(dayIdx) {
@@ -627,6 +637,14 @@ function updateCountdowns() {
   document.querySelectorAll("[data-cd]").forEach(el => {
     const target = parseInt(el.getAttribute("data-cd"));
     el.textContent = countdownSec(target);
+  });
+  document.querySelectorAll("[data-progress]").forEach(el => {
+    const start = parseInt(el.getAttribute("data-progress"));
+    const end = parseInt(el.getAttribute("data-end"));
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const pct = Math.max(0, Math.min(100, ((cur - start) / (end - start)) * 100));
+    el.style.setProperty("--progress", pct + "%");
   });
   renderStatus();
   renderProgress();
