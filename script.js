@@ -239,7 +239,7 @@ function renderCountdowns() {
 
   html += `
     <div class="countdown-item countdown-progress">
-      <span>${phrase} — ${pctDisplay}% учебного года</span>
+      <span>${phrase}</span>
       <div class="mini-progress">
         <div class="mini-progress-fill" style="width:${pct}%"></div>
       </div>
