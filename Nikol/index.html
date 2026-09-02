@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Расписание Николь</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  .page { max-width: 900px; margin: 0 auto; padding: 20px 16px; }
+  .page h1 { font-size: 22px; margin-bottom: 4px; }
+  .page .subtitle { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  .toggle-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px; font-size: 13px; color: var(--muted);
+  }
+  .toggle-row kbd {
+    background: var(--active-bg); border: 1px solid var(--line);
+    border-radius: 4px; padding: 2px 6px; font-size: 12px; font-family: inherit;
+  }
+  .toggle-row .dot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+  }
+  .dot-personal { background: #5b9bd5; }
+  .dot-extended { background: #70ad47; }
+  .dot-overlap { background: #ed7d31; }
+
+  .day-tabs {
+    display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .day-tab {
+    padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--text);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .day-tab:hover { background: var(--active-bg); }
+  .day-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .day-tab .dot-indicator {
+    width: 6px; height: 6px; border-radius: 50%; display: inline-block;
+    margin-left: 4px; vertical-align: middle;
+  }
+
+  .schedule-list { display: flex; flex-direction: column; gap: 8px; }
+  .lesson-row {
+    display: flex; align-items: stretch; border-radius: 10px;
+    border: 1.5px solid var(--line); background: var(--card); overflow: hidden;
+    transition: all 0.25s;
+  }
+  .lesson-row:hover { border-color: var(--accent); }
+  .lesson-time {
+    min-width: 100px; padding: 12px 14px; font-size: 13px; font-weight: 600;
+    color: var(--muted); display: flex; align-items: center;
+    border-right: 1px solid var(--line);
+  }
+  .lesson-info { padding: 10px 14px; flex: 1; display: flex; align-items: center; gap: 10px; }
+  .lesson-icon { font-size: 20px; }
+  .lesson-subj { font-size: 15px; font-weight: 600; }
+  .lesson-extra { font-size: 12px; color: var(--muted); }
+
+  .lesson-row.personal { border-left: 3px solid #5b9bd5; }
+  .lesson-row.extended { border-left: 3px solid #70ad47; }
+  .lesson-row.overlap { border-left: 3px solid #ed7d31; }
+  .lesson-row.school { border-left: 3px solid var(--accent); }
+
+  .lesson-row.hidden-ext { opacity: 0.3; }
+
+  .empty-day {
+    text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px;
+  }
+
+  .now-badge {
+    display: inline-block; background: var(--accent); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    margin-left: 8px; vertical-align: middle;
+  }
+
+  @media (max-width: 600px) {
+    .lesson-time { min-width: 80px; font-size: 12px; padding: 10px 8px; }
+    .lesson-subj { font-size: 14px; }
+    .day-tab { padding: 6px 10px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div style="margin-bottom:16px;">
+    <a href="../" style="font-size:14px;color:var(--accent);text-decoration:none;">← Основное расписание</a>
+  </div>
+  <h1>Расписание Николь</h1>
+  <div class="subtitle">2 «А» класс · СОШ №12 · 2026–2027</div>
+
+  <div class="toggle-row">
+    <span><span class="dot dot-personal"></span> Личные занятия</span>
+    <span><span class="dot dot-extended"></span> Продлёнка</span>
+    <span><span class="dot dot-overlap"></span> Пересечение</span>
+    <span style="margin-left:auto;"><kbd>/</kbd> показать/скрыть продлёнку</span>
+  </div>
+
+  <div class="day-tabs" id="dayTabs"></div>
+  <div class="schedule-list" id="scheduleList"></div>
+</div>
+
+<script>
+const SCHOOL = [
+  { n:1, time:"8:00–8:45", subj:"Белорусская литература", icon:"📖" },
+  { n:2, time:"9:00–9:45", subj:"Белорусский язык", icon:"💬" },
+  { n:3, time:"10:00–10:45", subj:"ФКиЗ", icon:"⚽" },
+  { n:4, time:"10:55–11:40", subj:"Русская литература", icon:"📖" },
+  { n:5, time:"12:00–12:45", subj:"Факультатив", icon:"📚" }
+];
+
+const EXTENDED = [
+  { time:"11:40–12:00", subj:"Приём в группу", icon:"🎒" },
+  { time:"12:00–12:45", subj:"Занятия по интересам", icon:"🎯" },
+  { time:"12:45–13:00", subj:"Обед", icon:"🍽️" },
+  { time:"13:00–14:00", subj:"На открытом воздухе", icon:"🌤️" },
+  { time:"14:00–14:30", subj:"Свободная игра", icon:"🎮" },
+  { time:"14:30–15:45", subj:"Самоподготовка", icon:"📝" },
+  { time:"15:45–16:00", subj:"Полдник", icon:"🍎" },
+  { time:"16:00–16:45", subj:"Занятие в помещении", icon:"🏫" },
+  { time:"16:45–17:40", subj:"Занятия по интересам, уход", icon:"🏠" }
+];
+
+const PERSONAL = {
+  0: [
+    { time:"15:00–17:15", subj:"Гимнастика", icon:"🤸", type:"personal" }
+  ],
+  1: [
+    { time:"13:15–14:00", subj:"Вокал", icon:"🎤", type:"personal" },
+    { time:"14:05–14:50", subj:"Фортепиано", icon:"🎹", type:"personal" },
+    { time:"18:15–19:50", subj:"Сводный хор (30 кл)", icon:"🎶", type:"personal" }
+  ],
+  2: [
+    { time:"14:55–15:40", subj:"Сольфеджио", icon:"🎵", type:"personal" },
+    { time:"16:00–18:15", subj:"Шахматы", icon:"♟️", type:"personal" },
+    { time:"16:35–18:05", subj:"Гимнастика", icon:"🤸", type:"personal" }
+  ],
+  3: [
+    { time:"14:05–14:50", subj:"Фортепиано", icon:"🎹", type:"personal" },
+    { time:"15:00–16:30", subj:"Гимнастика", icon:"🤸", type:"personal" },
+    { time:"17:50–20:00", subj:"Шахматы", icon:"♟️", type:"personal" }
+  ],
+  4: [
+    { time:"11:20–12:55", subj:"Хор (29 кл)", icon:"🎶", type:"personal" },
+    { time:"16:35–18:05", subj:"Гимнастика", icon:"🤸", type:"personal" }
+  ],
+  5: [
+    { time:"8:50–10:20", subj:"Гимнастика", icon:"🤸", type:"personal" },
+    { time:"11:40–13:35", subj:"Шахматы", icon:"♟️", type:"personal" }
+  ],
+  6: [
+    { time:"16:15–18:30", subj:"Шахматы", icon:"♟️", type:"personal" }
+  ]
+};
+
+const DAYS = ["ПН","ВТ","СР","ЧТ","ПТ","СБ","ВС"];
+const DAY_NAMES = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
+
+let showExtended = false;
+let activeDay = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+
+function parseTime(t) {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function timeNow() {
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function isOverlap(a, b) {
+  const [aS, aE] = a.time.split("–").map(parseTime);
+  const [bS, bE] = b.time.split("–").map(parseTime);
+  return aS < bE && bS < aE;
+}
+
+function hasPersonal(dayIdx) {
+  return PERSONAL[dayIdx] && PERSONAL[dayIdx].length > 0;
+}
+
+function hasOverlap(dayIdx) {
+  if (!hasPersonal(dayIdx)) return false;
+  return PERSONAL[dayIdx].some(p =>
+    EXTENDED.some(e => isOverlap(p, e))
+  );
+}
+
+function renderTabs() {
+  const tabs = document.getElementById("dayTabs");
+  tabs.innerHTML = DAYS.map((d, i) => {
+    let dot = "";
+    if (hasOverlap(i)) dot = `<span class="dot-indicator" style="background:#ed7d31;"></span>`;
+    else if (hasPersonal(i)) dot = `<span class="dot-indicator" style="background:#5b9bd5;"></span>`;
+    return `<button class="day-tab${i === activeDay ? " active" : ""}" onclick="selectDay(${i})">${d}${dot}</button>`;
+  }).join("");
+}
+
+function renderSchedule() {
+  const list = document.getElementById("scheduleList");
+  const dayIdx = activeDay;
+
+  const school = SCHOOL.map(s => ({...s, type:"school"}));
+  const personal = PERSONAL[dayIdx] || [];
+  const extended = EXTENDED.map(e => ({...e, type:"extended"}));
+
+  let items = [];
+
+  if (personal.length === 0 && !showExtended) {
+    items = school;
+  } else if (personal.length === 0 && showExtended) {
+    items = [...school, ...extended];
+  } else {
+    items = [...school];
+    personal.forEach(p => {
+      const overlapping = extended.filter(e => isOverlap(p, e));
+      if (overlapping.length > 0) {
+        items.push({...p, type:"overlap", overlapWith: overlapping});
+      } else {
+        items.push(p);
+      }
+    });
+    if (showExtended) {
+      extended.forEach(e => {
+        const coveredByPersonal = personal.some(p => isOverlap(p, e));
+        if (!coveredByPersonal) {
+          items.push(e);
+        }
+      });
+    }
+  }
+
+  items.sort((a, b) => {
+    const aTime = parseTime(a.time.split("–")[0]);
+    const bTime = parseTime(b.time.split("–")[0]);
+    return aTime - bTime;
+  });
+
+  const now = timeNow();
+  list.innerHTML = items.map(item => {
+    const [s, e] = item.time.split("–").map(parseTime);
+    const isNow = now >= s && now < e;
+    const isPast = now >= e;
+    const typeClass = item.type || "school";
+    const hiddenClass = !showExtended && item.type === "extended" ? " hidden-ext" : "";
+    const nowBadge = isNow ? `<span class="now-badge">сейчас</span>` : "";
+    const pastStyle = isPast ? "opacity:0.45;" : "";
+
+    let extra = "";
+    if (item.type === "overlap" && item.overlapWith) {
+      extra = `<div class="lesson-extra">пересечение с: ${item.overlapWith.map(o => o.subj).join(", ")}</div>`;
+    }
+
+    return `
+      <div class="lesson-row ${typeClass}${hiddenClass}" style="${pastStyle}">
+        <div class="lesson-time">${item.time}${nowBadge}</div>
+        <div class="lesson-info">
+          <span class="lesson-icon">${item.icon}</span>
+          <div>
+            <div class="lesson-subj">${item.subj}</div>
+            ${extra}
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function selectDay(i) {
+  activeDay = i;
+  renderTabs();
+  renderSchedule();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "/") {
+    e.preventDefault();
+    showExtended = !showExtended;
+    renderSchedule();
+  }
+});
+
+renderTabs();
+renderSchedule();
+</script>
+</body>
+</html>
