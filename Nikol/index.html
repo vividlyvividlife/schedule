@@ -340,6 +340,9 @@ const PERSONAL = {
 const DAYS = ["ПН","ВТ","СР","ЧТ","ПТ","СБ","ВС"];
 const DAY_NAMES = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
 
+const URL_PARAMS = new URLSearchParams(window.location.search);
+const TEST_MODE = URL_PARAMS.has("test");
+
 let showPersonal = localStorage.getItem("nikol_personal") === "true";
 let showExtended = localStorage.getItem("nikol_extended") === "true";
 let currentDayIdx = -1;
@@ -347,6 +350,31 @@ let currentDayIdx = -1;
 function parseTime(t) {
   const [h, m] = t.split("–")[0].split(":").map(Number);
   return h * 60 + m;
+}
+function formatTime(min) {
+  return `${Math.floor(min / 60)}:${String(min % 60).padStart(2, "0")}`;
+}
+function getTestSchedule() {
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const pad = (n) => String(n).padStart(2, "0");
+  const mkRange = (s, dur) => `${formatTime(s)}–${formatTime(s + dur)}`;
+  return {
+    school: [
+      { n: 1, time: mkRange(cur - 30, 45), subj: "Математика", icon: "🔢" },
+      { n: 2, time: mkRange(cur + 5, 45), subj: "Русский язык", icon: "✏️" },
+      { n: 3, time: mkRange(cur + 55, 45), subj: "ФКиЗ", icon: "⚽" },
+    ],
+    personal: [
+      { time: mkRange(cur - 10, 90), subj: "Гимнастика", icon: "🤸" },
+      { time: mkRange(cur + 15, 45), subj: "Шахматы", icon: "♟️" },
+      { time: mkRange(cur + 70, 60), subj: "Фортепиано", icon: "🎹" },
+    ],
+    extended: [
+      { time: mkRange(cur + 20, 30), subj: "Самоподготовка", icon: "📝" },
+      { time: mkRange(cur + 60, 40), subj: "Занятия по интересам", icon: "🎯" },
+    ]
+  };
 }
 function getTodayIndex() {
   const d = new Date().getDay();
@@ -390,9 +418,18 @@ function timeRangeOverlap(a, b) {
 
 function getItemsForDay(dayIdx) {
   const isWeekend = dayIdx >= 5;
-  const school = isWeekend ? [] : SCHOOL.map(s => ({...s, type:"school"}));
-  const personal = showPersonal ? (PERSONAL[dayIdx] || []).map(p => ({...p, type:"personal"})) : [];
-  const extended = showExtended ? EXTENDED.map(e => ({...e, type:"extended"})) : [];
+  let school, personal, extended;
+
+  if (TEST_MODE) {
+    const test = getTestSchedule();
+    school = test.school.map(s => ({...s, type:"school"}));
+    personal = showPersonal ? test.personal.map(p => ({...p, type:"personal"})) : [];
+    extended = showExtended ? test.extended.map(e => ({...e, type:"extended"})) : [];
+  } else {
+    school = isWeekend ? [] : SCHOOL.map(s => ({...s, type:"school"}));
+    personal = showPersonal ? (PERSONAL[dayIdx] || []).map(p => ({...p, type:"personal"})) : [];
+    extended = showExtended ? EXTENDED.map(e => ({...e, type:"extended"})) : [];
+  }
 
   if (personal.length === 0 && extended.length === 0) return school;
 
@@ -679,7 +716,11 @@ function renderProgress() {
   fill.style.width = pct + "%";
 }
 
-currentDayIdx = getTodayIndex();
+if (TEST_MODE) {
+  currentDayIdx = Math.min(getTodayIndex(), 4);
+} else {
+  currentDayIdx = getTodayIndex();
+}
 renderDate();
 renderTabs();
 renderAll();
