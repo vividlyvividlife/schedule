@@ -484,18 +484,13 @@ function showPreview() {
             <span style="display:inline-block;min-width:100px;border-bottom:1px solid #000;"></span>
           </div>
         </div>
-        <div style="text-align:right;flex:1;">
+        <div style="flex:1;max-width:320px;text-align:left;">
           <div>Директору государственного</div>
           <div>учреждения образования</div>
           <div>«Средняя школа №12 г. Гомеля»</div>
           <div>Антоненко В. В.</div>
-          <div style="margin-top:8px;">
-            <span style="display:inline-block;min-width:240px;border-bottom:1px solid #000;">${d.parentName || ""}</span>
-          </div>
-          <div style="margin-top:4px;">
-            прож. по адресу:
-            <span style="display:inline-block;min-width:200px;border-bottom:1px solid #000;">${d.address || ""}</span>
-          </div>
+          <div style="margin-top:8px;">${d.parentName || ""}</div>
+          <div style="margin-top:4px;">прож. по адресу: ${d.address || ""}</div>
           <div style="margin-top:4px;">
             ${d.phone ? d.phone.replace(/(\+375)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5") : "+375 ___-__-__"}
           </div>
