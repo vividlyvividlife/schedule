@@ -202,6 +202,14 @@
     <input type="text" id="className" placeholder='2 "А"'>
   </div>
 
+  <div class="form-group">
+    <label>Ребёнок</label>
+    <select id="childGender">
+      <option value="daughter">Дочь</option>
+      <option value="son">Сын</option>
+    </select>
+  </div>
+
   <div class="form-row">
     <div class="form-group">
       <label>Дата начала отсутствия</label>
@@ -284,6 +292,7 @@ function loadForm() {
       document.getElementById("phone").value = data.phone || "";
       document.getElementById("childName").value = data.childName || "";
       document.getElementById("className").value = data.className || "";
+      document.getElementById("childGender").value = data.childGender || "daughter";
       document.getElementById("dateFrom").value = data.dateFrom || "";
       document.getElementById("dateTo").value = data.dateTo || "";
       document.getElementById("reason").value = data.reason || "";
@@ -312,6 +321,7 @@ function saveForm() {
     phone: document.getElementById("phone").value,
     childName: document.getElementById("childName").value,
     className: document.getElementById("className").value,
+    childGender: document.getElementById("childGender").value,
     dateFrom: document.getElementById("dateFrom").value,
     dateTo: document.getElementById("dateTo").value,
     reason: document.getElementById("reason").value,
@@ -446,12 +456,14 @@ document.querySelectorAll(".datepicker-wrap input").forEach(input => {
 
 function showPreview() {
   saveForm();
+  const gender = document.getElementById("childGender").value;
   const d = {
     parentName: document.getElementById("parentName").value.trim(),
     address: document.getElementById("address").value.trim(),
     phone: document.getElementById("phone").value.trim(),
     childName: document.getElementById("childName").value.trim(),
     className: document.getElementById("className").value.trim(),
+    childGender: gender,
     dateFrom: document.getElementById("dateFrom").value.trim(),
     dateTo: document.getElementById("dateTo").value.trim(),
     reason: document.getElementById("reason").value.trim(),
@@ -489,7 +501,7 @@ function showPreview() {
       <div style="margin-top:60px;text-indent:30px;">
         Прошу разрешить отсутствовать на учебных занятиях моему ребенку
         ${d.childName || ""},
-        учащейся(гося) ${d.className || ""} класса, с
+        ${d.childGender === "son" ? "учащемуся" : "учащейся"} ${d.className || ""} класса, с
         ${d.dateFrom || ""}
         по
         ${d.dateTo || ""}
