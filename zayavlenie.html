@@ -202,11 +202,6 @@
     <input type="text" id="className" placeholder='1 "А"'>
   </div>
 
-  <div class="form-group">
-    <label>№ заявления</label>
-    <input type="text" id="claimNum" placeholder="1">
-  </div>
-
   <div class="form-row">
     <div class="form-group">
       <label>Дата начала отсутствия</label>
@@ -289,7 +284,6 @@ function loadForm() {
       document.getElementById("phone").value = data.phone || "";
       document.getElementById("childName").value = data.childName || "";
       document.getElementById("className").value = data.className || "";
-      document.getElementById("claimNum").value = data.claimNum || "";
       document.getElementById("dateFrom").value = data.dateFrom || "";
       document.getElementById("dateTo").value = data.dateTo || "";
       document.getElementById("reason").value = data.reason || "";
@@ -318,7 +312,6 @@ function saveForm() {
     phone: document.getElementById("phone").value,
     childName: document.getElementById("childName").value,
     className: document.getElementById("className").value,
-    claimNum: document.getElementById("claimNum").value,
     dateFrom: document.getElementById("dateFrom").value,
     dateTo: document.getElementById("dateTo").value,
     reason: document.getElementById("reason").value,
@@ -459,7 +452,6 @@ function showPreview() {
     phone: document.getElementById("phone").value.trim(),
     childName: document.getElementById("childName").value.trim(),
     className: document.getElementById("className").value.trim(),
-    claimNum: document.getElementById("claimNum").value.trim(),
     dateFrom: document.getElementById("dateFrom").value.trim(),
     dateTo: document.getElementById("dateTo").value.trim(),
     reason: document.getElementById("reason").value.trim(),
