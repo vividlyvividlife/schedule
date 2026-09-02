@@ -224,7 +224,9 @@ function renderCountdowns() {
   const daysPassed = daysBetween(startStr, todayStr);
   const endStr = HOLIDAYS.schoolYearEnd || "2027-05-31";
   const totalDays = daysBetween(startStr, endStr);
-  const pct = Math.min(100, Math.max(0, Math.round((daysPassed / totalDays) * 100)));
+  const pctRaw = Math.max(0, (daysPassed / totalDays) * 100);
+  const pct = Math.min(100, Math.round(pctRaw * 10) / 10);
+  const pctDisplay = pct % 1 === 0 ? pct : pct.toFixed(1);
 
   const phrases = [
     `📚 Стали умнее на ${daysPassed} дн.`,
@@ -236,7 +238,7 @@ function renderCountdowns() {
 
   html += `
     <div class="countdown-item countdown-progress">
-      <span>${phrase} — ${pct}% учебного года</span>
+      <span>${phrase} — ${pctDisplay}% учебного года</span>
       <div class="mini-progress">
         <div class="mini-progress-fill" style="width:${pct}%"></div>
       </div>
