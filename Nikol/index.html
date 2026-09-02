@@ -580,12 +580,19 @@ function renderAll() {
 
   function renderDay(dayIdx) {
     const items = getItemsForDay(dayIdx);
-    if (items.length === 0 && dayIdx >= 5) return renderWeekendMsg(dayIdx);
-    if (items.length === 0) return `<div class="empty-day">Нет занятий</div>`;
-    return items.map(item => {
-      if (item.type === "merge") return renderMerge(item, dayIdx);
-      return renderSingle(item, dayIdx);
-    }).join("");
+    let html = "";
+    if (items.length > 0) {
+      html += items.map(item => {
+        if (item.type === "merge") return renderMerge(item, dayIdx);
+        return renderSingle(item, dayIdx);
+      }).join("");
+    }
+    if (dayIdx >= 5) {
+      html += renderWeekendMsg(dayIdx);
+    } else if (items.length === 0) {
+      html += `<div class="empty-day">Нет занятий</div>`;
+    }
+    return html;
   }
 
   if (isMobile) {
