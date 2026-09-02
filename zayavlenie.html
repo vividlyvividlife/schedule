@@ -125,9 +125,9 @@
   .preview-paper {
     background: #fff;
     color: #000;
-    max-width: 700px;
+    max-width: 210mm;
     width: 100%;
-    padding: 48px 56px;
+    padding: 20mm 25mm;
     border-radius: 4px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     font-size: 14px;
@@ -474,17 +474,17 @@ function showPreview() {
   const phoneFormatted = d.phone ? d.phone.replace(/(\+375)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5") : "+375 ___-__-__";
 
   const html = `
-    <div style="font-size:13px;line-height:1.8;margin:0 55px;">
+    <div style="font-size:13px;line-height:1.8;">
 
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div style="flex:0 0 15%;min-width:120px;">
+        <div style="width:320px;padding-top:40px;">
           <div style="font-style:italic;font-weight:700;">Заявление</div>
           <div style="margin-top:6px;">
-            <span style="display:inline-block;min-width:100px;border-bottom:1px solid #000;"></span>№
-            <span style="display:inline-block;min-width:100px;border-bottom:1px solid #000;"></span>
+            <span style="display:inline-block;border-bottom:1px solid #000;padding:0 2px;">_______</span>№
+            <span style="display:inline-block;border-bottom:1px solid #000;padding:0 2px;">_______</span>
           </div>
         </div>
-        <div style="text-align:left;">
+        <div style="width:320px;text-align:left;">
           <div>Директору государственного</div>
           <div>учреждения образования</div>
           <div>«Средняя школа №12 г. Гомеля»</div>
@@ -497,7 +497,7 @@ function showPreview() {
         </div>
       </div>
 
-      <div style="margin-top:40px;padding-left:40px;text-indent:30px;">
+      <div style="margin-top:40px;text-indent:30px;">
         Прошу разрешить отсутствовать на учебных занятиях моему ребенку
         ${d.childName || ""},
         учащейся(гося) ${d.className || ""} класса, с
@@ -508,11 +508,11 @@ function showPreview() {
         ${d.reasonGen || ""}.
       </div>
 
-      <div style="margin-top:16px;padding-left:40px;text-indent:30px;">
+      <div style="margin-top:16px;text-indent:30px;">
         На время отсутствия моего ребенка ответственность за сохранность жизни и его здоровья возлагаю на себя.
       </div>
 
-      <div style="margin-top:16px;padding-left:40px;text-indent:30px;">
+      <div style="margin-top:16px;text-indent:30px;">
         Пропущенный материал обязуемся отработать самостоятельно.
       </div>
 
