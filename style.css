@@ -172,7 +172,7 @@ body {
 }
 .lesson.past { opacity: 0.4; }
 .lesson.future { border-left: 3px solid transparent; background: var(--card); }
-.lesson.next { border-left: 3px solid var(--accent); background: var(--active-bg); }
+.lesson.next { border-left: 3px solid transparent; background: var(--card); }
 .lesson-body {
   flex: 1;
   padding: 12px 14px;

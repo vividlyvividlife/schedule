@@ -96,7 +96,7 @@ function getCurrentLesson(day) {
     const s = parseTime(day.lessons[i].time);
     const end = s + 45;
     if (cur >= s && cur < end) return { idx: i, type: "current" };
-    if (cur < s) return { idx: i, type: "next" };
+    if (cur < s && (s - cur) <= 120) return { idx: i, type: "next" };
   }
   if (day.lessons.length && cur >= parseTime(day.lessons[day.lessons.length - 1].time) + 45) {
     return { idx: day.lessons.length - 1, type: "past" };
@@ -406,8 +406,8 @@ function renderAll() {
     const item = EXTENDED[itemIdx];
     const s = parseTime(item.time);
     if (cur >= s && cur < s + 20) return "current";
-    if (cur < s) return "next";
-    return "past";
+    if (cur < s && (s - cur) <= 120) return "next";
+    return "future";
   }
 
   function renderDayLessons(d, dayIdx) {
