@@ -297,8 +297,9 @@ function renderWeekendMsg(dayIdx) {
 function renderDate() {
   const el = document.getElementById("dateDisplay");
   const now = new Date();
-  const opts = { weekday: "long", day: "numeric", month: "long" };
-  el.textContent = now.toLocaleDateString("ru-RU", opts);
+  const dateStr = now.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
+  const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  el.textContent = `${dateStr} · ${timeStr}`;
 }
 
 function renderStatus() {
@@ -527,7 +528,7 @@ async function init() {
   renderProgress();
   renderCountdowns();
 
-  setInterval(() => { renderDate(); renderStatus(); renderProgress(); renderCountdowns(); }, 30000);
+  setInterval(() => { renderDate(); renderStatus(); renderProgress(); renderCountdowns(); }, 1000);
   window.addEventListener("resize", renderAll);
 }
 
