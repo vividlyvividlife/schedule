@@ -171,7 +171,6 @@ body {
   background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e8eaf4) var(--progress, 0%), var(--progress-fill, #e8eaf4) 100%);
   border-left: 3px solid var(--accent);
   position: relative;
-  overflow: visible;
 }
 .lesson.current::after {
   content: "";
