@@ -452,8 +452,15 @@ function renderSingle(item, dayIdx) {
   const num = item.type === "school" ? item.n : "⭐";
   const startTime = parseTime(item.time);
   const endTime = parseTime(item.time.split("–")[1]);
+  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
+  const progressStyle = state === "current" ? (() => {
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const pct = Math.max(0, Math.min(100, ((cur - startTime) / (endTime - startTime)) * 100));
+    return `style="--progress:${pct}%"`;
+  })() : "";
   return `
-    <div class="${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}">
+    <div class="${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle}>
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num">${num}</div>
@@ -471,14 +478,29 @@ function renderMerge(group, dayIdx) {
   const earliestE = Math.max(...times.map(t => t[1]));
   const state = getCardState(dayIdx, `${Math.floor(earliestS/60)}:${String(earliestS%60).padStart(2,"0")}–${Math.floor(earliestE/60)}:${String(earliestE%60).padStart(2,"0")}`);
   const cls = `merge-card ${state}`;
+  const progressAttr = state === "current" ? `data-progress="${earliestS}" data-end="${earliestE}"` : "";
+  const progressStyle = state === "current" ? (() => {
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const pct = Math.max(0, Math.min(100, ((cur - earliestS) / (earliestE - earliestS)) * 100));
+    return `style="--progress:${pct}%"`;
+  })() : "";
 
   const rows = group.items.map(item => {
     const labelCls = item.type;
     const labelText = item.type === "school" ? "Урок" : item.type === "personal" ? "Занятие" : "Продлёнка";
     const itemStart = parseTime(item.time);
     const itemEnd = parseTime(item.time.split("–")[1]);
+    const rowState = getCardState(dayIdx, item.time);
+    const rowProgressAttr = rowState === "current" ? `data-progress="${itemStart}" data-end="${itemEnd}"` : "";
+    const rowProgressStyle = rowState === "current" ? (() => {
+      const now = new Date();
+      const cur = now.getHours() * 60 + now.getMinutes();
+      const pct = Math.max(0, Math.min(100, ((cur - itemStart) / (itemEnd - itemStart)) * 100));
+      return `style="--progress:${pct}%"`;
+    })() : "";
     return `
-      <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}">
+      <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${rowProgressStyle}>
         <div class="merge-icon ${item.type}">${item.icon}</div>
         <div class="merge-info">
           <div class="merge-label ${labelCls}">${labelText}</div>
@@ -488,7 +510,7 @@ function renderMerge(group, dayIdx) {
       </div>`;
   }).join("");
 
-  return `<div class="${cls}" data-start="${earliestS}" data-end="${earliestE}" data-day="${dayIdx}" data-state="${state}">${rows}</div>`;
+  return `<div class="${cls}" data-start="${earliestS}" data-end="${earliestE}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle}>${rows}</div>`;
 }
 
 function renderWeekendMsg(dayIdx) {

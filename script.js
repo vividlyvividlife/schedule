@@ -237,8 +237,15 @@ function renderLesson(l, state, dayIdx) {
   const endTime = parseTime(l.time.split("–")[1]);
   const icon = ICONS[l.subj] || "📋";
   const paidBadge = l.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
+  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
+  const progressStyle = state === "current" ? (() => {
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const pct = Math.max(0, Math.min(100, ((cur - startTime) / (endTime - startTime)) * 100));
+    return `style="--progress:${pct}%"`;
+  })() : "";
   return `
-    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}">
+    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle}>
       <div class="lesson-body">
         <div class="lesson-icon">${icon}</div>
         <div class="lesson-num">${l.n}</div>
@@ -257,8 +264,14 @@ function renderExtendedItem(item, state, dayIdx) {
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
+  const progressStyle = state === "current" ? (() => {
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const pct = Math.max(0, Math.min(100, ((cur - startTime) / (endTime - startTime)) * 100));
+    return `style="--progress:${pct}%"`;
+  })() : "";
   return `
-    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr}>
+    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle}>
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num" style="color:var(--accent);font-size:11px;">⏰</div>
