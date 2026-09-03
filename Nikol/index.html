@@ -245,6 +245,7 @@ body {
 <div class="day-tabs" id="dayTabs"></div>
 <div class="day-content" id="dayContent"></div>
 
+<script src="../engines.js"></script>
 <script>
 const SAT_MSG = [
   { e:"🎉", t:"Выходной — личные занятия!", a:"" },
@@ -338,14 +339,6 @@ let showPersonal = localStorage.getItem("nikol_personal") === "true";
 let showExtended = localStorage.getItem("nikol_extended") === "true";
 let currentDayIdx = -1;
 
-function parseTime(t) {
-  const [h, m] = t.split("–")[0].split(":").map(Number);
-  return h * 60 + m;
-}
-function getTodayIndex() {
-  const d = new Date().getDay();
-  return d === 0 ? 6 : d - 1;
-}
 function getDaySeed() {
   const now = new Date();
   return now.getFullYear() * 1000 + now.getMonth() * 50 + now.getDate();
@@ -353,41 +346,6 @@ function getDaySeed() {
 function getWeekendMessage(dayIdx) {
   const msgs = dayIdx === 5 ? SAT_MSG : SUN_MSG;
   return msgs[getDaySeed() % msgs.length];
-}
-function countdown(targetMin) {
-  const now = new Date();
-  const cur = now.getHours() * 60 + now.getMinutes();
-  const diff = targetMin - cur;
-  if (diff <= 0) return "";
-  const h = Math.floor(diff / 60), m = diff % 60;
-  if (h > 0) return `через ${h} ч ${m} мин`;
-  return `через ${m} мин`;
-}
-function countdownSec(targetMin) {
-  const now = new Date();
-  const curSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  const targetSec = targetMin * 60;
-  const diff = targetSec - curSec;
-  if (diff <= 0) return "";
-  const h = Math.floor(diff / 3600);
-  const m = Math.floor((diff % 3600) / 60);
-  const s = diff % 60;
-  if (h > 0) return `через ${h} ч ${m} мин`;
-  if (m > 0) return `через ${m} мин ${s} сек`;
-  return `через ${s} сек`;
-}
-function remainingSec(endMin) {
-  const now = new Date();
-  const curSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  const targetSec = endMin * 60;
-  const diff = targetSec - curSec;
-  if (diff <= 0) return "";
-  const h = Math.floor(diff / 3600);
-  const m = Math.floor((diff % 3600) / 60);
-  const s = diff % 60;
-  if (h > 0) return `ещё ${h} ч ${m} мин`;
-  if (m > 0) return `ещё ${m} мин ${s} сек`;
-  return `ещё ${s} сек`;
 }
 function timeRangeOverlap(a, b) {
   const [aS, aE] = a.time.split("–").map(parseTime);
@@ -454,18 +412,6 @@ function getItemsForDay(dayIdx) {
   return merged;
 }
 
-function getCardState(dayIdx, time) {
-  const todayIdx = getTodayIndex();
-  if (dayIdx < todayIdx) return "past";
-  if (dayIdx > todayIdx) return "future";
-  const cur = new Date().getHours() * 60 + new Date().getMinutes();
-  const s = parseTime(time);
-  const e = parseTime(time.split("–")[1]);
-  if (cur >= s && cur < e) return "current";
-  if (cur < s && (s - cur) <= 120) return "next";
-  return "future";
-}
-
 function renderSingle(item, dayIdx) {
   const state = getCardState(dayIdx, item.time);
   const cls = `lesson ${state}`;
@@ -529,13 +475,6 @@ function renderWeekendMsg(dayIdx) {
       ${msg.t}
       <div class="sub">${DAY_NAMES[dayIdx]}</div>
     </div>`;
-}
-
-function renderDate() {
-  const now = new Date();
-  const dateStr = now.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
-  const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  document.getElementById("dateDisplay").textContent = `${dateStr} · ${timeStr}`;
 }
 
 function renderStatus() {
@@ -664,27 +603,6 @@ if (showExtended) {
   document.getElementById("extendedToggle").checked = true;
 }
 
-function updateCountdowns() {
-  document.querySelectorAll("[data-cd]").forEach(el => {
-    const target = parseInt(el.getAttribute("data-cd"));
-    el.textContent = countdownSec(target);
-  });
-  document.querySelectorAll("[data-cd-end]").forEach(el => {
-    const target = parseInt(el.getAttribute("data-cd-end"));
-    el.textContent = remainingSec(target);
-  });
-  document.querySelectorAll("[data-progress]").forEach(el => {
-    const start = parseInt(el.getAttribute("data-progress"));
-    const end = parseInt(el.getAttribute("data-end"));
-    const now = new Date();
-    const cur = now.getHours() * 60 + now.getMinutes();
-    const pct = Math.max(0, Math.min(100, ((cur - start) / (end - start)) * 100));
-    el.style.setProperty("--progress", pct + "%");
-  });
-  renderStatus();
-  renderProgress();
-}
-
 function renderProgress() {
   const todayIdx = getTodayIndex();
   const items = getItemsForDay(todayIdx);
@@ -741,18 +659,18 @@ document.addEventListener("touchend", (e) => {
 }, { passive: true });
 
 currentDayIdx = getTodayIndex();
-renderDate();
+document.getElementById("dateDisplay").textContent = formatClock();
 renderTabs();
 
 fetch("../schedule.json").then(r => r.json()).then(data => {
   SCHOOL = data.schedule || [];
   renderAll();
   renderStatus();
-  setInterval(updateCountdowns, 1000);
+  startEngines();
 }).catch(() => {
   renderAll();
   renderStatus();
-  setInterval(updateCountdowns, 1000);
+  startEngines();
 });
 </script>
 </body>

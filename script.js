@@ -68,16 +68,6 @@ let touchStartX = 0;
 let touchStartY = 0;
 let touchStartTime = 0;
 
-function parseTime(t) {
-  const [h, m] = t.split("–")[0].split(":").map(Number);
-  return h * 60 + m;
-}
-
-function getTodayIndex() {
-  const d = new Date().getDay();
-  return d === 0 ? 6 : d - 1;
-}
-
 function getDaySeed() {
   const now = new Date();
   return now.getFullYear() * 1000 + now.getMonth() * 50 + now.getDate();
@@ -102,43 +92,6 @@ function getCurrentLesson(day) {
     return { idx: day.lessons.length - 1, type: "past" };
   }
   return null;
-}
-
-function countdown(targetMin) {
-  const now = new Date();
-  const cur = now.getHours() * 60 + now.getMinutes();
-  const diff = targetMin - cur;
-  if (diff <= 0) return "";
-  const h = Math.floor(diff / 60);
-  const m = diff % 60;
-  if (h > 0) return `через ${h} ч ${m} мин`;
-  return `через ${m} мин`;
-}
-function countdownSec(targetMin) {
-  const now = new Date();
-  const curSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  const targetSec = targetMin * 60;
-  const diff = targetSec - curSec;
-  if (diff <= 0) return "";
-  const h = Math.floor(diff / 3600);
-  const m = Math.floor((diff % 3600) / 60);
-  const s = diff % 60;
-  if (h > 0) return `через ${h} ч ${m} мин`;
-  if (m > 0) return `через ${m} мин ${s} сек`;
-  return `через ${s} сек`;
-}
-function remainingSec(endMin) {
-  const now = new Date();
-  const curSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  const targetSec = endMin * 60;
-  const diff = targetSec - curSec;
-  if (diff <= 0) return "";
-  const h = Math.floor(diff / 3600);
-  const m = Math.floor((diff % 3600) / 60);
-  const s = diff % 60;
-  if (h > 0) return `ещё ${h} ч ${m} мин`;
-  if (m > 0) return `ещё ${m} мин ${s} сек`;
-  return `ещё ${s} сек`;
 }
 
 function daysBetween(date1, date2) {
@@ -328,10 +281,7 @@ function renderWeekendMsg(dayIdx) {
 
 function renderDate() {
   const el = document.getElementById("dateDisplay");
-  const now = new Date();
-  const dateStr = now.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
-  const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  el.textContent = `${dateStr} · ${timeStr}`;
+  if (el) el.textContent = formatClock();
 }
 
 function renderStatus() {
@@ -351,17 +301,17 @@ function renderStatus() {
     return;
   }
   if (!info) {
-    el.innerHTML = `${day.name} · <span id="clockLive">${timeStr}</span> · Уроков на сегодня нет`;
+    el.innerHTML = `${day.name} · ${timeStr} · Уроков на сегодня нет`;
     return;
   }
   const l = day.lessons[info.idx];
   if (info.type === "current") {
     const endTime = parseTime(l.time.split("–")[1]);
-    el.innerHTML = `Сейчас: <span class="highlight">${l.subj}</span> · ${l.time} · <span id="clockLive">${timeStr}</span> · <span data-cd-end="${endTime}">${remainingSec(endTime)}</span>`;
+    el.innerHTML = `Сейчас: <span class="highlight">${l.subj}</span> · ${l.time} · <span data-cd-end="${endTime}">${remainingSec(endTime)}</span>`;
   } else if (info.type === "next") {
     el.innerHTML = `Следующий: <span class="highlight">${l.subj}</span> · ${l.time} · <span data-cd="${parseTime(l.time)}">${countdownSec(parseTime(l.time))}</span>`;
   } else {
-    el.innerHTML = `${day.name} · <span id="clockLive">${timeStr}</span> · Уроков на сегодня нет`;
+    el.innerHTML = `${day.name} · ${timeStr} · Уроков на сегодня нет`;
   }
 }
 
@@ -378,17 +328,6 @@ function renderProgress() {
   const last = parseTime(day.lessons[day.lessons.length - 1].time) + 45;
   const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
   document.getElementById("progressFill").style.width = pct + "%";
-}
-
-function updateCountdowns() {
-  document.querySelectorAll("[data-cd]").forEach(el => {
-    const target = parseInt(el.getAttribute("data-cd"));
-    el.textContent = countdownSec(target);
-  });
-  document.querySelectorAll("[data-cd-end]").forEach(el => {
-    const target = parseInt(el.getAttribute("data-cd-end"));
-    el.textContent = remainingSec(target);
-  });
 }
 
 function renderTabs() {
@@ -572,7 +511,8 @@ async function init() {
   renderProgress();
   renderCountdowns();
 
-  setInterval(() => { renderDate(); renderStatus(); renderProgress(); renderCountdowns(); updateCountdowns(); }, 1000);
+  startEngines();
+  setInterval(() => { renderStatus(); renderProgress(); renderCountdowns(); }, 1000);
   window.addEventListener("resize", renderAll);
 }
 
