@@ -167,7 +167,7 @@ body {
 }
 .lesson:active { transform: scale(0.98); }
 .lesson.current {
-  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--active-bg) var(--progress, 0%), var(--active-bg) 100%);
+  background: var(--card);
   border-left: 3px solid var(--accent);
   position: relative;
   overflow: visible;
@@ -177,7 +177,7 @@ body {
   position: absolute;
   top: 0;
   left: var(--progress, 0%);
-  width: 2px;
+  width: 1px;
   height: 100%;
   background: var(--accent);
   transition: left 0.5s ease;

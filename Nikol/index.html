@@ -107,7 +107,7 @@ body {
 .lesson.next { border-left: 3px solid transparent; background: var(--card); }
 .lesson.current {
   border-left: 3px solid var(--accent);
-  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--active-bg) var(--progress, 0%), var(--active-bg) 100%);
+  background: var(--card);
   position: relative;
   overflow: visible;
 }
@@ -116,7 +116,7 @@ body {
   position: absolute;
   top: 0;
   left: var(--progress, 0%);
-  width: 2px;
+  width: 1px;
   height: 100%;
   background: var(--accent);
   transition: left 0.5s ease;
@@ -147,7 +147,7 @@ body {
   border-left: 3px solid #ed7d31;
 }
 .merge-card.current {
-  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--active-bg) var(--progress, 0%), var(--active-bg) 100%);
+  background: var(--card);
   position: relative;
   overflow: visible;
 }
@@ -156,7 +156,7 @@ body {
   position: absolute;
   top: 0;
   left: var(--progress, 0%);
-  width: 2px;
+  width: 1px;
   height: 100%;
   background: var(--accent);
   transition: left 0.5s ease;
