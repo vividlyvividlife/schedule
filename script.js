@@ -326,8 +326,18 @@ function renderProgress() {
   }
   const now = new Date();
   const cur = now.getHours() * 60 + now.getMinutes();
-  const first = parseTime(day.lessons[0].time);
-  const last = parseTime(day.lessons[day.lessons.length - 1].time) + 45;
+  let first = parseTime(day.lessons[0].time);
+  let last = parseTime(day.lessons[day.lessons.length - 1].time) + 45;
+
+  if (extendedOn && EXTENDED.length) {
+    const lastLessonEnd = last;
+    const filtered = EXTENDED.filter(ext => parseTime(ext.time) >= lastLessonEnd);
+    if (filtered.length) {
+      const lastExt = filtered[filtered.length - 1];
+      last = parseTime(lastExt.time.split("–")[1]);
+    }
+  }
+
   const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
   document.getElementById("progressFill").style.width = pct + "%";
 }
@@ -357,6 +367,7 @@ function toggleExtended() {
   localStorage.setItem("extended", extendedOn);
   document.getElementById("extendedLabel").textContent = extendedOn ? "ВКЛ" : "";
   renderAll();
+  renderProgress();
 }
 
 function toggleTheme() {
