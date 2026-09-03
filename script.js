@@ -114,6 +114,32 @@ function countdown(targetMin) {
   if (h > 0) return `через ${h} ч ${m} мин`;
   return `через ${m} мин`;
 }
+function countdownSec(targetMin) {
+  const now = new Date();
+  const curSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const targetSec = targetMin * 60;
+  const diff = targetSec - curSec;
+  if (diff <= 0) return "";
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  if (h > 0) return `через ${h} ч ${m} мин`;
+  if (m > 0) return `через ${m} мин ${s} сек`;
+  return `через ${s} сек`;
+}
+function remainingSec(endMin) {
+  const now = new Date();
+  const curSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const targetSec = endMin * 60;
+  const diff = targetSec - curSec;
+  if (diff <= 0) return "";
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  if (h > 0) return `ещё ${h} ч ${m} мин`;
+  if (m > 0) return `ещё ${m} мин ${s} сек`;
+  return `ещё ${s} сек`;
+}
 
 function daysBetween(date1, date2) {
   const d1 = new Date(date1);
@@ -250,7 +276,10 @@ function renderCountdowns() {
 
 function renderLesson(l, state) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
-  const cd = state === "next" ? countdown(parseTime(l.time)) : "";
+  const startTime = parseTime(l.time);
+  const endTime = parseTime(l.time.split("–")[1]);
+  const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
+  const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   const icon = ICONS[l.subj] || "📋";
   return `
     <div class="lesson${cls}">
@@ -260,7 +289,7 @@ function renderLesson(l, state) {
         <div class="lesson-info">
           <div class="lesson-time">${l.time}</div>
           <div class="lesson-subject">${l.subj}</div>
-          ${cd ? `<div class="lesson-countdown">${cd}</div>` : ""}
+          ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>
     </div>`;
@@ -268,7 +297,10 @@ function renderLesson(l, state) {
 
 function renderExtendedItem(item, state) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
-  const cd = state === "next" ? countdown(parseTime(item.time)) : "";
+  const startTime = parseTime(item.time);
+  const endTime = parseTime(item.time.split("–")[1]);
+  const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
+  const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   return `
     <div class="lesson${cls}">
       <div class="lesson-body">
@@ -277,7 +309,7 @@ function renderExtendedItem(item, state) {
         <div class="lesson-info">
           <div class="lesson-time">${item.time}</div>
           <div class="lesson-subject">${item.subj}</div>
-          ${cd ? `<div class="lesson-countdown">${cd}</div>` : ""}
+          ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>
     </div>`;
@@ -326,7 +358,7 @@ function renderStatus() {
   if (info.type === "current") {
     el.innerHTML = `Сейчас: <span class="highlight">${l.subj}</span> · ${l.time} · ${timeStr}`;
   } else if (info.type === "next") {
-    el.innerHTML = `Следующий: <span class="highlight">${l.subj}</span> · ${l.time} · ${countdown(parseTime(l.time))}`;
+    el.innerHTML = `Следующий: <span class="highlight">${l.subj}</span> · ${l.time} · <span data-cd="${parseTime(l.time)}">${countdownSec(parseTime(l.time))}</span>`;
   } else {
     el.innerHTML = `${day.name} · ${timeStr} · Уроков на сегодня нет`;
   }
@@ -345,6 +377,17 @@ function renderProgress() {
   const last = parseTime(day.lessons[day.lessons.length - 1].time) + 45;
   const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
   document.getElementById("progressFill").style.width = pct + "%";
+}
+
+function updateCountdowns() {
+  document.querySelectorAll("[data-cd]").forEach(el => {
+    const target = parseInt(el.getAttribute("data-cd"));
+    el.textContent = countdownSec(target);
+  });
+  document.querySelectorAll("[data-cd-end]").forEach(el => {
+    const target = parseInt(el.getAttribute("data-cd-end"));
+    el.textContent = remainingSec(target);
+  });
 }
 
 function renderTabs() {
@@ -528,7 +571,7 @@ async function init() {
   renderProgress();
   renderCountdowns();
 
-  setInterval(() => { renderDate(); renderStatus(); renderProgress(); renderCountdowns(); }, 1000);
+  setInterval(() => { renderDate(); renderStatus(); renderProgress(); renderCountdowns(); updateCountdowns(); }, 1000);
   window.addEventListener("resize", renderAll);
 }
 
