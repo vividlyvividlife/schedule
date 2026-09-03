@@ -160,6 +160,7 @@ function updateCardStates() {
     } else {
       el.removeAttribute("data-progress");
       el.removeAttribute("data-end");
+      el.style.removeProperty("--progress");
       const info = el.querySelector(".lesson-info, .merge-info");
       if (info) {
         let cdEl = info.querySelector(".lesson-countdown, .merge-countdown");
