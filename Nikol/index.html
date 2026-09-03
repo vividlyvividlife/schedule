@@ -105,7 +105,7 @@ body {
 .lesson.current { background: var(--active-bg); border-left: 3px solid var(--accent); }
 .lesson.past { opacity: 0.4; }
 .lesson.future { border-left: 3px solid transparent; background: var(--card); }
-.lesson.next { border-left: 3px solid var(--accent); background: var(--card); }
+.lesson.next { border-left: 3px solid transparent; background: var(--card); }
 .lesson.current {
   border-left: 3px solid var(--accent);
   background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--active-bg) var(--progress, 0%), var(--active-bg) 100%);
@@ -459,8 +459,8 @@ function getCardState(dayIdx, time) {
   const s = parseTime(time);
   const e = parseTime(time.split("–")[1]);
   if (cur >= s && cur < e) return "current";
-  if (cur < s) return "next";
-  return "past";
+  if (cur < s && (s - cur) <= 120) return "next";
+  return "future";
 }
 
 function renderSingle(item, dayIdx) {
