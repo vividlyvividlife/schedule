@@ -405,7 +405,12 @@ function getItemsForDay(dayIdx) {
   const isWeekend = dayIdx >= 5;
   const school = isWeekend ? [] : SCHOOL.map(s => ({...s, type:"school"}));
   const personal = showPersonal ? (PERSONAL[dayIdx] || []).map(p => ({...p, type:"personal"})) : [];
-  const extended = showExtended ? EXTENDED.map(e => ({...e, type:"extended"})) : [];
+
+  let extended = [];
+  if (showExtended && !isWeekend && school.length > 0) {
+    const lastLessonEnd = parseTime(SCHOOL[SCHOOL.length - 1].time) + 45;
+    extended = EXTENDED.filter(ext => parseTime(ext.time) >= lastLessonEnd).map(e => ({...e, type:"extended"}));
+  }
 
   if (personal.length === 0 && extended.length === 0) return school;
 
