@@ -695,11 +695,11 @@ fetch("../schedule.json").then(r => r.json()).then(data => {
   SCHOOL = data.schedule || [];
   renderAll();
   renderStatus();
-  startEngines();
+  startEngines(() => { renderStatus(); renderProgress(); });
 }).catch(() => {
   renderAll();
   renderStatus();
-  startEngines();
+  startEngines(() => { renderStatus(); renderProgress(); });
 });
 </script>
 </body>

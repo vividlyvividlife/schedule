@@ -515,8 +515,7 @@ async function init() {
   renderProgress();
   renderCountdowns();
 
-  startEngines();
-  setInterval(() => { renderStatus(); renderProgress(); renderCountdowns(); }, 1000);
+  startEngines(() => { renderStatus(); renderProgress(); renderCountdowns(); });
   window.addEventListener("resize", renderAll);
 }
 

@@ -121,8 +121,9 @@ function renderLessonCard(item, extraClass) {
 
 /* ===== ЗАПУСК ДВИЖКА ===== */
 
-function startEngines() {
+function startEngines(onTick) {
   updateClocks();
   updateCountdowns();
-  setInterval(updateCountdowns, 1000);
+  if (onTick) onTick();
+  setInterval(() => { updateCountdowns(); if (onTick) onTick(); }, 1000);
 }
