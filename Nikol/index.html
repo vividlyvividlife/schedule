@@ -449,9 +449,10 @@ function getItemsForDay(dayIdx) {
 function renderSingle(item, dayIdx) {
   const state = getCardState(dayIdx, item.time);
   const cls = `lesson ${state}`;
-  const num = item.type === "school" ? item.n : "⭐";
+  const num = item.type === "school" ? (item.subj && item.subj.startsWith("Факультатив") ? "⭐" : item.n) : "⭐";
   const startTime = parseTime(item.time);
   const endTime = parseTime(item.time.split("–")[1]);
+  const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   const progressStyle = state === "current" ? (() => {
     const now = new Date();
@@ -459,6 +460,8 @@ function renderSingle(item, dayIdx) {
     const pct = Math.max(0, Math.min(100, ((cur - startTime) / (endTime - startTime)) * 100));
     return `style="--progress:${pct}%"`;
   })() : "";
+  const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
+  const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   return `
     <div class="${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle}>
       <div class="lesson-body">
@@ -466,7 +469,8 @@ function renderSingle(item, dayIdx) {
         <div class="lesson-num">${num}</div>
         <div class="lesson-info">
           <div class="lesson-time">${item.time}</div>
-          <div class="lesson-subject">${item.subj}</div>
+          <div class="lesson-subject">${item.subj}${paidBadge}</div>
+          ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>
     </div>`;
