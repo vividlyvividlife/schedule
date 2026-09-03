@@ -167,7 +167,7 @@ body {
 }
 .lesson:active { transform: scale(0.98); }
 .lesson.current {
-  background: var(--active-bg);
+  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--active-bg) var(--progress, 0%), var(--active-bg) 100%);
   border-left: 3px solid var(--accent);
 }
 .lesson.past { opacity: 0.4; }

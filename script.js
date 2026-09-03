@@ -233,9 +233,10 @@ function renderLesson(l, state) {
   const endTime = parseTime(l.time.split("–")[1]);
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
+  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   const icon = ICONS[l.subj] || "📋";
   return `
-    <div class="lesson${cls}">
+    <div class="lesson${cls}" ${progressAttr}>
       <div class="lesson-body">
         <div class="lesson-icon">${icon}</div>
         <div class="lesson-num">${l.n}</div>

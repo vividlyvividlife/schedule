@@ -217,7 +217,7 @@ body {
   <div>
     <h1>Расписание Николь</h1>
     <div class="sub">2 «А» · СОШ №12 · 2026–2027</div>
-    <div class="date" id="dateDisplay"></div>
+    <div class="date" id="dateDisplay" data-clock></div>
     <a href="../" style="font-size:12px;color:var(--accent);text-decoration:none;margin-top:4px;display:inline-block;">← Основное расписание</a>
   </div>
   <button class="theme-btn" onclick="toggleTheme()" title="Тёмная тема">☀</button>
@@ -369,8 +369,11 @@ function getItemsForDay(dayIdx) {
 
   let extended = [];
   if (showExtended && !isWeekend && school.length > 0) {
-    const lastLessonEnd = parseTime(SCHOOL[SCHOOL.length - 1].time) + 45;
-    extended = EXTENDED.filter(ext => parseTime(ext.time) >= lastLessonEnd).map(e => ({...e, type:"extended"}));
+    const dayLessons = (SCHOOL[dayIdx] || {}).lessons || [];
+    if (dayLessons.length > 0) {
+      const lastLessonEnd = parseTime(dayLessons[dayLessons.length - 1].time) + 45;
+      extended = EXTENDED.filter(ext => parseTime(ext.time) >= lastLessonEnd).map(e => ({...e, type:"extended"}));
+    }
   }
 
   if (personal.length === 0 && extended.length === 0) return school;
