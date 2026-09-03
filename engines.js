@@ -119,11 +119,75 @@ function renderLessonCard(item, extraClass) {
     </div>`;
 }
 
+/* ===== ОБНОВЛЕНИЕ СОСТОЯНИЯ КАРТОЧЕК LIVE ===== */
+
+function updateCardStates() {
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const todayIdx = getTodayIndex();
+
+  document.querySelectorAll("[data-start]").forEach(el => {
+    const dayIdx = parseInt(el.getAttribute("data-day"));
+    const startTime = parseInt(el.getAttribute("data-start"));
+    const endTime = parseInt(el.getAttribute("data-end"));
+
+    let newState;
+    if (dayIdx < todayIdx) newState = "past";
+    else if (dayIdx > todayIdx) newState = "future";
+    else if (cur >= startTime && cur < endTime) newState = "current";
+    else if (cur >= endTime) newState = "past";
+    else if (cur < startTime && (startTime - cur) <= 120) newState = "next";
+    else newState = "future";
+
+    const classes = el.className.replace(/\b(past|current|next|future)\b/g, "").trim();
+    el.className = classes + " " + newState;
+
+    if (newState === "current") {
+      el.setAttribute("data-progress", startTime);
+      el.setAttribute("data-end", endTime);
+      const info = el.querySelector(".lesson-info, .merge-info");
+      if (info) {
+        let cdEl = info.querySelector(".lesson-countdown, .merge-countdown");
+        if (!cdEl) {
+          cdEl = document.createElement("div");
+          cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";
+          info.appendChild(cdEl);
+        }
+        cdEl.setAttribute("data-cd-end", endTime);
+        cdEl.removeAttribute("data-cd");
+        cdEl.textContent = remainingSec(endTime);
+      }
+    } else {
+      el.removeAttribute("data-progress");
+      el.removeAttribute("data-end");
+      const info = el.querySelector(".lesson-info, .merge-info");
+      if (info) {
+        let cdEl = info.querySelector(".lesson-countdown, .merge-countdown");
+        if (newState === "next") {
+          if (!cdEl) {
+            cdEl = document.createElement("div");
+            cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";
+            info.appendChild(cdEl);
+          }
+          cdEl.setAttribute("data-cd", startTime);
+          cdEl.removeAttribute("data-cd-end");
+          cdEl.textContent = countdownSec(startTime);
+        } else if (cdEl) {
+          cdEl.removeAttribute("data-cd");
+          cdEl.removeAttribute("data-cd-end");
+          cdEl.textContent = "";
+        }
+      }
+    }
+  });
+}
+
 /* ===== ЗАПУСК ДВИЖКА ===== */
 
 function startEngines(onTick) {
   updateClocks();
   updateCountdowns();
+  updateCardStates();
   if (onTick) onTick();
-  setInterval(() => { updateCountdowns(); if (onTick) onTick(); }, 1000);
+  setInterval(() => { updateCountdowns(); updateCardStates(); if (onTick) onTick(); }, 1000);
 }

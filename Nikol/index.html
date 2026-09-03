@@ -449,18 +449,14 @@ function renderSingle(item, dayIdx) {
   const num = item.type === "school" ? item.n : "⭐";
   const startTime = parseTime(item.time);
   const endTime = parseTime(item.time.split("–")[1]);
-  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
-  const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
-  const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   return `
-    <div class="${cls}" ${progressAttr}>
+    <div class="${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}">
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num">${num}</div>
         <div class="lesson-info">
           <div class="lesson-time">${item.time}</div>
           <div class="lesson-subject">${item.subj}</div>
-          ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>
     </div>`;
@@ -472,29 +468,24 @@ function renderMerge(group, dayIdx) {
   const earliestE = Math.max(...times.map(t => t[1]));
   const state = getCardState(dayIdx, `${Math.floor(earliestS/60)}:${String(earliestS%60).padStart(2,"0")}–${Math.floor(earliestE/60)}:${String(earliestE%60).padStart(2,"0")}`);
   const cls = `merge-card ${state}`;
-  const progressAttr = state === "current" ? `data-progress="${earliestS}" data-end="${earliestE}"` : "";
 
   const rows = group.items.map(item => {
     const labelCls = item.type;
     const labelText = item.type === "school" ? "Урок" : item.type === "personal" ? "Занятие" : "Продлёнка";
     const itemStart = parseTime(item.time);
     const itemEnd = parseTime(item.time.split("–")[1]);
-    const itemState = getCardState(dayIdx, item.time);
-    const cdAttr = itemState === "next" ? `data-cd="${itemStart}"` : itemState === "current" ? `data-cd-end="${itemEnd}"` : "";
-    const cdText = itemState === "next" ? countdownSec(itemStart) : itemState === "current" ? remainingSec(itemEnd) : "";
     return `
-      <div class="merge-row">
+      <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}">
         <div class="merge-icon ${item.type}">${item.icon}</div>
         <div class="merge-info">
           <div class="merge-label ${labelCls}">${labelText}</div>
           <div class="merge-time">${item.time}</div>
           <div class="merge-subj">${item.subj}</div>
-          ${cdAttr ? `<div class="merge-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>`;
   }).join("");
 
-  return `<div class="${cls}" ${progressAttr}>${rows}</div>`;
+  return `<div class="${cls}" data-start="${earliestS}" data-end="${earliestE}" data-day="${dayIdx}">${rows}</div>`;
 }
 
 function renderWeekendMsg(dayIdx) {

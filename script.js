@@ -227,44 +227,36 @@ function renderCountdowns() {
   el.innerHTML = html;
 }
 
-function renderLesson(l, state) {
+function renderLesson(l, state, dayIdx) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
   const startTime = parseTime(l.time);
   const endTime = parseTime(l.time.split("–")[1]);
-  const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
-  const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
-  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   const icon = ICONS[l.subj] || "📋";
   return `
-    <div class="lesson${cls}" ${progressAttr}>
+    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}">
       <div class="lesson-body">
         <div class="lesson-icon">${icon}</div>
         <div class="lesson-num">${l.n}</div>
         <div class="lesson-info">
           <div class="lesson-time">${l.time}</div>
           <div class="lesson-subject">${l.subj}</div>
-          ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>
     </div>`;
 }
 
-function renderExtendedItem(item, state) {
+function renderExtendedItem(item, state, dayIdx) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
   const startTime = parseTime(item.time);
   const endTime = parseTime(item.time.split("–")[1]);
-  const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
-  const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
-  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   return `
-    <div class="lesson${cls}" ${progressAttr}>
+    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}">
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num" style="color:var(--accent);font-size:11px;">⏰</div>
         <div class="lesson-info">
           <div class="lesson-time">${item.time}</div>
           <div class="lesson-subject">${item.subj}</div>
-          ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>
     </div>`;
@@ -410,11 +402,11 @@ function renderAll() {
   }
 
   function renderDayLessons(d, dayIdx) {
-    let html = d.lessons.map((l, li) => renderLesson(l, getLessonState(dayIdx, li, d))).join("");
+    let html = d.lessons.map((l, li) => renderLesson(l, getLessonState(dayIdx, li, d), dayIdx)).join("");
     if (extendedOn && d.lessons.length > 0) {
       const lastLessonEnd = parseTime(d.lessons[d.lessons.length - 1].time) + 45;
       const filtered = EXTENDED.filter(ext => parseTime(ext.time) >= lastLessonEnd);
-      html += filtered.map((ext) => renderExtendedItem(ext, getExtState(EXTENDED.indexOf(ext), dayIdx))).join("");
+      html += filtered.map((ext) => renderExtendedItem(ext, getExtState(EXTENDED.indexOf(ext), dayIdx), dayIdx)).join("");
     }
     return html;
   }
