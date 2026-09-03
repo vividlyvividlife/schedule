@@ -168,7 +168,6 @@ function updateCardStates() {
       cdEl.textContent = remainingSec(endTime);
     } else if (newState === "next") {
       el.removeAttribute("data-progress");
-      el.removeAttribute("data-end");
       el.style.removeProperty("--progress");
       if (!cdEl) {
         cdEl = document.createElement("div");
@@ -180,7 +179,6 @@ function updateCardStates() {
       cdEl.textContent = countdownSec(startTime);
     } else {
       el.removeAttribute("data-progress");
-      el.removeAttribute("data-end");
       el.style.removeProperty("--progress");
       if (cdEl) {
         cdEl.removeAttribute("data-cd");
