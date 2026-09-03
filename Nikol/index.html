@@ -27,7 +27,7 @@ body {
 }
 .header h1 { font-size: 22px; font-weight: 700; }
 .header .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
-.header .date { font-size: 13px; color: var(--accent); font-weight: 600; margin-top: 4px; }
+.header .date { font-size: 16px; color: var(--accent); font-weight: 600; margin-top: 4px; }
 .theme-btn {
   background: var(--card); border: 1px solid var(--line); border-radius: 8px;
   width: 40px; height: 40px; font-size: 18px; cursor: pointer;
@@ -532,8 +532,10 @@ function renderWeekendMsg(dayIdx) {
 }
 
 function renderDate() {
-  document.getElementById("dateDisplay").textContent =
-    new Date().toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
+  const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  document.getElementById("dateDisplay").textContent = `${dateStr} · ${timeStr}`;
 }
 
 function renderStatus() {
