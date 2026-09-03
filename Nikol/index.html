@@ -450,7 +450,7 @@ function renderSingle(item, dayIdx) {
   const startTime = parseTime(item.time);
   const endTime = parseTime(item.time.split("–")[1]);
   return `
-    <div class="${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}">
+    <div class="${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}">
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num">${num}</div>
@@ -485,7 +485,7 @@ function renderMerge(group, dayIdx) {
       </div>`;
   }).join("");
 
-  return `<div class="${cls}" data-start="${earliestS}" data-end="${earliestE}" data-day="${dayIdx}">${rows}</div>`;
+  return `<div class="${cls}" data-start="${earliestS}" data-end="${earliestE}" data-day="${dayIdx}" data-state="${state}">${rows}</div>`;
 }
 
 function renderWeekendMsg(dayIdx) {

@@ -232,14 +232,18 @@ function renderLesson(l, state, dayIdx) {
   const startTime = parseTime(l.time);
   const endTime = parseTime(l.time.split("–")[1]);
   const icon = ICONS[l.subj] || "📋";
+  const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
+  const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
+  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   return `
-    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}">
+    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr}>
       <div class="lesson-body">
         <div class="lesson-icon">${icon}</div>
         <div class="lesson-num">${l.n}</div>
         <div class="lesson-info">
           <div class="lesson-time">${l.time}</div>
           <div class="lesson-subject">${l.subj}</div>
+          ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>
     </div>`;
@@ -249,14 +253,18 @@ function renderExtendedItem(item, state, dayIdx) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
   const startTime = parseTime(item.time);
   const endTime = parseTime(item.time.split("–")[1]);
+  const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
+  const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
+  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   return `
-    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}">
+    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr}>
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num" style="color:var(--accent);font-size:11px;">⏰</div>
         <div class="lesson-info">
           <div class="lesson-time">${item.time}</div>
           <div class="lesson-subject">${item.subj}</div>
+          ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>
     </div>`;

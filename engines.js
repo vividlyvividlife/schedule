@@ -139,45 +139,48 @@ function updateCardStates() {
     else if (cur < startTime && (startTime - cur) <= 120) newState = "next";
     else newState = "future";
 
-    const classes = el.className.replace(/\b(past|current|next|future)\b/g, "").trim();
-    el.className = classes + " " + newState;
+    const prevState = el.getAttribute("data-state");
+    if (prevState === newState) return;
+    el.setAttribute("data-state", newState);
+
+    const base = el.className.replace(/\b(past|current|next|future)\b/g, "").trim();
+    el.className = base + " " + newState;
+
+    const info = el.querySelector(".lesson-info, .merge-info");
+    if (!info) return;
+    let cdEl = info.querySelector(".lesson-countdown, .merge-countdown");
 
     if (newState === "current") {
       el.setAttribute("data-progress", startTime);
       el.setAttribute("data-end", endTime);
-      const info = el.querySelector(".lesson-info, .merge-info");
-      if (info) {
-        let cdEl = info.querySelector(".lesson-countdown, .merge-countdown");
-        if (!cdEl) {
-          cdEl = document.createElement("div");
-          cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";
-          info.appendChild(cdEl);
-        }
-        cdEl.setAttribute("data-cd-end", endTime);
-        cdEl.removeAttribute("data-cd");
-        cdEl.textContent = remainingSec(endTime);
+      if (!cdEl) {
+        cdEl = document.createElement("div");
+        cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";
+        info.appendChild(cdEl);
       }
+      cdEl.setAttribute("data-cd-end", endTime);
+      cdEl.removeAttribute("data-cd");
+      cdEl.textContent = remainingSec(endTime);
+    } else if (newState === "next") {
+      el.removeAttribute("data-progress");
+      el.removeAttribute("data-end");
+      el.style.removeProperty("--progress");
+      if (!cdEl) {
+        cdEl = document.createElement("div");
+        cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";
+        info.appendChild(cdEl);
+      }
+      cdEl.setAttribute("data-cd", startTime);
+      cdEl.removeAttribute("data-cd-end");
+      cdEl.textContent = countdownSec(startTime);
     } else {
       el.removeAttribute("data-progress");
       el.removeAttribute("data-end");
       el.style.removeProperty("--progress");
-      const info = el.querySelector(".lesson-info, .merge-info");
-      if (info) {
-        let cdEl = info.querySelector(".lesson-countdown, .merge-countdown");
-        if (newState === "next") {
-          if (!cdEl) {
-            cdEl = document.createElement("div");
-            cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";
-            info.appendChild(cdEl);
-          }
-          cdEl.setAttribute("data-cd", startTime);
-          cdEl.removeAttribute("data-cd-end");
-          cdEl.textContent = countdownSec(startTime);
-        } else if (cdEl) {
-          cdEl.removeAttribute("data-cd");
-          cdEl.removeAttribute("data-cd-end");
-          cdEl.textContent = "";
-        }
+      if (cdEl) {
+        cdEl.removeAttribute("data-cd");
+        cdEl.removeAttribute("data-cd-end");
+        cdEl.textContent = "";
       }
     }
   });
@@ -188,7 +191,6 @@ function updateCardStates() {
 function startEngines(onTick) {
   updateClocks();
   updateCountdowns();
-  updateCardStates();
   if (onTick) onTick();
   setInterval(() => { updateCountdowns(); updateCardStates(); if (onTick) onTick(); }, 1000);
 }
