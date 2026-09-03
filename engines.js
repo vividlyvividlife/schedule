@@ -140,7 +140,8 @@ function updateCardStates() {
     else newState = "future";
 
     const prevState = el.getAttribute("data-state");
-    if (prevState === newState) return;
+    const hasProgress = el.hasAttribute("data-progress");
+    if (prevState === newState && (newState !== "current" || hasProgress)) return;
     el.setAttribute("data-state", newState);
 
     const base = el.className.replace(/\b(past|current|next|future)\b/g, "").trim();

@@ -57,6 +57,10 @@ const ICONS = {
   "Человек и мир": "🌍",
   "Изобразительное искусство": "🎨",
   "Факультатив": "⭐",
+  "Пиши грамотно": "💰",
+  "Считаем и решаем": "💰",
+  "Вытокi роднай мовы": "🗣️",
+  "Решение текстовых задач": "📝",
 };
 
 let SCHEDULE = [];
@@ -232,18 +236,15 @@ function renderLesson(l, state, dayIdx) {
   const startTime = parseTime(l.time);
   const endTime = parseTime(l.time.split("–")[1]);
   const icon = ICONS[l.subj] || "📋";
-  const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
-  const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
-  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
+  const paidBadge = l.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
   return `
-    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr}>
+    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}">
       <div class="lesson-body">
         <div class="lesson-icon">${icon}</div>
         <div class="lesson-num">${l.n}</div>
         <div class="lesson-info">
           <div class="lesson-time">${l.time}</div>
-          <div class="lesson-subject">${l.subj}</div>
-          ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
+          <div class="lesson-subject">${l.subj}${paidBadge}</div>
         </div>
       </div>
     </div>`;
