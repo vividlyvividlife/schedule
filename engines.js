@@ -154,6 +154,10 @@ function updateCardStates() {
     if (newState === "current") {
       el.setAttribute("data-progress", startTime);
       el.setAttribute("data-end", endTime);
+      const now = new Date();
+      const curMin = now.getHours() * 60 + now.getMinutes();
+      const pct = Math.max(0, Math.min(100, ((curMin - startTime) / (endTime - startTime)) * 100));
+      el.style.setProperty("--progress", pct + "%");
       if (!cdEl) {
         cdEl = document.createElement("div");
         cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";
