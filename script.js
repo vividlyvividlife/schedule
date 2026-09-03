@@ -340,7 +340,7 @@ function renderStatus() {
   const day = SCHEDULE[today];
   const info = getCurrentLesson(day);
   const now = new Date();
-  const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
   if (day.lessons.length === 0) {
     const msg = getWeekendMessage(today);
@@ -351,16 +351,17 @@ function renderStatus() {
     return;
   }
   if (!info) {
-    el.innerHTML = `${day.name} · ${timeStr} · Уроков на сегодня нет`;
+    el.innerHTML = `${day.name} · <span id="clockLive">${timeStr}</span> · Уроков на сегодня нет`;
     return;
   }
   const l = day.lessons[info.idx];
   if (info.type === "current") {
-    el.innerHTML = `Сейчас: <span class="highlight">${l.subj}</span> · ${l.time} · ${timeStr}`;
+    const endTime = parseTime(l.time.split("–")[1]);
+    el.innerHTML = `Сейчас: <span class="highlight">${l.subj}</span> · ${l.time} · <span id="clockLive">${timeStr}</span> · <span data-cd-end="${endTime}">${remainingSec(endTime)}</span>`;
   } else if (info.type === "next") {
     el.innerHTML = `Следующий: <span class="highlight">${l.subj}</span> · ${l.time} · <span data-cd="${parseTime(l.time)}">${countdownSec(parseTime(l.time))}</span>`;
   } else {
-    el.innerHTML = `${day.name} · ${timeStr} · Уроков на сегодня нет`;
+    el.innerHTML = `${day.name} · <span id="clockLive">${timeStr}</span> · Уроков на сегодня нет`;
   }
 }
 
