@@ -255,8 +255,9 @@ function renderExtendedItem(item, state) {
   const endTime = parseTime(item.time.split("–")[1]);
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
+  const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   return `
-    <div class="lesson${cls}">
+    <div class="lesson${cls}" ${progressAttr}>
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num" style="color:var(--accent);font-size:11px;">⏰</div>
@@ -390,7 +391,9 @@ function renderAll() {
     const cur = now.getHours() * 60 + now.getMinutes();
     const item = EXTENDED[itemIdx];
     const s = parseTime(item.time);
-    if (cur >= s && cur < s + 20) return "current";
+    const e = parseTime(item.time.split("–")[1]);
+    if (cur >= s && cur < e) return "current";
+    if (cur >= e) return "past";
     if (cur < s && (s - cur) <= 120) return "next";
     return "future";
   }
