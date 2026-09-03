@@ -14,6 +14,7 @@
   --bg: #111118; --card: #1a1a24; --text: #e8e8ed; --muted: #8888a0;
   --accent: #7b8ad4; --line: #2a2a35; --active-bg: #1e2236;
   --shadow: 0 1px 4px rgba(0,0,0,0.3);
+  --progress-fill: #1a2040;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -107,7 +108,7 @@ body {
 .lesson.next { border-left: 3px solid transparent; background: var(--card); }
 .lesson.current {
   border-left: 3px solid var(--accent);
-  background: var(--card);
+  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e8eaf4) var(--progress, 0%), var(--progress-fill, #e8eaf4) 100%);
   position: relative;
   overflow: visible;
 }
@@ -116,7 +117,7 @@ body {
   position: absolute;
   top: 0;
   left: var(--progress, 0%);
-  width: 1px;
+  width: 2px;
   height: 100%;
   background: var(--accent);
   transition: left 0.5s ease;
@@ -147,7 +148,7 @@ body {
   border-left: 3px solid #ed7d31;
 }
 .merge-card.current {
-  background: var(--card);
+  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e8eaf4) var(--progress, 0%), var(--progress-fill, #e8eaf4) 100%);
   position: relative;
   overflow: visible;
 }
@@ -156,7 +157,7 @@ body {
   position: absolute;
   top: 0;
   left: var(--progress, 0%);
-  width: 1px;
+  width: 2px;
   height: 100%;
   background: var(--accent);
   transition: left 0.5s ease;

@@ -17,6 +17,7 @@
   --line: #2a2a35;
   --active-bg: #1e2236;
   --shadow: 0 1px 4px rgba(0,0,0,0.3);
+  --progress-fill: #1a2040;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -167,7 +168,7 @@ body {
 }
 .lesson:active { transform: scale(0.98); }
 .lesson.current {
-  background: var(--card);
+  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e8eaf4) var(--progress, 0%), var(--progress-fill, #e8eaf4) 100%);
   border-left: 3px solid var(--accent);
   position: relative;
   overflow: visible;
@@ -177,7 +178,7 @@ body {
   position: absolute;
   top: 0;
   left: var(--progress, 0%);
-  width: 1px;
+  width: 2px;
   height: 100%;
   background: var(--accent);
   transition: left 0.5s ease;
