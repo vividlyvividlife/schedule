@@ -291,13 +291,7 @@ const SUN_MSG = [
   { e:"🤷", t:"Завтра понедельник. Бывает.", a:"" },
 ];
 
-const SCHOOL = [
-  { n:1, time:"8:00–8:45", subj:"Белорусская литература", icon:"📖" },
-  { n:2, time:"9:00–9:45", subj:"Белорусский язык", icon:"💬" },
-  { n:3, time:"10:00–10:45", subj:"ФКиЗ", icon:"⚽" },
-  { n:4, time:"10:55–11:40", subj:"Русская литература", icon:"📖" },
-  { n:5, time:"12:00–12:45", subj:"Факультатив", icon:"⭐" }
-];
+let SCHOOL = [];
 const EXTENDED = [
   { time:"11:40–12:00", subj:"Приём в группу", icon:"🎒" },
   { time:"12:00–12:45", subj:"Занятия по интересам", icon:"🎯" },
@@ -403,7 +397,16 @@ function timeRangeOverlap(a, b) {
 
 function getItemsForDay(dayIdx) {
   const isWeekend = dayIdx >= 5;
-  const school = isWeekend ? [] : SCHOOL.map(s => ({...s, type:"school"}));
+  const daySchedule = SCHOOL[dayIdx] || { lessons: [] };
+  const school = isWeekend ? [] : (daySchedule.lessons || []).map(s => {
+    const iconMap = {
+      "Белорусская литература":"📖","Белорусский язык":"💬","ФКиЗ":"⚽",
+      "Русская литература":"📖","Русский язык":"✏️","Математика":"🔢",
+      "Трудовое обучение":"🔧","ОБЖ":"🛡️","Музыка":"🎵",
+      "Человек и мир":"🌍","Изобразительное искусство":"🎨","Факультатив":"⭐"
+    };
+    return { n: s.n, time: s.time, subj: s.subj, icon: iconMap[s.subj] || "📋", type: "school" };
+  });
   const personal = showPersonal ? (PERSONAL[dayIdx] || []).map(p => ({...p, type:"personal"})) : [];
 
   let extended = [];
@@ -738,9 +741,17 @@ document.addEventListener("touchend", (e) => {
 currentDayIdx = getTodayIndex();
 renderDate();
 renderTabs();
-renderAll();
-renderStatus();
-setInterval(updateCountdowns, 1000);
+
+fetch("../schedule.json").then(r => r.json()).then(data => {
+  SCHOOL = data.schedule || [];
+  renderAll();
+  renderStatus();
+  setInterval(updateCountdowns, 1000);
+}).catch(() => {
+  renderAll();
+  renderStatus();
+  setInterval(updateCountdowns, 1000);
+});
 </script>
 </body>
 </html>
