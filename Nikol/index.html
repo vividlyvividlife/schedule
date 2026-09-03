@@ -102,13 +102,26 @@ body {
   transition: background 0.2s, transform 0.15s;
 }
 .lesson:active { transform: scale(0.98); }
-.lesson.current { background: var(--active-bg); border-left: 3px solid var(--accent); }
 .lesson.past { opacity: 0.4; }
 .lesson.future { border-left: 3px solid transparent; background: var(--card); }
 .lesson.next { border-left: 3px solid transparent; background: var(--card); }
 .lesson.current {
   border-left: 3px solid var(--accent);
   background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--active-bg) var(--progress, 0%), var(--active-bg) 100%);
+  position: relative;
+  overflow: visible;
+}
+.lesson.current::after {
+  content: "🐱";
+  position: absolute;
+  top: 50%;
+  left: var(--progress, 0%);
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+  transition: left 0.5s ease;
+  pointer-events: none;
+  z-index: 2;
 }
 .lesson-body {
   flex: 1; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start;
@@ -135,6 +148,20 @@ body {
 }
 .merge-card.current {
   background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--active-bg) var(--progress, 0%), var(--active-bg) 100%);
+  position: relative;
+  overflow: visible;
+}
+.merge-card.current::after {
+  content: "🐱";
+  position: absolute;
+  top: 50%;
+  left: var(--progress, 0%);
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+  transition: left 0.5s ease;
+  pointer-events: none;
+  z-index: 2;
 }
 .merge-card.past { opacity: 0.4; }
 .merge-card.next { background: var(--card); }

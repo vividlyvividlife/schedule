@@ -89,6 +89,7 @@ function getCardState(dayIdx, time) {
   const s = parseTime(time);
   const e = parseTime(time.split("–")[1]);
   if (cur >= s && cur < e) return "current";
+  if (cur >= e) return "past";
   if (cur < s && (s - cur) <= 120) return "next";
   return "future";
 }
