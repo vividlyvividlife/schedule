@@ -148,23 +148,6 @@ body {
   box-shadow: var(--shadow); overflow: hidden;
   border-left: 3px solid #ed7d31;
 }
-.merge-card.current {
-  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e8eaf4) var(--progress, 0%), var(--progress-fill, #e8eaf4) 100%);
-  position: relative;
-  overflow: visible;
-}
-.merge-card.current::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: var(--progress, 0%);
-  width: 2px;
-  height: 100%;
-  background: var(--accent);
-  transition: left 0.5s ease;
-  pointer-events: none;
-  z-index: 2;
-}
 .merge-card.past { opacity: 0.4; }
 .merge-card.next { background: var(--card); }
 .merge-row {

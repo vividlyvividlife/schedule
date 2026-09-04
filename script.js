@@ -487,11 +487,7 @@ function renderAll() {
       ...l, _type: "school", _icon: ICONS[l.subj] || "📋",
       _state: getLessonState(dayIdx, li, d)
     }));
-    const extended = (extendedOn ? EXTENDED.filter(ext => {
-      if (d.lessons.length === 0) return true;
-      const lastEnd = parseTime(d.lessons[d.lessons.length - 1].time) + 45;
-      return parseTime(ext.time) >= lastEnd;
-    }) : []).map(ext => ({
+    const extended = (extendedOn ? EXTENDED : []).map(ext => ({
       ...ext, _type: "extended", _icon: ext.icon,
       _state: getExtState(EXTENDED.indexOf(ext), dayIdx)
     }));
