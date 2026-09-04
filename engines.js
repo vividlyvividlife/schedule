@@ -73,8 +73,8 @@ function updateProgressBars() {
     const start = parseInt(el.getAttribute("data-progress"));
     const end = parseInt(el.getAttribute("data-end"));
     const now = new Date();
-    const cur = now.getHours() * 60 + now.getMinutes();
-    const pct = Math.max(0, Math.min(100, ((cur - start) / (end - start)) * 100));
+    const cur = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const pct = Math.max(0, Math.min(100, ((cur - start * 60) / ((end - start) * 60)) * 100));
     el.style.setProperty("--progress", pct + "%");
   });
 }

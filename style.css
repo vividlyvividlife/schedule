@@ -182,7 +182,6 @@ body {
   width: 2px;
   height: 100%;
   background: var(--accent);
-  transition: left 0.5s ease;
   pointer-events: none;
   z-index: 2;
 }
