@@ -229,7 +229,7 @@ body {
   border-radius: 10px;
   margin-bottom: 8px;
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: visible;
   border-left: 3px solid #ed7d31;
 }
 .merge-card.past { opacity: 0.4; }
