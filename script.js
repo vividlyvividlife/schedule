@@ -485,7 +485,8 @@ function renderAll() {
   function renderDayLessons(d, dayIdx) {
     const school = d.lessons.map((l, li) => ({
       ...l, _type: "school", _icon: ICONS[l.subj] || "📋",
-      _state: getLessonState(dayIdx, li, d)
+      _state: getLessonState(dayIdx, li, d),
+      _noMerge: l.subj === "ФКиЗ"
     }));
     const extended = (extendedOn ? EXTENDED : []).map(ext => ({
       ...ext, _type: "extended", _icon: ext.icon,
@@ -504,7 +505,9 @@ function renderAll() {
     function union(a, b) { parent[find(a)] = find(b); }
 
     for (let i = 0; i < all.length; i++) {
+      if (all[i]._noMerge) continue;
       for (let j = i + 1; j < all.length; j++) {
+        if (all[j]._noMerge) continue;
         if (timeRangeOverlap(all[i], all[j])) union(i, j);
       }
     }
