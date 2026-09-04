@@ -503,25 +503,30 @@ function renderAll() {
       }).join("");
     }
 
-    const merged = [];
-    const used = new Set();
+    const parent = all.map((_, i) => i);
+    function find(x) { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+    function union(a, b) { parent[find(a)] = find(b); }
+
     for (let i = 0; i < all.length; i++) {
-      if (used.has(i)) continue;
-      const group = [all[i]];
-      used.add(i);
       for (let j = i + 1; j < all.length; j++) {
-        if (used.has(j)) continue;
-        if (group.some(item => timeRangeOverlap(item, all[j]))) {
-          group.push(all[j]);
-          used.add(j);
-        }
-      }
-      if (group.length > 1) {
-        merged.push({ type: "merge", items: group });
-      } else {
-        merged.push(group[0]);
+        if (timeRangeOverlap(all[i], all[j])) union(i, j);
       }
     }
+
+    const groups = {};
+    for (let i = 0; i < all.length; i++) {
+      const root = find(i);
+      if (!groups[root]) groups[root] = [];
+      groups[root].push(all[i]);
+    }
+
+    const merged = Object.values(groups).map(group => {
+      if (group.length > 1) {
+        group.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+        return { type: "merge", items: group };
+      }
+      return group[0];
+    });
     merged.sort((a, b) => {
       const aTime = a.type === "merge" ? parseTime(a.items[0].time) : parseTime(a.time);
       const bTime = b.type === "merge" ? parseTime(b.items[0].time) : parseTime(b.time);
