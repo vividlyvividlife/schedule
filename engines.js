@@ -196,4 +196,5 @@ function startEngines(onTick) {
   updateCountdowns();
   if (onTick) onTick();
   setInterval(() => { updateCountdowns(); updateCardStates(); if (onTick) onTick(); }, 1000);
+  setInterval(updateProgressBars, 200);
 }
