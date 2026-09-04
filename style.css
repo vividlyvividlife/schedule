@@ -172,7 +172,7 @@ body {
   background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e8eaf4) var(--progress, 0%), var(--progress-fill, #e8eaf4) 100%);
   border-left: 3px solid var(--accent);
   position: relative;
-  overflow: visible;
+  overflow: hidden;
 }
 .lesson.current::after {
   content: "";
@@ -241,7 +241,7 @@ body {
 }
 .merge-row.current {
   background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e0e2f4) var(--progress, 0%), var(--progress-fill, #e0e2f4) 100%);
-  overflow: visible;
+  overflow: hidden;
 }
 .merge-row.current::after {
   content: "";
