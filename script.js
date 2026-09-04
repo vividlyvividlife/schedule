@@ -288,6 +288,61 @@ function renderExtendedItem(item, state, dayIdx) {
     </div>`;
 }
 
+function timeRangeOverlap(a, b) {
+  const aS = parseTime(a.time);
+  const aE = parseTime(a.time.split("–")[1]);
+  const bS = parseTime(b.time);
+  const bE = parseTime(b.time.split("–")[1]);
+  return aS < bE && bS < aE;
+}
+
+function renderMergeCard(group, dayIdx) {
+  const times = group.map(i => i.time.split("–").map(parseTime));
+  const earliestS = Math.min(...times.map(t => t[0]));
+  const earliestE = Math.max(...times.map(t => t[1]));
+  const timeStr = `${Math.floor(earliestS/60)}:${String(earliestS%60).padStart(2,"0")}–${Math.floor(earliestE/60)}:${String(earliestE%60).padStart(2,"0")}`;
+  const state = getCardState(dayIdx, timeStr);
+  const cls = `merge-card ${state}`;
+  const progressAttr = state === "current" ? `data-progress="${earliestS}" data-end="${earliestE}"` : "";
+  const progressStyle = state === "current" ? (() => {
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const pct = Math.max(0, Math.min(100, ((cur - earliestS) / (earliestE - earliestS)) * 100));
+    return `style="--progress:${pct}%"`;
+  })() : "";
+
+  const rows = group.map(item => {
+    const labelCls = item._type;
+    const labelText = item._type === "school" ? "Урок" : "Продлёнка";
+    const itemStart = parseTime(item.time);
+    const itemEnd = parseTime(item.time.split("–")[1]);
+    const rowState = getCardState(dayIdx, item.time);
+    const rowProgressAttr = rowState === "current" ? `data-progress="${itemStart}" data-end="${itemEnd}"` : "";
+    const rowProgressStyle = rowState === "current" ? (() => {
+      const now = new Date();
+      const cur = now.getHours() * 60 + now.getMinutes();
+      const pct = Math.max(0, Math.min(100, ((cur - itemStart) / (itemEnd - itemStart)) * 100));
+      return `style="--progress:${pct}%"`;
+    })() : "";
+    const cdAttr = rowState === "next" ? `data-cd="${itemStart}"` : rowState === "current" ? `data-cd-end="${itemEnd}"` : "";
+    const cdText = rowState === "next" ? countdownSec(itemStart) : rowState === "current" ? remainingSec(itemEnd) : "";
+    const num = item._type === "school" ? (item.subj && item.subj.startsWith("Факультатив") ? "⭐" : item.n) : "⏰";
+    const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
+    return `
+      <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${rowProgressStyle}>
+        <div class="merge-icon ${labelCls}">${item._icon || "📋"}</div>
+        <div class="merge-info">
+          <div class="merge-label ${labelCls}">${labelText}</div>
+          <div class="merge-time">${item.time}</div>
+          <div class="merge-subj">${item.subj}${paidBadge}</div>
+          ${cdAttr ? `<div class="merge-countdown" ${cdAttr}>${cdText}</div>` : ""}
+        </div>
+      </div>`;
+  }).join("");
+
+  return `<div class="${cls}" data-start="${earliestS}" data-end="${earliestE}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle}>${rows}</div>`;
+}
+
 function renderWeekendMsg(dayIdx) {
   const msg = getWeekendMessage(dayIdx);
   const animCls = msg.anim ? ` animate-${msg.anim}` : "";
@@ -428,13 +483,56 @@ function renderAll() {
   }
 
   function renderDayLessons(d, dayIdx) {
-    let html = d.lessons.map((l, li) => renderLesson(l, getLessonState(dayIdx, li, d), dayIdx)).join("");
-    if (extendedOn && d.lessons.length > 0) {
-      const lastLessonEnd = parseTime(d.lessons[d.lessons.length - 1].time) + 45;
-      const filtered = EXTENDED.filter(ext => parseTime(ext.time) >= lastLessonEnd);
-      html += filtered.map((ext) => renderExtendedItem(ext, getExtState(EXTENDED.indexOf(ext), dayIdx), dayIdx)).join("");
+    const school = d.lessons.map((l, li) => ({
+      ...l, _type: "school", _icon: ICONS[l.subj] || "📋",
+      _state: getLessonState(dayIdx, li, d)
+    }));
+    const extended = (extendedOn ? EXTENDED.filter(ext => {
+      if (d.lessons.length === 0) return true;
+      const lastEnd = parseTime(d.lessons[d.lessons.length - 1].time) + 45;
+      return parseTime(ext.time) >= lastEnd;
+    }) : []).map(ext => ({
+      ...ext, _type: "extended", _icon: ext.icon,
+      _state: getExtState(EXTENDED.indexOf(ext), dayIdx)
+    }));
+    const all = [...school, ...extended];
+    if (all.length <= 1) {
+      return all.map(item => {
+        if (item._type === "school") return renderLesson(item, item._state, dayIdx);
+        return renderExtendedItem(item, item._state, dayIdx);
+      }).join("");
     }
-    return html;
+
+    const merged = [];
+    const used = new Set();
+    for (let i = 0; i < all.length; i++) {
+      if (used.has(i)) continue;
+      const group = [all[i]];
+      used.add(i);
+      for (let j = i + 1; j < all.length; j++) {
+        if (used.has(j)) continue;
+        if (group.some(item => timeRangeOverlap(item, all[j]))) {
+          group.push(all[j]);
+          used.add(j);
+        }
+      }
+      if (group.length > 1) {
+        merged.push({ type: "merge", items: group });
+      } else {
+        merged.push(group[0]);
+      }
+    }
+    merged.sort((a, b) => {
+      const aTime = a.type === "merge" ? parseTime(a.items[0].time) : parseTime(a.time);
+      const bTime = b.type === "merge" ? parseTime(b.items[0].time) : parseTime(b.time);
+      return aTime - bTime;
+    });
+
+    return merged.map(item => {
+      if (item.type === "merge") return renderMergeCard(item.items, dayIdx);
+      if (item._type === "school") return renderLesson(item, item._state, dayIdx);
+      return renderExtendedItem(item, item._state, dayIdx);
+    }).join("");
   }
 
   if (isMobile) {

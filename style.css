@@ -224,6 +224,80 @@ body {
   margin-top: 2px;
 }
 
+.merge-card {
+  background: var(--card);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  border-left: 3px solid #ed7d31;
+}
+.merge-card.current {
+  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e0e2f4) var(--progress, 0%), var(--progress-fill, #e0e2f4) 100%);
+  position: relative;
+  overflow: visible;
+}
+.merge-card.current::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--progress, 0%);
+  width: 2px;
+  height: 100%;
+  background: var(--accent);
+  transition: left 0.5s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.merge-card.past { opacity: 0.4; }
+.merge-card.next { background: var(--card); }
+.merge-row {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 14px;
+  position: relative; overflow: hidden;
+  border-radius: 8px;
+}
+.merge-row.current {
+  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e0e2f4) var(--progress, 0%), var(--progress-fill, #e0e2f4) 100%);
+  overflow: visible;
+}
+.merge-row.current::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--progress, 0%);
+  width: 2px;
+  height: 100%;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 2;
+}
+.merge-row + .merge-row {
+  border-top: 1px dashed var(--line);
+}
+.merge-icon {
+  font-size: 20px; flex-shrink: 0; width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px;
+}
+.merge-icon.school { background: #e8eaff; }
+.dark .merge-icon.school { background: #252840; }
+.merge-icon.extended { background: #e8f5e9; }
+.dark .merge-icon.extended { background: #1a2a1c; }
+.merge-info { flex: 1; }
+.merge-time { font-size: 11px; color: var(--muted); }
+.merge-subj { font-size: 14px; font-weight: 600; }
+.merge-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; padding: 1px 6px; border-radius: 4px;
+  display: inline-block; margin-bottom: 2px;
+}
+.merge-label.school { background: #e8eaff; color: #5b6abf; }
+.dark .merge-label.school { background: #252840; color: #7b8ad4; }
+.merge-label.extended { background: #e8f5e9; color: #27ae60; }
+.dark .merge-label.extended { background: #1a2a1c; color: #5aaf8a; }
+.merge-countdown { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+
 .weekend-msg {
   text-align: center;
   padding: 32px 20px;

@@ -170,6 +170,23 @@ body {
 .merge-row {
   display: flex; gap: 10px; align-items: flex-start;
   padding: 10px 14px;
+  position: relative; overflow: hidden;
+  border-radius: 8px;
+}
+.merge-row.current {
+  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e0e2f4) var(--progress, 0%), var(--progress-fill, #e0e2f4) 100%);
+  overflow: visible;
+}
+.merge-row.current::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--progress, 0%);
+  width: 2px;
+  height: 100%;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 2;
 }
 .merge-row + .merge-row {
   border-top: 1px dashed var(--line);
