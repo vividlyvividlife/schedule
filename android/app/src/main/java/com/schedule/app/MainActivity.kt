@@ -348,7 +348,8 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Сбросить?")
             .setMessage("Удалить все данные?")
             .setPositiveButton("Да") { _, _ ->
-                webView.evaluateJavascript("localStorage.removeItem('tg_local_data'); 'ok'") {
+                cancelAllReminders()
+                webView.evaluateJavascript("localStorage.removeItem('tg_local_data'); localStorage.removeItem('tg_reminders'); 'ok'") {
                     hasSchedule = false; hasPersonal = false; hasExtended = false
                     Toast.makeText(this, "Сброшено!", Toast.LENGTH_SHORT).show()
                     invalidateOptionsMenu()
@@ -431,12 +432,110 @@ class MainActivity : AppCompatActivity() {
 
     override fun onBackPressed() { if (webView.canGoBack()) webView.goBack() else super.onBackPressed() }
 
+    // ── Reminders / Notifications ────────────────────────────────────
+
+    fun scheduleRemindersFromJson(json: String) {
+        try {
+            val am = getSystemService(ALARM_SERVICE) as android.app.AlarmManager
+
+            cancelAllReminders()
+
+            val arr = org.json.JSONArray(json)
+            val dayNames = arrayOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+            val dayNamesFull = arrayOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье")
+
+            for (i in 0 until arr.length()) {
+                val r = arr.getJSONObject(i)
+                val type = r.getString("type")
+                val dayIdx = r.getInt("dayIdx")
+                val time = r.getString("time")
+                val subj = r.optString("subj", "")
+                val mins = r.getInt("mins")
+                val key = r.getString("key")
+
+                val typeLabel = when(type) { "school" -> "Урок"; "personal" -> "Занятие"; "extended" -> "Продлёнка"; else -> "Занятие" }
+
+                val parts = time.split("–")
+                val startParts = parts[0].split(":")
+                val startHour = startParts[0].toInt()
+                val startMin = startParts[1].toInt()
+                val startTotalMin = startHour * 60 + startMin
+
+                val cal = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.DAY_OF_WEEK, when(dayIdx) {
+                        0 -> java.util.Calendar.MONDAY
+                        1 -> java.util.Calendar.TUESDAY
+                        2 -> java.util.Calendar.WEDNESDAY
+                        3 -> java.util.Calendar.THURSDAY
+                        4 -> java.util.Calendar.FRIDAY
+                        5 -> java.util.Calendar.SATURDAY
+                        6 -> java.util.Calendar.SUNDAY
+                        else -> java.util.Calendar.MONDAY
+                    })
+                    set(java.util.Calendar.HOUR_OF_DAY, startHour)
+                    set(java.util.Calendar.MINUTE, startMin - mins)
+                    set(java.util.Calendar.SECOND, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }
+
+                if (cal.timeInMillis <= System.currentTimeMillis()) {
+                    cal.add(java.util.Calendar.WEEK_OF_YEAR, 1)
+                }
+
+                val notifId = key.hashCode()
+                val intent = Intent(this, NotificationReceiver::class.java).apply {
+                    putExtra(NotificationReceiver.EXTRA_TITLE, "$typeLabel: $subj")
+                    putExtra(NotificationReceiver.EXTRA_TEXT, "${dayNamesFull[dayIdx]} · Начало в ${parts[0]} · Через $mins мин")
+                    putExtra(NotificationReceiver.EXTRA_NOTIF_ID, notifId)
+                }
+                val pending = PendingIntent.getBroadcast(
+                    this, notifId, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                am.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, cal.timeInMillis, pending)
+                Log.d(TAG, "Alarm set: $key at ${cal.time}")
+            }
+
+            val editor = getSharedPreferences("schedule_prefs", MODE_PRIVATE).edit()
+            editor.putString("reminders_json", json)
+            editor.apply()
+
+            runOnUiThread { Toast.makeText(this, "Напоминания настроены ✓", Toast.LENGTH_SHORT).show() }
+        } catch (e: Exception) {
+            Log.e(TAG, "scheduleReminders error", e)
+        }
+    }
+
+    private fun cancelAllReminders() {
+        val am = getSystemService(ALARM_SERVICE) as android.app.AlarmManager
+        val prefs = getSharedPreferences("schedule_prefs", MODE_PRIVATE)
+        val json = prefs.getString("reminders_json", "[]") ?: "[]"
+        try {
+            val arr = org.json.JSONArray(json)
+            for (i in 0 until arr.length()) {
+                val r = arr.getJSONObject(i)
+                val key = r.getString("key")
+                val intent = Intent(this, NotificationReceiver::class.java)
+                val pending = PendingIntent.getBroadcast(
+                    this, key.hashCode(), intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                am.cancel(pending)
+            }
+        } catch (_: Exception) {}
+        prefs.edit().remove("reminders_json").apply()
+    }
+
     class AndroidBridge(private val activity: MainActivity) {
         @JavascriptInterface fun exportTxt(filename: String, content: String) {
             activity.runOnUiThread { activity.saveAndShareFile(filename, content, "text/plain") }
         }
         @JavascriptInterface fun showToast(message: String) {
             activity.runOnUiThread { Toast.makeText(activity, message, Toast.LENGTH_SHORT).show() }
+        }
+        @JavascriptInterface fun syncReminders(json: String) {
+            Log.d(TAG, "syncReminders: $json")
+            activity.scheduleRemindersFromJson(json)
         }
     }
 }

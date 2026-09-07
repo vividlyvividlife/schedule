@@ -252,6 +252,8 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   const roomText = l.room ? `<div class="lesson-room">${l.room}</div>` : "";
+  const bellActive = hasReminder("school", dayIdx, itemIdx, l.time);
+  const bellCls = bellActive ? " bell-active" : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('school',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   return `
     <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle} ${editMode ? 'onclick="showEditModal(\'school\',' + dayIdx + ',' + itemIdx + ')"' : ''}>
@@ -264,6 +266,7 @@ function renderLesson(l, state, dayIdx, itemIdx) {
           ${roomText}
           ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
+        <button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${(l.subj||'').replace(/'/g,"\\'")}')">🔔</button>
         ${editBtn}
       </div>
     </div>`;
@@ -283,6 +286,8 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
     return `style="--progress:${pct}%"`;
   })() : "";
   const type = item._type || "extended";
+  const bellActive = hasReminder(type, dayIdx, itemIdx, item.time);
+  const bellCls = bellActive ? " bell-active" : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${type}',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   return `
     <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle} ${editMode ? `onclick="showEditModal('${type}',${dayIdx},${itemIdx})"` : ''}>
@@ -295,6 +300,7 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
           ${item.room ? `<div class="lesson-room">${item.room}</div>` : ""}
           ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
+        <button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${(item.subj||'').replace(/'/g,"\\'")}')">🔔</button>
         ${editBtn}
       </div>
     </div>`;
@@ -333,6 +339,8 @@ function renderMergeCard(group, dayIdx) {
     const cdText = rowState === "next" ? countdownSec(itemStart) : rowState === "current" ? remainingSec(itemEnd) : "";
     const num = item._type === "school" ? (item.subj && (item.subj.startsWith("Факультатив") || item.subj.startsWith("Кружок")) ? "⭐" : (item.n != null ? item.n : "")) : "⏰";
     const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
+    const bellActive = hasReminder(item._type, dayIdx, item._itemIdx, item.time);
+    const bellCls = bellActive ? " bell-active" : "";
     const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${item._type}',${dayIdx},${item._itemIdx})">✏️</button></div>` : "";
     return `
       <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${rowProgressStyle} ${editMode ? `onclick="showEditModal('${item._type}',${dayIdx},${item._itemIdx})"` : ''}>
@@ -344,6 +352,7 @@ function renderMergeCard(group, dayIdx) {
           ${item.room ? `<div class="merge-room">${item.room}</div>` : ""}
           ${cdAttr ? `<div class="merge-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
+        <button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${(item.subj||'').replace(/'/g,"\\'")}')">🔔</button>
         ${editBtn}
       </div>`;
   }).join("");
@@ -487,6 +496,93 @@ function toggleTheme() {
 
 let editMode = isEditMode();
 let modalData = { type: null, dayIdx: -1, itemIdx: -1 };
+let reminders = JSON.parse(localStorage.getItem("tg_reminders") || "[]");
+
+function saveReminders() {
+  localStorage.setItem("tg_reminders", JSON.stringify(reminders));
+  if (window.Android) {
+    Android.syncReminders(JSON.stringify(reminders));
+  }
+}
+
+function getReminderKey(type, dayIdx, itemIdx, time) {
+  return type + "_" + dayIdx + "_" + itemIdx + "_" + time;
+}
+
+function getReminder(type, dayIdx, itemIdx, time) {
+  const key = getReminderKey(type, dayIdx, itemIdx, time);
+  return reminders.find(r => r.key === key);
+}
+
+function toggleReminder(type, dayIdx, itemIdx, time, subj) {
+  const existing = getReminder(type, dayIdx, itemIdx, time);
+  if (existing) {
+    reminders = reminders.filter(r => r.key !== existing.key);
+    saveReminders();
+    renderAll();
+    if (window.Android) Android.showToast("Напоминание отменено");
+    return;
+  }
+  showReminderDialog(type, dayIdx, itemIdx, time, subj);
+}
+
+function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
+  const labels = { school: "Урок", personal: "Занятие", extended: "Продлёнка" };
+  const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+  const d = document.createElement("div");
+  d.className = "reminder-dialog-overlay";
+  d.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center;";
+  d.innerHTML = `
+    <div style="background:var(--card);border-radius:16px;padding:20px;width:280px;color:var(--text);">
+      <div style="font-size:16px;font-weight:600;margin-bottom:12px;">🔔 Напоминание</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
+        ${labels[type]} · ${dayNames[dayIdx]} · ${time}<br>${subj}
+      </div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Напомнить:</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="reminder-chip" data-min="5">5 мин</button>
+        <button class="reminder-chip" data-min="10">10 мин</button>
+        <button class="reminder-chip" data-min="15">15 мин</button>
+        <button class="reminder-chip" data-min="30">30 мин</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <span style="font-size:13px;color:var(--text);">Своё:</span>
+        <input id="reminderCustomMin" type="number" min="1" max="1440" placeholder="мин"
+          style="flex:1;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="this.closest('.reminder-dialog-overlay').remove()" style="flex:1;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;">Отмена</button>
+        <button id="reminderSaveBtn" style="flex:1;padding:10px;border:none;border-radius:10px;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Сохранить</button>
+      </div>
+    </div>`;
+  document.body.appendChild(d);
+  d.querySelectorAll(".reminder-chip").forEach(chip => {
+    chip.style.cssText = "padding:6px 12px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
+    chip.onclick = () => {
+      d.querySelectorAll(".reminder-chip").forEach(c => { c.style.background = "transparent"; c.style.color = "var(--text)"; });
+      chip.style.background = "var(--accent)";
+      chip.style.color = "#fff";
+      d.querySelector("#reminderCustomMin").value = "";
+      d._selectedMin = parseInt(chip.dataset.min);
+    };
+  });
+  d.querySelector("#reminderSaveBtn").onclick = () => {
+    const custom = parseInt(d.querySelector("#reminderCustomMin").value);
+    const mins = custom || d._selectedMin;
+    if (!mins || mins < 1) { if (window.Android) Android.showToast("Укажи минуты"); return; }
+    const key = getReminderKey(type, dayIdx, itemIdx, time);
+    reminders.push({ key, type, dayIdx, itemIdx, time, subj, mins, dayIdx });
+    saveReminders();
+    d.remove();
+    renderAll();
+    if (window.Android) Android.showToast("Напоминание за " + mins + " мин ✓");
+  };
+  d.onclick = (e) => { if (e.target === d) d.remove(); };
+}
+
+function hasReminder(type, dayIdx, itemIdx, time) {
+  return !!getReminder(type, dayIdx, itemIdx, time);
+}
 
 function toggleEditMode() {
   editMode = !editMode;

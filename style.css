@@ -648,3 +648,29 @@ body.edit-mode .merge-row:hover { opacity: 0.85; }
     font-style: italic;
   }
 }
+
+.bell-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.4;
+  transition: opacity 0.2s, transform 0.2s;
+  flex-shrink: 0;
+  align-self: center;
+}
+.bell-btn:hover { opacity: 0.8; transform: scale(1.2); }
+.bell-btn.bell-active { opacity: 1; animation: bellRing 0.5s; }
+
+@keyframes bellRing {
+  0% { transform: rotate(0); }
+  25% { transform: rotate(15deg); }
+  50% { transform: rotate(-15deg); }
+  75% { transform: rotate(10deg); }
+  100% { transform: rotate(0); }
+}
+
+.reminder-chip {
+  transition: background 0.2s, color 0.2s;
+}
