@@ -44,46 +44,8 @@ const SUN_MSG = [
 ];
 
 let SCHOOL = [];
-const EXTENDED = [
-  { time:"11:40–12:00", subj:"Приём в группу", icon:"🎒" },
-  { time:"12:00–12:45", subj:"Занятия по интересам", icon:"🎯" },
-  { time:"12:45–13:00", subj:"Обед", icon:"🍽️" },
-  { time:"13:00–14:00", subj:"На открытом воздухе", icon:"🌤️" },
-  { time:"14:00–14:30", subj:"Свободная игра", icon:"🎮" },
-  { time:"14:30–15:45", subj:"Самоподготовка", icon:"📝" },
-  { time:"15:45–16:00", subj:"Полдник", icon:"🍎" },
-  { time:"16:00–16:45", subj:"Занятие в помещении", icon:"🏫" },
-  { time:"16:45–17:40", subj:"Занятия по интересам, уход", icon:"🏠" }
-];
-const PERSONAL = {
-  0: [{ time:"15:00–18:00", subj:"Гимнастика", icon:"🤸" }],
-  1: [
-    { time:"13:15–14:00", subj:"Вокал", icon:"🎤" },
-    { time:"14:05–14:50", subj:"Фортепиано", icon:"🎹" },
-    { time:"18:15–19:50", subj:"Сводный хор (30 кл)", icon:"🎶" },
-    { time:"18:15–19:50", subj:"Английский язык", icon:"🇬🇧" }
-  ],
-  2: [
-    { time:"14:55–15:40", subj:"Сольфеджио", icon:"🎵" },
-    { time:"16:00–18:15", subj:"Шахматы", icon:"♟️" },
-    { time:"16:35–18:05", subj:"Гимнастика", icon:"🤸" }
-  ],
-  3: [
-    { time:"14:05–14:50", subj:"Фортепиано", icon:"🎹" },
-    { time:"15:00–16:30", subj:"Гимнастика", icon:"🤸" },
-    { time:"17:50–20:00", subj:"Шахматы", icon:"♟️" }
-  ],
-  4: [
-    { time:"11:20–12:55", subj:"Хор (29 кл)", icon:"🎶" },
-    { time:"16:35–18:05", subj:"Гимнастика", icon:"🤸" },
-    { time:"18:15–19:50", subj:"Английский язык", icon:"🇬🇧" }
-  ],
-  5: [
-    { time:"8:50–10:20", subj:"Гимнастика", icon:"🤸" },
-    { time:"11:40–13:35", subj:"Шахматы", icon:"♟️" }
-  ],
-  6: [{ time:"16:15–18:30", subj:"Шахматы", icon:"♟️" }]
-};
+let PERSONAL = {};
+let EXTENDED = [];
 
 const DAYS = ["ПН","ВТ","СР","ЧТ","ПТ","СБ","ВС"];
 const DAY_NAMES = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
@@ -440,8 +402,10 @@ currentDayIdx = getTodayIndex();
 document.getElementById("dateDisplay").textContent = formatClock();
 renderTabs();
 
-fetch("../schedule.json").then(r => r.json()).then(data => {
+fetch("../timeSchedule.json").then(r => r.json()).then(data => {
   SCHOOL = data.schedule || [];
+  PERSONAL = data.personal || {};
+  EXTENDED = data.extended || [];
   renderAll();
   renderStatus();
   startEngines(() => { renderStatus(); renderProgress(); });

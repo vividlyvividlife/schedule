@@ -616,7 +616,7 @@ document.addEventListener("touchend", (e) => {
 async function init() {
   try {
     const [scheduleRes, holidaysRes] = await Promise.all([
-      fetch("schedule.json?" + Date.now()),
+      fetch("timeSchedule.json?" + Date.now()),
       fetch("holidays.json?" + Date.now())
     ]);
     const scheduleData = await scheduleRes.json();
