@@ -70,6 +70,7 @@ let EXTENDED = [];
 let HOLIDAYS = null;
 let extendedOn = localStorage.getItem("extended") === "true";
 let personalOn = localStorage.getItem("personal") === "true";
+let schoolOn = localStorage.getItem("school") !== "false";
 let currentDayIdx = -1;
 let touchStartX = 0;
 let touchStartY = 0;
@@ -448,8 +449,12 @@ function buildToggles() {
   let html = "";
   const hasExtended = EXTENDED.length > 0;
   const hasPersonal = Object.keys(PERSONAL).length > 0;
+  const hasSchool = SCHEDULE.some(d => d.lessons.length > 0);
   if (hasExtended && localStorage.getItem("extended") === null) { extendedOn = true; localStorage.setItem("extended", true); }
   if (hasPersonal && localStorage.getItem("personal") === null) { personalOn = true; localStorage.setItem("personal", true); }
+  if (hasSchool) {
+    html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="schoolToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="schoolToggle">Уроки</label></div>`;
+  }
   if (hasExtended) {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="extendedToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="extendedToggle">Продлёнка</label></div>`;
   }
@@ -457,13 +462,16 @@ function buildToggles() {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="personalToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="personalToggle">Занятия</label></div>`;
   }
   c.innerHTML = html;
+  if (schoolOn && hasSchool) document.getElementById("schoolToggle").checked = true;
   if (extendedOn && hasExtended) document.getElementById("extendedToggle").checked = true;
   if (personalOn && hasPersonal) document.getElementById("personalToggle").checked = true;
 }
 
 function onToggle() {
+  const sch = document.getElementById("schoolToggle");
   const ext = document.getElementById("extendedToggle");
   const pers = document.getElementById("personalToggle");
+  if (sch) { schoolOn = sch.checked; localStorage.setItem("school", schoolOn); }
   if (ext) { extendedOn = ext.checked; localStorage.setItem("extended", extendedOn); }
   if (pers) { personalOn = pers.checked; localStorage.setItem("personal", personalOn); }
   renderAll();
@@ -484,9 +492,9 @@ function toggleEditMode() {
   editMode = !editMode;
   localStorage.setItem(EDIT_KEY, editMode);
   document.body.classList.toggle("edit-mode", editMode);
-  const btn = document.getElementById("editToggle");
+  const editBar = document.getElementById("editBar");
   const addBtn = document.getElementById("addBtn");
-  if (btn) btn.classList.toggle("active", editMode);
+  if (editBar) editBar.style.display = editMode ? "flex" : "none";
   if (addBtn) addBtn.style.display = editMode ? "block" : "none";
   renderAll();
 }
@@ -643,11 +651,11 @@ function renderAll() {
   }
 
   function renderDayLessons(d, dayIdx) {
-    const school = d.lessons.map((l, li) => ({
+    const school = schoolOn ? d.lessons.map((l, li) => ({
       ...l, _type: "school", _icon: ICONS[l.subj] || "📋", _itemIdx: li,
       _state: getLessonState(dayIdx, li, d),
       _noMerge: l.subj === "ФКиЗ"
-    }));
+    })) : [];
     const personal = (personalOn ? (PERSONAL[dayIdx] || []) : []).map((p, pi) => ({
       ...p, _type: "personal", _icon: p.icon || "🤸", _itemIdx: pi,
       _state: (function() {
@@ -716,7 +724,9 @@ function renderAll() {
 
   if (isMobile) {
     content.innerHTML = SCHEDULE.map((d, i) => {
-      if (d.lessons.length === 0) {
+      const hasSchool = schoolOn && d.lessons.length > 0;
+      const hasPersonal = personalOn && PERSONAL[i] && PERSONAL[i].length > 0;
+      if (!hasSchool && !hasPersonal) {
         return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
       }
       return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderDayLessons(d, i)}</div>`;
@@ -725,14 +735,16 @@ function renderAll() {
     const left = SCHEDULE.slice(0, 3);
     const right = SCHEDULE.slice(3, 5);
     const renderSide = (days) => days.map(d => {
-      if (d.lessons.length === 0) {
+      const dayIdx = SCHEDULE.indexOf(d);
+      const hasSchool = schoolOn && d.lessons.length > 0;
+      const hasPersonal = personalOn && PERSONAL[dayIdx] && PERSONAL[dayIdx].length > 0;
+      if (!hasSchool && !hasPersonal) {
         return `
           <div class="diary-day">
             <div class="diary-day-name">${d.name}</div>
-            ${renderWeekendMsg(SCHEDULE.indexOf(d))}
+            ${renderWeekendMsg(dayIdx)}
           </div>`;
       }
-      const dayIdx = SCHEDULE.indexOf(d);
       return `
         <div class="diary-day">
           <div class="diary-day-name">${d.name}</div>
@@ -820,7 +832,9 @@ async function init() {
 
   if (editMode) {
     document.body.classList.add("edit-mode");
+    const editBar = document.getElementById("editBar");
     const addBtn = document.getElementById("addBtn");
+    if (editBar) editBar.style.display = "flex";
     if (addBtn) addBtn.style.display = "block";
   }
 

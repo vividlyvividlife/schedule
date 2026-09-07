@@ -4,12 +4,12 @@
 
     <item
         android:id="@+id/menu_import"
-        android:title="📥 Импорт"
+        android:title="📥 Импорт JSON"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/menu_export"
-        android:title="📤 Экспорт"
+        android:title="📤 Экспорт JSON"
         app:showAsAction="ifRoom" />
 
     <item
@@ -18,19 +18,24 @@
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/menu_delete_schedule"
-        android:title="❌ Удалить все уроки"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/menu_delete_personal"
-        android:title="❌ Удалить все занятия"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/menu_delete_extended"
-        android:title="❌ Удалить продлёнку"
-        app:showAsAction="never" />
+        android:id="@+id/menu_delete"
+        android:title="🗑️ Удалить данные"
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/menu_delete_schedule"
+                android:title="❌ Уроки"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/menu_delete_personal"
+                android:title="❌ Занятия"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/menu_delete_extended"
+                android:title="❌ Продлёнка"
+                app:showAsAction="never" />
+        </menu>
+    </item>
 
     <item
         android:id="@+id/menu_reset"

@@ -60,6 +60,11 @@ class MainActivity : AppCompatActivity() {
         webView.addJavascriptInterface(AndroidBridge(this), "Android")
 
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                Log.d(TAG, "Page loaded: $url")
+                queryDataState { invalidateOptionsMenu() }
+            }
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url?.toString() ?: return false
                 if (url.contains("zayavlenie")) {
@@ -86,19 +91,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
-        queryDataState {
-            menu?.findItem(R.id.menu_delete_schedule)?.isVisible = hasSchedule
-            menu?.findItem(R.id.menu_delete_personal)?.isVisible = hasPersonal
-            menu?.findItem(R.id.menu_delete_extended)?.isVisible = hasExtended
-            menu?.findItem(R.id.menu_reset)?.isVisible = hasSchedule || hasPersonal || hasExtended
-        }
         return true
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        menu?.findItem(R.id.menu_delete_schedule)?.isVisible = hasSchedule
-        menu?.findItem(R.id.menu_delete_personal)?.isVisible = hasPersonal
-        menu?.findItem(R.id.menu_delete_extended)?.isVisible = hasExtended
+        val deleteMenu = menu?.findItem(R.id.menu_delete)?.subMenu
+        deleteMenu?.findItem(R.id.menu_delete_schedule)?.isVisible = hasSchedule
+        deleteMenu?.findItem(R.id.menu_delete_personal)?.isVisible = hasPersonal
+        deleteMenu?.findItem(R.id.menu_delete_extended)?.isVisible = hasExtended
         menu?.findItem(R.id.menu_reset)?.isVisible = hasSchedule || hasPersonal || hasExtended
         return true
     }
