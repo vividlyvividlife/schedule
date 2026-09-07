@@ -29,13 +29,12 @@ body {
   min-height: 100vh;
   transition: background 0.3s, color 0.3s;
   overflow-x: hidden;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .header {
   max-width: 900px;
   margin: 0 auto;
-  padding: calc(20px + env(safe-area-inset-top, 0px)) 16px 12px;
+  padding: 20px 16px 12px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -409,7 +408,7 @@ body {
 .export-bar {
   max-width: 900px;
   margin: 0 auto;
-  padding: 8px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 16px 24px;
   display: flex;
   gap: 8px;
 }
