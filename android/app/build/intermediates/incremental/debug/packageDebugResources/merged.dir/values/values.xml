@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.TGEveryday" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#5b6abf</item>
+        <item name="colorPrimaryVariant">#4a5aae</item>
+        <item name="colorOnPrimary">#ffffff</item>
+        <item name="colorSecondary">#8b9de8</item>
+        <item name="android:statusBarColor">#141420</item>
+        <item name="android:navigationBarColor">#141420</item>
+    </style>
+</resources>

@@ -11,7 +11,7 @@
         android:label="Расписание"
         android:roundIcon="@drawable/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.TGEveryday"
+        android:theme="@style/Theme.Schedule"
         android:usesCleartextTraffic="true">
 
         <activity
