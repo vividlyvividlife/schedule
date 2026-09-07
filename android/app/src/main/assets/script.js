@@ -65,9 +65,11 @@ const ICONS = {
 };
 
 let SCHEDULE = [];
+let PERSONAL = {};
 let EXTENDED = [];
 let HOLIDAYS = null;
 let extendedOn = localStorage.getItem("extended") === "true";
+let personalOn = localStorage.getItem("personal") === "true";
 let currentDayIdx = -1;
 let touchStartX = 0;
 let touchStartY = 0;
@@ -310,7 +312,7 @@ function renderMergeCard(group, dayIdx) {
 
   const rows = group.map(item => {
     const labelCls = item._type;
-    const labelText = item._type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : "Продлёнка";
+    const labelText = item._type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item._type === "personal" ? "Занятие" : "Продлёнка";
     const itemStart = parseTime(item.time);
     const itemEnd = parseTime(item.time.split("–")[1]);
     const rowState = getCardState(dayIdx, item.time);
@@ -433,10 +435,28 @@ function switchDay(idx) {
   });
 }
 
-function toggleExtended() {
-  extendedOn = document.getElementById("extendedToggle").checked;
-  localStorage.setItem("extended", extendedOn);
-  document.getElementById("extendedLabel").textContent = extendedOn ? "ВКЛ" : "";
+function buildToggles() {
+  const c = document.getElementById("togglesContainer");
+  if (!c) return;
+  let html = "";
+  const hasExtended = EXTENDED.length > 0;
+  const hasPersonal = Object.keys(PERSONAL).length > 0;
+  if (hasExtended) {
+    html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="extendedToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="extendedToggle">Продлёнка</label></div>`;
+  }
+  if (hasPersonal) {
+    html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="personalToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="personalToggle">Занятия</label></div>`;
+  }
+  c.innerHTML = html;
+  if (extendedOn && hasExtended) document.getElementById("extendedToggle").checked = true;
+  if (personalOn && hasPersonal) document.getElementById("personalToggle").checked = true;
+}
+
+function onToggle() {
+  const ext = document.getElementById("extendedToggle");
+  const pers = document.getElementById("personalToggle");
+  if (ext) { extendedOn = ext.checked; localStorage.setItem("extended", extendedOn); }
+  if (pers) { personalOn = pers.checked; localStorage.setItem("personal", personalOn); }
   renderAll();
   renderProgress();
 }
@@ -486,11 +506,26 @@ function renderAll() {
       _state: getLessonState(dayIdx, li, d),
       _noMerge: l.subj === "ФКиЗ"
     }));
+    const personal = (personalOn ? (PERSONAL[dayIdx] || []) : []).map(p => ({
+      ...p, _type: "personal", _icon: p.icon || "🤸",
+      _state: (function() {
+        if (dayIdx < todayIdx) return "past";
+        if (dayIdx > todayIdx) return "future";
+        const now = new Date();
+        const cur = now.getHours() * 60 + now.getMinutes();
+        const s = parseTime(p.time);
+        const e = parseTime(p.time.split("–")[1]);
+        if (cur >= s && cur < e) return "current";
+        if (cur >= e) return "past";
+        if (cur < s && (s - cur) <= 120) return "next";
+        return "future";
+      })()
+    }));
     const extended = (extendedOn ? EXTENDED : []).map(ext => ({
       ...ext, _type: "extended", _icon: ext.icon,
       _state: getExtState(EXTENDED.indexOf(ext), dayIdx)
     }));
-    const all = [...school, ...extended];
+    const all = [...school, ...personal, ...extended];
     if (all.length <= 1) {
       return all.map(item => {
         if (item._type === "school") return renderLesson(item, item._state, dayIdx);
@@ -619,6 +654,7 @@ async function init() {
     ]);
     const scheduleData = await scheduleRes.json();
     SCHEDULE = scheduleData.schedule;
+    PERSONAL = scheduleData.personal || {};
     EXTENDED = scheduleData.extended;
     HOLIDAYS = await holidaysRes.json();
   } catch (e) {
@@ -629,17 +665,15 @@ async function init() {
   const local = loadLocalData();
   if (local) {
     if (local.schedule) SCHEDULE = local.schedule;
+    if (local.personal) PERSONAL = local.personal;
     if (local.extended) EXTENDED = local.extended;
   }
+
+  buildToggles();
 
   if (localStorage.getItem("theme") === "dark") {
     document.body.classList.add("dark");
     document.querySelector(".theme-btn").textContent = "☾";
-  }
-
-  if (extendedOn) {
-    document.getElementById("extendedToggle").checked = true;
-    document.getElementById("extendedLabel").textContent = "ВКЛ";
   }
 
   currentDayIdx = getTodayIndex();
