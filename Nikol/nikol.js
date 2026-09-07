@@ -77,8 +77,9 @@ function getItemsForDay(dayIdx) {
       "Русская литература":"📖","Русский язык":"✏️","Математика":"🔢",
       "Трудовое обучение":"🔧","ОБЖ":"🛡️","Музыка":"🎵",
       "Человек и мир":"🌍","Изобразительное искусство":"🎨","Факультатив":"⭐",
-      "Факультатив \"Пиши грамотно\"":"✍️","Факультатив \"Считаем и решаем\"":"🧮","Факультатив \"Вытокi роднай мовы\"":"🗣️",
-      "Факультатив \"Решение текстовых задач\"":"📝"
+      "Факультатив \"Пиши грамотно\"":"✍️","Факультатив \"Считаем и решаем\"":"🧮",      "Факультатив \"Вытокi роднай мовы\"":"🗣️",
+      "Факультатив \"Решение текстовых задач\"":"📝",
+      "Кружок \"Ритмика и танец\"":"💃"
     };
     return { n: s.n, time: s.time, subj: s.subj, icon: iconMap[s.subj] || "📋", type: "school", paid: s.paid };
   });
@@ -86,11 +87,7 @@ function getItemsForDay(dayIdx) {
 
   let extended = [];
   if (showExtended && !isWeekend && school.length > 0) {
-    const dayLessons = (SCHOOL[dayIdx] || {}).lessons || [];
-    if (dayLessons.length > 0) {
-      const lastLessonEnd = parseTime(dayLessons[dayLessons.length - 1].time) + 45;
-      extended = EXTENDED.filter(ext => parseTime(ext.time) >= lastLessonEnd).map(e => ({...e, type:"extended"}));
-    }
+    extended = EXTENDED.map(e => ({...e, type:"extended"}));
   }
 
   if (personal.length === 0 && extended.length === 0) return school;
