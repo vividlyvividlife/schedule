@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.tgeveryday.app'
+    namespace 'com.schedule.app'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.tgeveryday.app"
+        applicationId "com.schedule.app"
         minSdk 26
         targetSdk 35
         versionCode 1

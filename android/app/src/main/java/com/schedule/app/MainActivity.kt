@@ -1,4 +1,4 @@
-package com.tgeveryday.app
+package com.schedule.app
 
 import android.content.Intent
 import android.net.Uri
