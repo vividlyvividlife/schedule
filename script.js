@@ -307,7 +307,7 @@ function renderMergeCard(group, dayIdx) {
 
   const rows = group.map(item => {
     const labelCls = item._type;
-    const labelText = item._type === "school" ? "Урок" : "Продлёнка";
+    const labelText = item._type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : "Продлёнка";
     const itemStart = parseTime(item.time);
     const itemEnd = parseTime(item.time.split("–")[1]);
     const rowState = getCardState(dayIdx, item.time);
