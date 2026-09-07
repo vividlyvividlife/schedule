@@ -247,6 +247,7 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(Intent.createChooser(intent, "Выберите JSON файл"), FILE_PICKER_REQUEST)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_PICKER_REQUEST && resultCode == RESULT_OK) {
@@ -257,6 +258,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        if (requestCode == 9999 && resultCode == RESULT_OK) {
+            val uri = data?.getParcelableExtra<android.net.Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            pickerCallback?.invoke(uri)
+        }
+        if (requestCode == 9999) pickerCallback = null
     }
 
     private fun importJson(jsonStr: String) {
@@ -434,16 +440,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() { if (webView.canGoBack()) webView.goBack() else super.onBackPressed() }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 9999 && resultCode == RESULT_OK) {
-            val uri = data?.getParcelableExtra<android.net.Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-            pickerCallback?.invoke(uri)
-        }
-        pickerCallback = null
-    }
 
     // ── Reminders / Notifications ────────────────────────────────────
 
