@@ -8,4 +8,10 @@
         <item name="android:statusBarColor">#141420</item>
         <item name="android:navigationBarColor">#141420</item>
     </style>
+
+    <style name="Theme.Schedule.Dialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="colorPrimary">#5b6abf</item>
+        <item name="colorSecondary">#8b9de8</item>
+        <item name="dialogCornerRadius">16dp</item>
+    </style>
 </resources>

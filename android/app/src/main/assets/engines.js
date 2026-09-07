@@ -248,6 +248,212 @@ function downloadTxt(filename, content) {
   URL.revokeObjectURL(a.href);
 }
 
+/* ===== ЛОКАЛЬНЫЕ ДАННЫЕ + CRUD ===== */
+
+const DATA_KEY = "tg_local_data";
+const EDIT_KEY = "tg_edit_mode";
+
+function loadLocalData() {
+  try { return JSON.parse(localStorage.getItem(DATA_KEY)); } catch { return null; }
+}
+function saveLocalData(data) {
+  localStorage.setItem(DATA_KEY, JSON.stringify(data));
+}
+function isEditMode() {
+  return localStorage.getItem(EDIT_KEY) === "true";
+}
+function toggleEditMode() {
+  const v = !isEditMode();
+  localStorage.setItem(EDIT_KEY, v);
+  return v;
+}
+
+function getScheduleData() {
+  const local = loadLocalData();
+  if (local && local.schedule) return local.schedule;
+  return null;
+}
+function getPersonalData() {
+  const local = loadLocalData();
+  if (local && local.personal) return local.personal;
+  return null;
+}
+function getExtendedData() {
+  const local = loadLocalData();
+  if (local && local.extended) return local.extended;
+  return null;
+}
+
+function mergeWithLocal(defaultData, section) {
+  const local = loadLocalData();
+  if (local && local[section]) return local[section];
+  return defaultData;
+}
+
+function syncFromWeb(callback) {
+  const url = "https://vividlyvividlife.github.io/schedule/timeSchedule.json";
+  fetch(url).then(r => r.json()).then(data => {
+    saveLocalData(data);
+    if (callback) callback(true, data);
+  }).catch(e => {
+    if (callback) callback(false, null);
+  });
+}
+
+function exportLocalData() {
+  const data = loadLocalData();
+  if (!data) return null;
+  return JSON.stringify(data, null, 2);
+}
+
+function importLocalData(jsonStr, callback) {
+  try {
+    const data = JSON.parse(jsonStr);
+    if (!data.schedule) throw new Error("Неверный формат");
+    saveLocalData(data);
+    if (callback) callback(true, data);
+  } catch (e) {
+    if (callback) callback(false, null);
+  }
+}
+
+function resetLocalData(callback) {
+  localStorage.removeItem(DATA_KEY);
+  if (callback) callback();
+}
+
+/* CRUD: Lessons */
+function addLesson(dayIdx, lesson, callback) {
+  const data = loadLocalData();
+  if (!data) return;
+  if (!data.schedule[dayIdx]) return;
+  data.schedule[dayIdx].lessons.push(lesson);
+  data.schedule[dayIdx].lessons.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  saveLocalData(data);
+  if (callback) callback();
+}
+
+function updateLesson(dayIdx, lessonIdx, lesson, callback) {
+  const data = loadLocalData();
+  if (!data || !data.schedule[dayIdx]) return;
+  data.schedule[dayIdx].lessons[lessonIdx] = lesson;
+  saveLocalData(data);
+  if (callback) callback();
+}
+
+function deleteLesson(dayIdx, lessonIdx, callback) {
+  const data = loadLocalData();
+  if (!data || !data.schedule[dayIdx]) return;
+  data.schedule[dayIdx].lessons.splice(lessonIdx, 1);
+  saveLocalData(data);
+  if (callback) callback();
+}
+
+/* CRUD: Personal */
+function addPersonal(dayIdx, item, callback) {
+  const data = loadLocalData();
+  if (!data) return;
+  if (!data.personal[dayIdx]) data.personal[dayIdx] = [];
+  data.personal[dayIdx].push(item);
+  data.personal[dayIdx].sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  saveLocalData(data);
+  if (callback) callback();
+}
+
+function updatePersonal(dayIdx, itemIdx, item, callback) {
+  const data = loadLocalData();
+  if (!data || !data.personal[dayIdx]) return;
+  data.personal[dayIdx][itemIdx] = item;
+  saveLocalData(data);
+  if (callback) callback();
+}
+
+function deletePersonal(dayIdx, itemIdx, callback) {
+  const data = loadLocalData();
+  if (!data || !data.personal[dayIdx]) return;
+  data.personal[dayIdx].splice(itemIdx, 1);
+  if (data.personal[dayIdx].length === 0) delete data.personal[dayIdx];
+  saveLocalData(data);
+  if (callback) callback();
+}
+
+/* CRUD: Extended */
+function addExtended(item, callback) {
+  const data = loadLocalData();
+  if (!data) return;
+  data.extended.push(item);
+  data.extended.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  saveLocalData(data);
+  if (callback) callback();
+}
+
+function updateExtended(idx, item, callback) {
+  const data = loadLocalData();
+  if (!data) return;
+  data.extended[idx] = item;
+  saveLocalData(data);
+  if (callback) callback();
+}
+
+function deleteExtended(idx, callback) {
+  const data = loadLocalData();
+  if (!data) return;
+  data.extended.splice(idx, 1);
+  saveLocalData(data);
+  if (callback) callback();
+}
+
+/* ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ===== */
+
+function showModal(title, fields, onSave) {
+  let existing = document.getElementById("editModal");
+  if (existing) existing.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "editModal";
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">${title}</div>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        ${fields.map(f => {
+          if (f.type === "select") {
+            return `<label class="modal-label">${f.label}</label>
+              <select class="modal-input" data-field="${f.key}">
+                ${f.options.map(o => `<option value="${o.value}" ${o.value === f.value ? "selected" : ""}>${o.label}</option>`).join("")}
+              </select>`;
+          }
+          return `<label class="modal-label">${f.label}</label>
+            <input class="modal-input" data-field="${f.key}" type="${f.type || "text"}" value="${f.value || ""}" placeholder="${f.placeholder || ""}">`;
+        }).join("")}
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Отмена</button>
+        <button class="modal-btn modal-btn-save" id="modalSaveBtn">Сохранить</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+  modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
+
+  document.getElementById("modalSaveBtn").addEventListener("click", () => {
+    const values = {};
+    modal.querySelectorAll(".modal-input").forEach(el => {
+      values[el.dataset.field] = el.value;
+    });
+    closeModal();
+    onSave(values);
+  });
+}
+
+function closeModal() {
+  const m = document.getElementById("editModal");
+  if (m) m.remove();
+}
+
 /* ===== ЗАПУСК ДВИЖКА ===== */
 
 function startEngines(onTick) {

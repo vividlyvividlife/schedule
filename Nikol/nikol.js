@@ -398,6 +398,12 @@ fetch("../timeSchedule.json").then(r => r.json()).then(data => {
   SCHOOL = data.schedule || [];
   PERSONAL = data.personal || {};
   EXTENDED = data.extended || [];
+  const local = loadLocalData();
+  if (local) {
+    if (local.schedule) SCHOOL = local.schedule;
+    if (local.personal) PERSONAL = local.personal;
+    if (local.extended) EXTENDED = local.extended;
+  }
   renderAll();
   renderStatus();
   startEngines(() => { renderStatus(); renderProgress(); });
@@ -410,16 +416,22 @@ fetch("../timeSchedule.json").then(r => r.json()).then(data => {
 const DAY_NAMES_FULL_RU = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
 
 function exportNikolSchool() {
-  const txt = exportScheduleTxt("Расписание уроков · Николь · 2 «А» · СОШ №12", SCHOOL);
+  const local = loadLocalData();
+  const data = (local && local.schedule) ? local.schedule : SCHOOL;
+  const txt = exportScheduleTxt("Расписание уроков · Николь · 2 «А» · СОШ №12", data);
   downloadTxt("Уроки_Николь.txt", txt);
 }
 
 function exportNikolPersonal() {
-  const txt = exportPersonalTxt("Личные занятия · Николь · 2 «А» · СОШ №12", PERSONAL, DAY_NAMES_FULL_RU);
+  const local = loadLocalData();
+  const data = (local && local.personal) ? local.personal : PERSONAL;
+  const txt = exportPersonalTxt("Личные занятия · Николь · 2 «А» · СОШ №12", data, DAY_NAMES_FULL_RU);
   downloadTxt("Занятия_Николь.txt", txt);
 }
 
 function exportNikolExtended() {
-  const txt = exportExtendedTxt("Группа продлённого дня · Николь · 2 «А» · СОШ №12", EXTENDED);
+  const local = loadLocalData();
+  const data = (local && local.extended) ? local.extended : EXTENDED;
+  const txt = exportExtendedTxt("Группа продлённого дня · Николь · 2 «А» · СОШ №12", data);
   downloadTxt("Продлёнка_Николь.txt", txt);
 }

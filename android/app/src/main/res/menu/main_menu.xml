@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_export"
+        android:title="📤 Экспорт"
+        android:icon="@android:drawable/ic_menu_save"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_import"
+        android:title="📥 Импорт"
+        android:icon="@android:drawable/ic_menu_upload"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_edit"
+        android:title="✏️ Редактировать"
+        android:icon="@android:drawable/ic_menu_edit"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_delete"
+        android:title="🗑 Удалить"
+        android:icon="@android:drawable/ic_menu_delete"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_sync"
+        android:title="🔄 Синхронизация"
+        android:icon="@android:drawable/ic_menu_rotate"
+        app:showAsAction="never" />
+</menu>

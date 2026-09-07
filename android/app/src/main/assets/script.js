@@ -626,6 +626,12 @@ async function init() {
     return;
   }
 
+  const local = loadLocalData();
+  if (local) {
+    if (local.schedule) SCHEDULE = local.schedule;
+    if (local.extended) EXTENDED = local.extended;
+  }
+
   if (localStorage.getItem("theme") === "dark") {
     document.body.classList.add("dark");
     document.querySelector(".theme-btn").textContent = "☾";
@@ -649,12 +655,16 @@ async function init() {
 }
 
 function exportSchool() {
-  const txt = exportScheduleTxt("Расписание уроков · 2 «А» · СОШ №12 · 2026–2027", SCHEDULE);
+  const local = loadLocalData();
+  const data = (local && local.schedule) ? local.schedule : SCHEDULE;
+  const txt = exportScheduleTxt("Расписание уроков · 2 «А» · СОШ №12 · 2026–2027", data);
   downloadTxt("Уроки_2А.txt", txt);
 }
 
 function exportExtended() {
-  const txt = exportExtendedTxt("Группа продлённого дня · 2 «А» · СОШ №12", EXTENDED);
+  const local = loadLocalData();
+  const data = (local && local.extended) ? local.extended : EXTENDED;
+  const txt = exportExtendedTxt("Группа продлённого дня · 2 «А» · СОШ №12", data);
   downloadTxt("Продлёнка_2А.txt", txt);
 }
 
