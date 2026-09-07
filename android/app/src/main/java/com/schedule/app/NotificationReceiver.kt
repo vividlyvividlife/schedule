@@ -6,6 +6,8 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 
@@ -16,14 +18,23 @@ class NotificationReceiver : BroadcastReceiver() {
         const val EXTRA_TITLE = "title"
         const val EXTRA_TEXT = "text"
         const val EXTRA_NOTIF_ID = "notif_id"
+        const val EXTRA_SOUND = "sound"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Расписание"
         val text = intent.getStringExtra(EXTRA_TEXT) ?: ""
         val notifId = intent.getIntExtra(EXTRA_NOTIF_ID, System.currentTimeMillis().toInt())
+        val soundType = intent.getStringExtra(EXTRA_SOUND) ?: "default"
 
         createChannel(context)
+
+        val soundUri: Uri = when (soundType) {
+            "school" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            "gentle" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            "urgent" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            else -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        }
 
         val launchIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -41,6 +52,8 @@ class NotificationReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .setSound(soundUri)
+            .setVibrate(longArrayOf(0, 300, 200, 300))
             .build()
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -56,6 +69,7 @@ class NotificationReceiver : BroadcastReceiver() {
             ).apply {
                 description = "Оповещения о начале и конце уроков"
                 enableVibration(true)
+                vibrationPattern = longArrayOf(0, 300, 200, 300)
             }
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)

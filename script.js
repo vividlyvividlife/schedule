@@ -529,26 +529,39 @@ function toggleReminder(type, dayIdx, itemIdx, time, subj) {
 function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
   const labels = { school: "Урок", personal: "Занятие", extended: "Продлёнка" };
   const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+  const existing = getReminder(type, dayIdx, itemIdx, time);
   const d = document.createElement("div");
   d.className = "reminder-dialog-overlay";
   d.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center;";
   d.innerHTML = `
-    <div style="background:var(--card);border-radius:16px;padding:20px;width:280px;color:var(--text);">
+    <div style="background:var(--card);border-radius:16px;padding:20px;width:290px;color:var(--text);">
       <div style="font-size:16px;font-weight:600;margin-bottom:12px;">🔔 Напоминание</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
         ${labels[type]} · ${dayNames[dayIdx]} · ${time}<br>${subj}
       </div>
-      <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Напомнить:</div>
-      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
-        <button class="reminder-chip" data-min="5">5 мин</button>
-        <button class="reminder-chip" data-min="10">10 мин</button>
-        <button class="reminder-chip" data-min="15">15 мин</button>
-        <button class="reminder-chip" data-min="30">30 мин</button>
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Повтор:</div>
+      <div style="display:flex;gap:6px;margin-bottom:14px;" id="repeatGroup">
+        <button class="reminder-chip repeat-chip active" data-repeat="weekly">🔄 Еженедельно</button>
+        <button class="reminder-chip repeat-chip" data-repeat="once">1️⃣ Один раз</button>
+      </div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Напомнить за:</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;" id="minGroup">
+        <button class="reminder-chip min-chip" data-min="5">5 мин</button>
+        <button class="reminder-chip min-chip" data-min="10">10 мин</button>
+        <button class="reminder-chip min-chip" data-min="15">15 мин</button>
+        <button class="reminder-chip min-chip" data-min="30">30 мин</button>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
         <span style="font-size:13px;color:var(--text);">Своё:</span>
         <input id="reminderCustomMin" type="number" min="1" max="1440" placeholder="мин"
           style="flex:1;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;">
+      </div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Мелодия:</div>
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;" id="soundGroup">
+        <button class="reminder-chip sound-chip active" data-sound="default">🔔 Системный</button>
+        <button class="reminder-chip sound-chip" data-sound="school">🏫 Звонок</button>
+        <button class="reminder-chip sound-chip" data-sound="gentle">🎵 Мягкий</button>
+        <button class="reminder-chip sound-chip" data-sound="urgent">⚡ Срочный</button>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="this.closest('.reminder-dialog-overlay').remove()" style="flex:1;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;">Отмена</button>
@@ -556,26 +569,64 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
       </div>
     </div>`;
   document.body.appendChild(d);
-  d.querySelectorAll(".reminder-chip").forEach(chip => {
-    chip.style.cssText = "padding:6px 12px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
+
+  d._selectedRepeat = existing ? existing.repeat : "weekly";
+  d._selectedMin = existing ? existing.mins : null;
+  d._selectedSound = existing ? (existing.sound || "default") : "default";
+
+  const soundUris = {
+    default: "content://settings/system/notification_sound",
+    school: "content://settings/system/notification_sound",
+    gentle: "content://settings/system/notification_sound",
+    urgent: "content://settings/system/notification_sound"
+  };
+
+  d.querySelectorAll(".repeat-chip").forEach(chip => {
+    chip.style.cssText = "padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
+    if (chip.dataset.repeat === d._selectedRepeat) { chip.style.background = "var(--accent)"; chip.style.color = "#fff"; }
     chip.onclick = () => {
-      d.querySelectorAll(".reminder-chip").forEach(c => { c.style.background = "transparent"; c.style.color = "var(--text)"; });
+      d.querySelectorAll(".repeat-chip").forEach(c => { c.style.background = "transparent"; c.style.color = "var(--text)"; });
+      chip.style.background = "var(--accent)";
+      chip.style.color = "#fff";
+      d._selectedRepeat = chip.dataset.repeat;
+    };
+  });
+
+  d.querySelectorAll(".min-chip").forEach(chip => {
+    chip.style.cssText = "padding:6px 12px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
+    if (d._selectedMin && parseInt(chip.dataset.min) === d._selectedMin) { chip.style.background = "var(--accent)"; chip.style.color = "#fff"; }
+    chip.onclick = () => {
+      d.querySelectorAll(".min-chip").forEach(c => { c.style.background = "transparent"; c.style.color = "var(--text)"; });
       chip.style.background = "var(--accent)";
       chip.style.color = "#fff";
       d.querySelector("#reminderCustomMin").value = "";
       d._selectedMin = parseInt(chip.dataset.min);
     };
   });
+
+  d.querySelectorAll(".sound-chip").forEach(chip => {
+    chip.style.cssText = "padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
+    if (chip.dataset.sound === d._selectedSound) { chip.style.background = "var(--accent)"; chip.style.color = "#fff"; }
+    chip.onclick = () => {
+      d.querySelectorAll(".sound-chip").forEach(c => { c.style.background = "transparent"; c.style.color = "var(--text)"; });
+      chip.style.background = "var(--accent)";
+      chip.style.color = "#fff";
+      d._selectedSound = chip.dataset.sound;
+    };
+  });
+
   d.querySelector("#reminderSaveBtn").onclick = () => {
     const custom = parseInt(d.querySelector("#reminderCustomMin").value);
     const mins = custom || d._selectedMin;
     if (!mins || mins < 1) { if (window.Android) Android.showToast("Укажи минуты"); return; }
     const key = getReminderKey(type, dayIdx, itemIdx, time);
-    reminders.push({ key, type, dayIdx, itemIdx, time, subj, mins, dayIdx });
+    reminders = reminders.filter(r => r.key !== key);
+    reminders.push({ key, type, dayIdx, itemIdx, time, subj, mins, repeat: d._selectedRepeat, sound: d._selectedSound });
     saveReminders();
     d.remove();
     renderAll();
-    if (window.Android) Android.showToast("Напоминание за " + mins + " мин ✓");
+    const rptLabel = d._selectedRepeat === "weekly" ? "еженедельно" : "один раз";
+    if (window.Android) Android.showToast("Напоминание за " + mins + " мин ✓ (" + rptLabel + ")");
   };
   d.onclick = (e) => { if (e.target === d) d.remove(); };
 }

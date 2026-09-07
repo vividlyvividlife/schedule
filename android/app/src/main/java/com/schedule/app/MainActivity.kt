@@ -484,17 +484,27 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val notifId = key.hashCode()
+                val sound = r.optString("sound", "default")
                 val intent = Intent(this, NotificationReceiver::class.java).apply {
                     putExtra(NotificationReceiver.EXTRA_TITLE, "$typeLabel: $subj")
                     putExtra(NotificationReceiver.EXTRA_TEXT, "${dayNamesFull[dayIdx]} · Начало в ${parts[0]} · Через $mins мин")
                     putExtra(NotificationReceiver.EXTRA_NOTIF_ID, notifId)
+                    putExtra(NotificationReceiver.EXTRA_SOUND, sound)
                 }
                 val pending = PendingIntent.getBroadcast(
                     this, notifId, intent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
-                am.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, cal.timeInMillis, pending)
-                Log.d(TAG, "Alarm set: $key at ${cal.time}")
+
+                val repeat = r.optString("repeat", "weekly")
+                if (repeat == "weekly") {
+                    val interval = 7L * 24 * 60 * 60 * 1000
+                    am.setRepeating(android.app.AlarmManager.RTC_WAKEUP, cal.timeInMillis, interval, pending)
+                    Log.d(TAG, "Weekly alarm set: $key at ${cal.time}")
+                } else {
+                    am.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, cal.timeInMillis, pending)
+                    Log.d(TAG, "Once alarm set: $key at ${cal.time}")
+                }
             }
 
             val editor = getSharedPreferences("schedule_prefs", MODE_PRIVATE).edit()
