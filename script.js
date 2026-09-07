@@ -657,15 +657,25 @@ async function init() {
 function exportSchool() {
   const local = loadLocalData();
   const data = (local && local.schedule) ? local.schedule : SCHEDULE;
-  const txt = exportScheduleTxt("Расписание уроков · 2 «А» · СОШ №12 · 2026–2027", data);
-  downloadTxt("Уроки_2А.txt", txt);
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "Уроки_2А.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function exportExtended() {
   const local = loadLocalData();
   const data = (local && local.extended) ? local.extended : EXTENDED;
-  const txt = exportExtendedTxt("Группа продлённого дня · 2 «А» · СОШ №12", data);
-  downloadTxt("Продлёнка_2А.txt", txt);
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "Продлёнка_2А.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function exportFullJson() {

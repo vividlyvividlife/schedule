@@ -418,22 +418,37 @@ const DAY_NAMES_FULL_RU = ["Понедельник", "Вторник", "Сред
 function exportNikolSchool() {
   const local = loadLocalData();
   const data = (local && local.schedule) ? local.schedule : SCHOOL;
-  const txt = exportScheduleTxt("Расписание уроков · Николь · 2 «А» · СОШ №12", data);
-  downloadTxt("Уроки_Николь.txt", txt);
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "Уроки_Николь.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function exportNikolPersonal() {
   const local = loadLocalData();
   const data = (local && local.personal) ? local.personal : PERSONAL;
-  const txt = exportPersonalTxt("Личные занятия · Николь · 2 «А» · СОШ №12", data, DAY_NAMES_FULL_RU);
-  downloadTxt("Занятия_Николь.txt", txt);
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "Занятия_Николь.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function exportNikolExtended() {
   const local = loadLocalData();
   const data = (local && local.extended) ? local.extended : EXTENDED;
-  const txt = exportExtendedTxt("Группа продлённого дня · Николь · 2 «А» · СОШ №12", data);
-  downloadTxt("Продлёнка_Николь.txt", txt);
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "Продлёнка_Николь.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function exportFullJson() {
