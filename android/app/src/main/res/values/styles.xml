@@ -12,5 +12,15 @@
     <style name="Theme.Schedule.Dialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
         <item name="colorPrimary">#5b6abf</item>
         <item name="colorSecondary">#8b9de8</item>
+        <item name="android:textColorPrimary">#ededf4</item>
+        <item name="android:textColorSecondary">#9595b4</item>
+        <item name="android:background">#1c1c30</item>
+        <item name="buttonBarPositiveButtonStyle">@style/DialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/DialogButton</item>
+        <item name="dialogCornerRadius">16dp</item>
+    </style>
+
+    <style name="DialogButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">#8b9de8</item>
     </style>
 </resources>
