@@ -574,7 +574,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
 
   d._selectedRepeat = existing ? existing.repeat : "weekly";
   d._selectedMin = existing ? existing.mins : null;
-  d._selectedSound = existing ? (existing.sound || "content://settings/system/notification_sound") : "content://settings/system/notification_sound";
+  d._selectedSound = existing ? (existing.sound || "android.resource://com.schedule.app/raw/notif_ding") : "android.resource://com.schedule.app/raw/notif_ding";
   d._selectedVibro = existing ? (existing.vibro !== false) : true;
 
   d.querySelectorAll(".repeat-chip").forEach(chip => {
@@ -637,10 +637,10 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
         list.appendChild(item);
       });
     } catch (e) {
-      d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">Системный звонок</div>';
+      d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">🔔 Ding (по умолчанию)</div>';
     }
   } else {
-    d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">Системный звонок</div>';
+    d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">🔔 Ding (по умолчанию)</div>';
   }
 
   d.querySelector("#reminderSaveBtn").onclick = () => {
