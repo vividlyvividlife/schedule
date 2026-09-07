@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merge Progress Bars Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #141420; color: #ededf4; padding: 24px; max-width: 500px; margin: 0 auto; }
+  h2 { font-size: 14px; margin-bottom: 12px; color: #9595b4; }
+  .time-label { font-size: 20px; font-weight: 700; color: #ededf4; margin-bottom: 8px; text-align: center; }
+  .controls { display: flex; gap: 8px; margin-bottom: 20px; justify-content: center; }
+  .controls button { padding: 6px 16px; border: 1px solid #333352; border-radius: 8px; background: #1c1c30; color: #ededf4; cursor: pointer; font-size: 13px; }
+  .controls button:hover { background: #262c52; }
+  .controls button.active { background: #8b9de8; color: #141420; border-color: #8b9de8; }
+
+  .day-block { margin-bottom: 24px; }
+  .day-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+  .merge-card { border-radius: 14px; border-left: 3px solid #c46b8a; background: #1c1c30; margin-bottom: 12px; overflow: hidden; }
+  .merge-card.past { opacity: 0.5; }
+  .merge-card.future { opacity: 0.7; }
+  .merge-card.next { opacity: 0.85; }
+  .merge-card.current { opacity: 1; }
+
+  .merge-row { position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 14px; overflow: hidden; }
+  .merge-row + .merge-row { border-top: 1px solid #333352; }
+  .merge-row.current::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--progress, 0%); background: linear-gradient(90deg, rgba(139,157,232,0.15), rgba(139,157,232,0.05)); transition: width 0.3s linear; }
+  .merge-row.current::after { content: ''; position: absolute; left: var(--progress, 0%); top: 0; bottom: 0; width: 2px; background: #8b9de8; transition: left 0.3s linear; }
+  .merge-row.past { opacity: 0.5; }
+
+  .merge-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; z-index: 1; }
+  .merge-icon.school { background: rgba(139,157,232,0.15); }
+  .merge-icon.extended { background: rgba(232,168,76,0.15); }
+
+  .merge-info { flex: 1; z-index: 1; }
+  .merge-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .merge-label.school { color: #8b9de8; }
+  .merge-label.extended { color: #e8a84c; }
+  .merge-time { font-size: 12px; color: #9595b4; }
+  .merge-subj { font-size: 14px; font-weight: 600; }
+  .merge-countdown { font-size: 12px; color: #e8a84c; margin-top: 2px; }
+
+  .legend { margin-top: 32px; padding: 16px; background: #1c1c30; border-radius: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .legend-swatch { width: 24px; height: 4px; border-radius: 2px; }
+
+  .input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .input-row label { font-size: 13px; color: #9595b4; }
+  .input-row input[type="range"] { flex: 1; accent-color: #8b9de8; }
+  .input-row span { font-size: 14px; font-weight: 600; min-width: 40px; }
+</style>
+</head>
+<body>
+
+<div class="time-label" id="clock">11:40</div>
+<div class="input-row">
+  <label>Время:</label>
+  <input type="range" id="timeSlider" min="660" max="780" value="700" step="1">
+  <span id="timeDisplay">11:40</span>
+</div>
+<div class="controls">
+  <button onclick="setTime(700)">11:40</button>
+  <button onclick="setTime(715)">11:55</button>
+  <button onclick="setTime(720)">12:00</button>
+  <button onclick="setTime(740)">12:20</button>
+  <button onclick="setTime(760)">12:40</button>
+  <button onclick="setTime(765)">12:45</button>
+</div>
+
+<h2>Четверг — Урок + Продлёнка (перекрытие)</h2>
+<div class="day-block">
+  <div class="merge-card current" id="card1">
+    <div class="merge-row current" data-start="700" data-end="720" style="--progress: 0%">
+      <div class="merge-icon extended">⏰</div>
+      <div class="merge-info">
+        <div class="merge-label extended">Продлёнка</div>
+        <div class="merge-time">11:40–12:00</div>
+        <div class="merge-subj">Приём в группу</div>
+        <div class="merge-countdown"></div>
+      </div>
+    </div>
+    <div class="merge-row current" data-start="715" data-end="760" style="--progress: 0%">
+      <div class="merge-icon school">⭐</div>
+      <div class="merge-info">
+        <div class="merge-label school">Урок</div>
+        <div class="merge-time">11:55–12:40</div>
+        <div class="merge-subj">Факультатив</div>
+        <div class="merge-countdown"></div>
+      </div>
+    </div>
+    <div class="merge-row current" data-start="720" data-end="765" style="--progress: 0%">
+      <div class="merge-icon extended">⏰</div>
+      <div class="merge-info">
+        <div class="merge-label extended">Продлёнка</div>
+        <div class="merge-time">12:00–12:45</div>
+        <div class="merge-subj">Занятия по интересам</div>
+        <div class="merge-countdown"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>Среда — Урок + Продлёнка (перекрытие)</h2>
+<div class="day-block">
+  <div class="merge-card current" id="card2">
+    <div class="merge-row current" data-start="700" data-end="720" style="--progress: 0%">
+      <div class="merge-icon extended">⏰</div>
+      <div class="merge-info">
+        <div class="merge-label extended">Продлёнка</div>
+        <div class="merge-time">11:40–12:00</div>
+        <div class="merge-subj">Приём в группу</div>
+        <div class="merge-countdown"></div>
+      </div>
+    </div>
+    <div class="merge-row current" data-start="715" data-end="760" style="--progress: 0%">
+      <div class="merge-icon school">⭐</div>
+      <div class="merge-info">
+        <div class="merge-label school">Урок</div>
+        <div class="merge-time">11:55–12:40</div>
+        <div class="merge-subj">Факультатив</div>
+        <div class="merge-countdown"></div>
+      </div>
+    </div>
+    <div class="merge-row current" data-start="720" data-end="765" style="--progress: 0%">
+      <div class="merge-icon extended">⏰</div>
+      <div class="merge-info">
+        <div class="merge-label extended">Продлёнка</div>
+        <div class="merge-time">12:00–12:45</div>
+        <div class="merge-subj">Занятия по интересам</div>
+        <div class="merge-countdown"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-swatch" style="background: linear-gradient(90deg, rgba(139,157,232,0.15), rgba(139,157,232,0.05));"></div> Прогресс-бар (собственный для каждой строки)</div>
+  <div class="legend-item"><div class="legend-swatch" style="background: #8b9de8; width: 2px;"></div> Акцентная линия (идёт вместе с прогрессом)</div>
+  <div class="legend-item"><div class="legend-swatch" style="background: #c46b8a;"></div> Левая граница merge-card</div>
+</div>
+
+<script>
+function minToHM(m) {
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  return `${h}:${String(min).padStart(2, '0')}`;
+}
+
+function updateProgress() {
+  const cur = parseInt(document.getElementById('timeSlider').value);
+  document.getElementById('timeDisplay').textContent = minToHM(cur);
+  document.getElementById('clock').textContent = minToHM(cur);
+
+  document.querySelectorAll('.merge-row').forEach(row => {
+    const start = parseInt(row.dataset.start);
+    const end = parseInt(row.dataset.end);
+    const rowEl = row;
+
+    if (cur >= start && cur < end) {
+      rowEl.classList.add('current');
+      rowEl.classList.remove('past');
+      const pct = ((cur - start) / (end - start)) * 100;
+      rowEl.style.setProperty('--progress', pct + '%');
+      const cdEl = rowEl.querySelector('.merge-countdown');
+      if (cdEl) {
+        const rem = end - cur;
+        cdEl.textContent = `${Math.floor(rem/60)}ч ${rem%60} мин`;
+        cdEl.style.display = '';
+      }
+    } else if (cur >= end) {
+      rowEl.classList.remove('current');
+      rowEl.classList.add('past');
+      rowEl.style.setProperty('--progress', '100%');
+      const cdEl = rowEl.querySelector('.merge-countdown');
+      if (cdEl) cdEl.style.display = 'none';
+    } else {
+      rowEl.classList.remove('current', 'past');
+      rowEl.style.setProperty('--progress', '0%');
+      const cdEl = rowEl.querySelector('.merge-countdown');
+      if (cdEl) {
+        const diff = start - cur;
+        cdEl.textContent = `через ${Math.floor(diff/60)}ч ${diff%60} мин`;
+        cdEl.style.display = '';
+        cdEl.style.color = '#9595b4';
+      }
+    }
+  });
+}
+
+function setTime(m) {
+  document.getElementById('timeSlider').value = m;
+  updateProgress();
+}
+
+document.getElementById('timeSlider').addEventListener('input', updateProgress);
+updateProgress();
+</script>
+</body>
+</html>

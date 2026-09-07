@@ -155,6 +155,7 @@ function renderSingle(item, dayIdx) {
         <div class="lesson-info">
           <div class="lesson-time">${item.time}</div>
           <div class="lesson-subject">${item.subj}${paidBadge}</div>
+          ${item.room ? `<div class="lesson-room">${item.room}</div>` : ""}
           ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>
@@ -190,6 +191,7 @@ function renderMerge(group, dayIdx) {
           <div class="merge-label ${labelCls}">${labelText}</div>
           <div class="merge-time">${item.time}</div>
           <div class="merge-subj">${item.subj}</div>
+          ${item.room ? `<div class="merge-room">${item.room}</div>` : ""}
           ${cdAttr ? `<div class="merge-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
       </div>`;
@@ -404,3 +406,20 @@ fetch("../timeSchedule.json").then(r => r.json()).then(data => {
   renderStatus();
   startEngines(() => { renderStatus(); renderProgress(); });
 });
+
+const DAY_NAMES_FULL_RU = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+
+function exportNikolSchool() {
+  const txt = exportScheduleTxt("Расписание уроков · Николь · 2 «А» · СОШ №12", SCHOOL);
+  downloadTxt("Уроки_Николь.txt", txt);
+}
+
+function exportNikolPersonal() {
+  const txt = exportPersonalTxt("Личные занятия · Николь · 2 «А» · СОШ №12", PERSONAL, DAY_NAMES_FULL_RU);
+  downloadTxt("Занятия_Николь.txt", txt);
+}
+
+function exportNikolExtended() {
+  const txt = exportExtendedTxt("Группа продлённого дня · Николь · 2 «А» · СОШ №12", EXTENDED);
+  downloadTxt("Продлёнка_Николь.txt", txt);
+}
