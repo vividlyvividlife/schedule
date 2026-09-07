@@ -192,62 +192,6 @@ function updateCardStates() {
 
 /* ===== ЭКСПОРТ В TXT ===== */
 
-const DAY_NAMES_FULL = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
-
-function exportScheduleTxt(title, scheduleData) {
-  let txt = `${title}\n${"=".repeat(title.length)}\n\n`;
-  scheduleData.forEach(day => {
-    if (day.lessons.length === 0) return;
-    txt += `📅 ${day.name}\n`;
-    day.lessons.forEach(l => {
-      const paid = l.paid ? " 💰" : "";
-      const room = l.room ? ` · ${l.room}` : "";
-      txt += `  ${l.n ? l.n + ". " : ""}${l.time} — ${l.subj}${room}${paid}\n`;
-    });
-    txt += "\n";
-  });
-  return txt;
-}
-
-function exportPersonalTxt(title, personalData, dayNames) {
-  let txt = `${title}\n${"=".repeat(title.length)}\n\n`;
-  Object.keys(personalData).forEach(dayIdx => {
-    const items = personalData[dayIdx];
-    if (!items || items.length === 0) return;
-    txt += `📅 ${dayNames[dayIdx]}\n`;
-    items.forEach(p => {
-      const room = p.room ? ` · ${p.room}` : "";
-      txt += `  ${p.time} — ${p.subj}${room}\n`;
-    });
-    txt += "\n";
-  });
-  return txt;
-}
-
-function exportExtendedTxt(title, extendedData) {
-  let txt = `${title}\n${"=".repeat(title.length)}\n\n`;
-  txt += `📅 Каждый учебный день (пн–пт)\n`;
-  extendedData.forEach(e => {
-    const room = e.room ? ` · ${e.room}` : "";
-    txt += `  ${e.time} — ${e.subj}${room}\n`;
-  });
-  txt += "\n";
-  return txt;
-}
-
-function downloadTxt(filename, content) {
-  if (window.Android && window.Android.exportTxt) {
-    window.Android.exportTxt(filename, content);
-    return;
-  }
-  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
 /* ===== ЛОКАЛЬНЫЕ ДАННЫЕ + CRUD ===== */
 
 const DATA_KEY = "tg_local_data";

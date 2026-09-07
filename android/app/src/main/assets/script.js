@@ -678,45 +678,4 @@ function exportExtended() {
   URL.revokeObjectURL(a.href);
 }
 
-function exportFullJson() {
-  const local = loadLocalData();
-  const out = {
-    schedule: (local && local.schedule) ? local.schedule : SCHEDULE,
-    personal: (local && local.personal) ? local.personal : (typeof PERSONAL !== 'undefined' ? PERSONAL : {}),
-    extended: (local && local.extended) ? local.extended : EXTENDED
-  };
-  const json = JSON.stringify(out, null, 2);
-  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "raspisanie_2A.json";
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function importFullJson() {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".json,application/json";
-  input.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (!data.schedule && !data.extended) { alert("Неверный формат JSON"); return; }
-        const existing = loadLocalData() || { schedule: [], personal: {}, extended: [] };
-        if (data.schedule) existing.schedule = data.schedule;
-        if (data.personal) existing.personal = data.personal;
-        if (data.extended) existing.extended = data.extended;
-        saveLocalData(existing);
-        location.reload();
-      } catch (err) { alert("Ошибка: " + err.message); }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
-
 init();
