@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
-            putExtra(Intent.EXTRA_MIME arrayOf("text/plain", "application/json", "text/*"))
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/plain", "application/json", "text/*"))
         }
         startActivityForResult(intent, FILE_PICKER_REQUEST)
     }
