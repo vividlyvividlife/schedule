@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 Log.d(TAG, "Page loaded: $url")
-                queryDataState { invalidateOptionsMenu() }
+                webView.postDelayed({ queryDataState {} }, 1000)
             }
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url?.toString() ?: return false
@@ -122,9 +122,9 @@ class MainActivity : AppCompatActivity() {
     private fun showExportDialog() {
         val options = mutableListOf("💾 Всё расписание (JSON)")
         val handlers = mutableListOf(Runnable { exportFullJson() })
-        if (hasSchedule) { options.add("📄 Только уроки (JSON)"); handlers.add(Runnable { webView.evaluateJavascript("exportSchool()", null) }) }
-        if (hasPersonal) { options.add("🤸 Только занятия (JSON)"); handlers.add(Runnable { webView.evaluateJavascript("exportPersonal()", null) }) }
-        if (hasExtended) { options.add("🎒 Только продлёнка (JSON)"); handlers.add(Runnable { webView.evaluateJavascript("exportExtended()", null) }) }
+        if (hasSchedule) { options.add("📄 Только уроки (JSON)"); handlers.add(Runnable { exportPart("schedule") }) }
+        if (hasPersonal) { options.add("🤸 Только занятия (JSON)"); handlers.add(Runnable { exportPart("personal") }) }
+        if (hasExtended) { options.add("🎒 Только продлёнка (JSON)"); handlers.add(Runnable { exportPart("extended") }) }
         AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
             .setTitle("Экспорт")
             .setItems(options.toTypedArray()) { _, which -> handlers[which].run() }
@@ -136,25 +136,49 @@ class MainActivity : AppCompatActivity() {
         webView.evaluateJavascript(
             """(function() {
                 try {
-                    var local = localStorage.getItem('tg_local_data');
-                    if (local) {
-                        var ld = JSON.parse(local);
-                        if (ld.schedule) SCHEDULE = ld.schedule;
-                        if (ld.personal) PERSONAL = ld.personal;
-                        if (ld.extended) EXTENDED = ld.extended;
-                    }
-                    var out = { schedule: SCHEDULE, personal: PERSONAL, extended: EXTENDED };
+                    var d = JSON.parse(localStorage.getItem('tg_local_data') || '{}');
+                    var local = d;
+                    var sch = (local.schedule && local.schedule.length) ? local.schedule : SCHEDULE;
+                    var pers = (local.personal && Object.keys(local.personal).length) ? local.personal : PERSONAL;
+                    var ext = (local.extended && local.extended.length) ? local.extended : EXTENDED;
+                    var out = { schedule: sch, personal: pers, extended: ext };
                     return JSON.stringify(out, null, 2);
                 } catch(e) { return '{"error":"' + e.message + '"}'; }
             })()"""
-        ) { result ->
-            if (result != null && result != "null") {
-                val json = result.removeSurrounding("\"")
-                    .replace("\\n", "\n")
-                    .replace("\\\"", "\"")
-                    .replace("\\\\", "\\")
-                saveAndShareFile("raspisanie_2A.json", json, "application/json")
+        ) { result -> handleJsonResult(result, "raspisanie_2A.json") }
+    }
+
+    private fun exportPart(type: String) {
+        val names = mapOf("schedule" to "Uroki_2A.json", "personal" to "Zanyatiya_2A.json", "extended" to "Prodlenka_2A.json")
+        webView.evaluateJavascript(
+            """(function() {
+                try {
+                    var d = JSON.parse(localStorage.getItem('tg_local_data') || '{}');
+                    var data = d['$type'] || [];
+                    if (Array.isArray(data) && data.length === 0) {
+                        if ('$type' === 'schedule') data = SCHEDULE;
+                        else if ('$type' === 'personal') data = PERSONAL;
+                        else if ('$type' === 'extended') data = EXTENDED;
+                    }
+                    return JSON.stringify(data, null, 2);
+                } catch(e) { return '{"error":"' + e.message + '"}'; }
+            })()"""
+        ) { result -> handleJsonResult(result, names[type] ?: "export.json") }
+    }
+
+    private fun handleJsonResult(result: String?, filename: String) {
+        if (result != null && result != "null") {
+            val json = result.trim('"')
+                .replace("\\n", "\n")
+                .replace("\\\"", "\"")
+                .replace("\\\\", "\\")
+            if (!json.contains("\"error\"")) {
+                saveAndShareFile(filename, json, "application/json")
+                Log.d(TAG, "Export OK: $filename (${json.length} bytes)")
                 Toast.makeText(this, "JSON экспортирован!", Toast.LENGTH_SHORT).show()
+            } else {
+                Log.e(TAG, "Export JS error: $json")
+                Toast.makeText(this, "Ошибка: $json", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -211,13 +235,12 @@ class MainActivity : AppCompatActivity() {
                 } catch(e) { return 'err:' + e.message; }
             })()"""
         ) { result ->
-            val r = result?.removeSurrounding("\"") ?: "Ошибка"
+            val r = result?.trim('"') ?: "Ошибка"
             if (r.startsWith("ok")) {
                 val what = r.removePrefix("ok:")
                 Log.d(TAG, "Import OK: $what")
                 Toast.makeText(this, "$what импортировано! Перезапускаю...", Toast.LENGTH_SHORT).show()
                 webView.reload()
-                webView.postDelayed({ queryDataState { invalidateOptionsMenu() } }, 2000)
             } else {
                 Log.e(TAG, "Import error: $r")
                 Toast.makeText(this, "Ошибка: $r", Toast.LENGTH_LONG).show()
@@ -230,7 +253,7 @@ class MainActivity : AppCompatActivity() {
     private fun toggleEditMode() {
         Log.d(TAG, "Toggle edit mode")
         webView.evaluateJavascript("toggleEditMode(); 'ok'") {
-            val s = it?.removeSurrounding("\"") ?: ""
+            val s = it?.trim('"') ?: ""
             Toast.makeText(this, if (s == "ok") "Режим редактирования" else "Ошибка", Toast.LENGTH_SHORT).show()
         }
     }
@@ -259,11 +282,10 @@ class MainActivity : AppCompatActivity() {
                 } catch(e) { return e.message; }
             })()"""
         ) { r ->
-            val s = r?.removeSurrounding("\"") ?: ""
+            val s = r?.trim('"') ?: ""
             if (s == "ok") {
                 Toast.makeText(this, "Удалено!", Toast.LENGTH_SHORT).show()
                 webView.reload()
-                webView.postDelayed({ queryDataState { invalidateOptionsMenu() } }, 1000)
             } else Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
         }
     }
@@ -293,23 +315,34 @@ class MainActivity : AppCompatActivity() {
                 try {
                     var d = JSON.parse(localStorage.getItem('tg_local_data') || '{}');
                     var sch = d.schedule || [];
-                    var hasSch = sch.some(function(day){ return day.lessons && day.lessons.length > 0; });
+                    var hasSch = false;
+                    for (var i = 0; i < sch.length; i++) {
+                        if (sch[i] && sch[i].lessons && sch[i].lessons.length > 0) { hasSch = true; break; }
+                    }
                     var pers = d.personal || {};
-                    var hasPers = Object.keys(pers).some(function(k){ return Array.isArray(pers[k]) && pers[k].length > 0; });
+                    var hasPers = false;
+                    var keys = Object.keys(pers);
+                    for (var i = 0; i < keys.length; i++) {
+                        if (Array.isArray(pers[keys[i]]) && pers[keys[i]].length > 0) { hasPers = true; break; }
+                    }
                     var ext = d.extended || [];
-                    return JSON.stringify({schedule:hasSch, personal:hasPers, extended:ext.length>0});
-                } catch(e) { return '{"schedule":false,"personal":false,"extended":false}'; }
+                    var hasExt = ext.length > 0;
+                    return (hasSch ? '1' : '0') + (hasPers ? '1' : '0') + (hasExt ? '1' : '0');
+                } catch(e) { return '000'; }
             })()"""
         ) { result ->
-            val s = result?.removeSurrounding("\"") ?: ""
-            try {
-                val json = org.json.JSONObject(s)
-                hasSchedule = json.optBoolean("schedule", false)
-                hasPersonal = json.optBoolean("personal", false)
-                hasExtended = json.optBoolean("extended", false)
-                Log.d(TAG, "Data state: schedule=$hasSchedule personal=$hasPersonal extended=$hasExtended")
-            } catch (e: Exception) { Log.e(TAG, "queryDataState parse error: $s", e) }
-            runOnUiThread { onDone() }
+            val s = result?.trim('"', ' ') ?: "000"
+            Log.d(TAG, "queryDataState raw='$s'")
+            if (s.length >= 3) {
+                hasSchedule = s[0] == '1'
+                hasPersonal = s[1] == '1'
+                hasExtended = s[2] == '1'
+            }
+            Log.d(TAG, "Data state: schedule=$hasSchedule personal=$hasPersonal extended=$hasExtended")
+            runOnUiThread {
+                invalidateOptionsMenu()
+                onDone()
+            }
         }
     }
 
