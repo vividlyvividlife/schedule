@@ -148,10 +148,11 @@ function updateCardStates() {
     el.className = base + " " + newState;
 
     const info = el.querySelector(".lesson-info, .merge-info");
-    if (!info) return;
-    let cdEl = info.querySelector(".lesson-countdown, .merge-countdown");
+    const isMergeWrapper = el.classList.contains("merge-card");
+    if (!info && !isMergeWrapper) return;
+    let cdEl = info ? info.querySelector(".lesson-countdown, .merge-countdown") : null;
 
-    if (newState === "current") {
+    if (newState === "current" && !isMergeWrapper) {
       el.setAttribute("data-progress", startTime);
       el.setAttribute("data-end", endTime);
       const now = new Date();
@@ -166,7 +167,7 @@ function updateCardStates() {
       cdEl.setAttribute("data-cd-end", endTime);
       cdEl.removeAttribute("data-cd");
       cdEl.textContent = remainingSec(endTime);
-    } else if (newState === "next") {
+    } else if (newState === "next" && !isMergeWrapper) {
       el.removeAttribute("data-progress");
       el.style.removeProperty("--progress");
       if (!cdEl) {
