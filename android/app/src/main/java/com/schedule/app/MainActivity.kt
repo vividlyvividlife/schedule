@@ -152,22 +152,34 @@ class MainActivity : AppCompatActivity() {
             """(function() {
                 try {
                     var data = JSON.parse('$escaped');
-                    if (!data.schedule && !data.extended) throw new Error('Неверный формат JSON');
                     var merged = JSON.parse(localStorage.getItem('tg_local_data') || '{"schedule":[],"personal":{},"extended":[]}');
-                    if (data.schedule) merged.schedule = data.schedule;
-                    if (data.personal) merged.personal = data.personal;
-                    if (data.extended) merged.extended = data.extended;
+                    var what = '';
+                    if (Array.isArray(data) && data.length > 0 && data[0] && data[0].lessons) {
+                        merged.schedule = data;
+                        what = 'Уроки';
+                    } else if (Array.isArray(data) && data.length > 0 && data[0] && data[0].time && data[0].subj && !data[0].lessons) {
+                        merged.extended = data;
+                        what = 'Продлёнка';
+                    } else if (typeof data === 'object' && !Array.isArray(data) && data[0] && Array.isArray(data[0])) {
+                        merged.personal = data;
+                        what = 'Личные занятия';
+                    } else if (data.schedule || data.extended || data.personal) {
+                        if (data.schedule) merged.schedule = data.schedule;
+                        if (data.personal) merged.personal = data.personal;
+                        if (data.extended) merged.extended = data.extended;
+                        what = 'Всё';
+                    } else {
+                        throw new Error('Не удалось определить тип данных');
+                    }
                     localStorage.setItem('tg_local_data', JSON.stringify(merged));
-                    var count = 0;
-                    if (merged.schedule) merged.schedule.forEach(function(d) { if (d && d.lessons) count += d.lessons.length; });
-                    return 'ok:' + count;
+                    return 'ok:' + what;
                 } catch(e) { return 'err:' + e.message; }
             })()"""
         ) { result ->
             val r = result?.removeSurrounding("\"") ?: "Ошибка"
             if (r.startsWith("ok")) {
-                val count = r.removePrefix("ok:")
-                Toast.makeText(this, "Импортировано $count уроков. Перезапускаю...", Toast.LENGTH_SHORT).show()
+                val what = r.removePrefix("ok:")
+                Toast.makeText(this, "$what импортировано! Перезапускаю...", Toast.LENGTH_SHORT).show()
                 webView.reload()
             } else {
                 Toast.makeText(this, "Ошибка: $r", Toast.LENGTH_LONG).show()
