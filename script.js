@@ -61,6 +61,7 @@ const ICONS = {
   "Факультатив \"Считаем и решаем\"": "🧮",
   "Факультатив \"Вытокi роднай мовы\"": "🗣️",
   "Факультатив \"Решение текстовых задач\"": "📝",
+  "Кружок \"Ритмика и танец\"": "💃",
 };
 
 let SCHEDULE = [];
@@ -237,7 +238,7 @@ function renderLesson(l, state, dayIdx) {
   const endTime = parseTime(l.time.split("–")[1]);
   const icon = ICONS[l.subj] || "📋";
   const paidBadge = l.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
-  const num = l.subj && l.subj.startsWith("Факультатив") ? "⭐" : l.n;
+  const num = l.subj && l.subj.startsWith("Факультатив") ? "⭐" : (l.n != null ? l.n : "");
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   const progressStyle = state === "current" ? (() => {
     const now = new Date();
