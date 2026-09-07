@@ -170,13 +170,6 @@ function renderMerge(group, dayIdx) {
   const earliestE = Math.max(...times.map(t => t[1]));
   const state = getCardState(dayIdx, `${Math.floor(earliestS/60)}:${String(earliestS%60).padStart(2,"0")}–${Math.floor(earliestE/60)}:${String(earliestE%60).padStart(2,"0")}`);
   const cls = `merge-card ${state}`;
-  const progressAttr = state === "current" ? `data-progress="${earliestS}" data-end="${earliestE}"` : "";
-  const progressStyle = state === "current" ? (() => {
-    const now = new Date();
-    const cur = now.getHours() * 60 + now.getMinutes();
-    const pct = Math.max(0, Math.min(100, ((cur - earliestS) / (earliestE - earliestS)) * 100));
-    return `style="--progress:${pct}%"`;
-  })() : "";
 
   const rows = group.items.map(item => {
     const labelCls = item.type;
@@ -205,7 +198,7 @@ function renderMerge(group, dayIdx) {
       </div>`;
   }).join("");
 
-  return `<div class="${cls}" data-start="${earliestS}" data-end="${earliestE}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle}>${rows}</div>`;
+  return `<div class="${cls}" data-start="${earliestS}" data-end="${earliestE}" data-day="${dayIdx}" data-state="${state}">${rows}</div>`;
 }
 
 function renderWeekendMsg(dayIdx) {
