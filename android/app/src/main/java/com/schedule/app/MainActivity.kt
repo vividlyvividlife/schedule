@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
     private var hasSchedule = false
     private var hasPersonal = false
     private var hasExtended = false
-    private var _ringtonePlayer: android.media.Ringtone? = null
+    internal var _ringtonePlayer: android.media.Ringtone? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -568,12 +568,14 @@ class MainActivity : AppCompatActivity() {
         }
         @JavascriptInterface fun playRingtone(uri: String) {
             try {
+                activity._ringtonePlayer?.stop()
                 val r = android.media.RingtoneManager.getRingtone(activity, android.net.Uri.parse(uri))
                 r?.play()
+                activity._ringtonePlayer = r
             } catch (_: Exception) {}
         }
         @JavascriptInterface fun stopRingtone() {
-            try { _ringtonePlayer?.stop() } catch (_: Exception) {}
+            try { activity._ringtonePlayer?.stop(); activity._ringtonePlayer = null } catch (_: Exception) {}
         }
     }
 }
