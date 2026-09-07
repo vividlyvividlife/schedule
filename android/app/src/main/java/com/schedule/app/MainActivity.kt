@@ -127,18 +127,11 @@ class MainActivity : AppCompatActivity() {
     // ── Import ─────────────────────────────────────────────────────────
 
     private fun openFilePicker() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
-            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
-                "application/json",
-                "application/octet-stream",
-                "text/plain",
-                "text/json",
-                "application/x-json"
-            ))
         }
-        startActivityForResult(intent, FILE_PICKER_REQUEST)
+        startActivityForResult(Intent.createChooser(intent, "Выберите JSON файл"), FILE_PICKER_REQUEST)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
