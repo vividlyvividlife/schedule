@@ -561,10 +561,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
         <button class="reminder-chip vibro-chip active" data-vibro="on">📳 Вкл</button>
         <button class="reminder-chip vibro-chip" data-vibro="off">📴 Выкл</button>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-size:13px;color:var(--text);">Мелодия:</span>
-        <span id="testSoundBtn" style="font-size:12px;color:var(--accent);cursor:pointer;">▶️ Прослушать</span>
-      </div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Мелодия:</div>
       <div id="ringtoneList" style="max-height:140px;overflow-y:auto;border:1.5px solid var(--line);border-radius:8px;margin-bottom:14px;background:var(--bg);">
         <div style="padding:10px;color:var(--muted);font-size:12px;">Загрузка...</div>
       </div>
@@ -621,36 +618,21 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
       list.innerHTML = "";
       ringtones.forEach((r, i) => {
         const item = document.createElement("div");
-        item.style.cssText = "display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:12px;border-bottom:1px solid var(--line);color:var(--text);";
-        const isSelected = r.uri === d._selectedSound;
-        if (isSelected) { item.style.background = "var(--accent)"; item.style.color = "#fff"; }
-
-        const playBtn = document.createElement("span");
-        playBtn.textContent = "▶️";
-        playBtn.style.cssText = "cursor:pointer;font-size:14px;flex-shrink:0;width:24px;text-align:center;";
-        playBtn.onclick = (e) => {
-          e.stopPropagation();
-          if (playBtn.textContent === "▶️") {
-            if (window.Android) Android.playRingtone(r.uri);
-            list.querySelectorAll(".play-btn").forEach(b => b.textContent = "▶️");
-            playBtn.textContent = "⏹️";
-          } else {
-            if (window.Android) Android.stopRingtone();
-            playBtn.textContent = "▶️";
-          }
-        };
-
-        const title = document.createElement("span");
-        title.textContent = r.title;
-        title.style.cssText = "flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
-
-        item.appendChild(playBtn);
-        item.appendChild(title);
+        item.style.cssText = "padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--line);color:var(--text);";
+        if (r.uri === d._selectedSound) { item.style.background = "var(--accent)"; item.style.color = "#fff"; }
+        item.textContent = r.title;
         item.onclick = () => {
+          if (d._selectedSound === r.uri && d._playingUri === r.uri) {
+            if (window.Android) Android.stopRingtone();
+            d._playingUri = null;
+            return;
+          }
           list.querySelectorAll("div").forEach(el => { el.style.background = ""; el.style.color = "var(--text)"; });
           item.style.background = "var(--accent)";
           item.style.color = "#fff";
           d._selectedSound = r.uri;
+          d._playingUri = r.uri;
+          if (window.Android) Android.playRingtone(r.uri);
         };
         list.appendChild(item);
       });
@@ -660,12 +642,6 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
   } else {
     d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">Системный звонок</div>';
   }
-
-  d.querySelector("#testSoundBtn").onclick = () => {
-    if (window.Android) {
-      Android.playRingtone(d._selectedSound);
-    }
-  };
 
   d.querySelector("#reminderSaveBtn").onclick = () => {
     if (window.Android) Android.stopRingtone();
