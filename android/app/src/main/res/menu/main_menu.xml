@@ -5,12 +5,12 @@
     <item
         android:id="@+id/menu_import"
         android:title="📥 Импорт JSON"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/menu_export"
         android:title="📤 Экспорт JSON"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/menu_edit_mode"
