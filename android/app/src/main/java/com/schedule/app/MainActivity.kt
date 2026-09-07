@@ -3,7 +3,10 @@ package com.schedule.app
 import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -87,6 +90,54 @@ class MainActivity : AppCompatActivity() {
         }
         Log.d(TAG, "onCreate: loading schedule")
         webView.loadUrl("https://appassets.androidplatform.net/index.html")
+
+        checkBatteryOptimization()
+        requestNotificationPermission()
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            val prefs = getSharedPreferences("schedule_prefs", MODE_PRIVATE)
+            if (!prefs.getBoolean("notif_permitted", false)) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 2001)
+                prefs.edit().putBoolean("notif_permitted", true).apply()
+            }
+        }
+    }
+
+    private fun checkBatteryOptimization() {
+        val prefs = getSharedPreferences("schedule_prefs", MODE_PRIVATE)
+        if (prefs.getBoolean("battery_prompted", false)) return
+
+        val pm = getSystemService(POWER_SERVICE) as PowerManager
+        val isIgnoring = pm.isIgnoringBatteryOptimizations(packageName)
+
+        if (!isIgnoring) {
+            AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
+                .setTitle("🔋 Оптимизация батареи")
+                .setMessage(
+                    "Для стабильной работы расписания:\n\n" +
+                    "1. Нажмите «Разрешить» — это отключит оптимизацию батареи\n" +
+                    "2. В свежих приложениях нажмите иконку 🔒 рядом с приложением\n\n" +
+                    "Это позволит расписанию работать в фоне и не обновляться."
+                )
+                .setPositiveButton("Разрешить") { _, _ ->
+                    try {
+                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                        intent.data = Uri.parse("package:$packageName")
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Battery settings error", e)
+                    }
+                }
+                .setNegativeButton("Позже", null)
+                .setOnDismissListener {
+                    prefs.edit().putBoolean("battery_prompted", true).apply()
+                }
+                .show()
+        } else {
+            prefs.edit().putBoolean("battery_prompted", true).apply()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
