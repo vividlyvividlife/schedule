@@ -50,6 +50,49 @@
   <button class="export-btn" onclick="exportExtended()">🎒 Продлёнка JSON</button>
 </div>
 
+<div class="edit-bar" id="editBar">
+  <button class="edit-toggle" id="editToggle" onclick="toggleEditMode()">✏️ Режим редактирования</button>
+  <button class="add-btn" id="addBtn" onclick="showAddModal()" style="display:none;">+ Добавить урок</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" style="display:none;" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Редактировать</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="modal-label">День
+        <select class="modal-input" id="modalDay"></select>
+      </label>
+      <label class="modal-label">Номер урока
+        <input class="modal-input" id="modalNum" type="number" min="1" max="11">
+      </label>
+      <label class="modal-label">Предмет
+        <input class="modal-input" id="modalSubj" placeholder="Математика">
+      </label>
+      <label class="modal-label">Время
+        <input class="modal-input" id="modalTime" placeholder="08:30–09:15">
+      </label>
+      <label class="modal-label">Кабинет
+        <input class="modal-input" id="modalRoom" placeholder="ауд. 1-3">
+      </label>
+      <label class="modal-label">Тип
+        <select class="modal-input" id="modalType">
+          <option value="school">Урок</option>
+          <option value="personal">Занятие</option>
+          <option value="extended">Продлёнка</option>
+        </select>
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Отмена</button>
+      <button class="modal-btn modal-btn-delete" id="modalDeleteBtn" onclick="deleteFromModal()" style="display:none;background:#d45555;color:#fff;">Удалить</button>
+      <button class="modal-btn modal-btn-save" onclick="saveModal()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
 <script src="engines.js"></script>
 <script src="script.js"></script>
 </body>

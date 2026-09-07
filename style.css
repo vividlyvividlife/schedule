@@ -591,6 +591,12 @@ body {
 }
 .add-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+body.edit-mode .lesson,
+body.edit-mode .merge-row,
+body.edit-mode .merge-card { cursor: pointer; }
+body.edit-mode .lesson:hover,
+body.edit-mode .merge-row:hover { opacity: 0.85; }
+
 @media (max-width: 400px) {
   .day-tab { padding: 5px 0; font-size: 12px; flex: 1; }
   .day-tabs { gap: 4px; padding: 0 12px 12px; }

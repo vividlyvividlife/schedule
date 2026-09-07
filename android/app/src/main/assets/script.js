@@ -234,7 +234,7 @@ function renderCountdowns() {
   el.innerHTML = html;
 }
 
-function renderLesson(l, state, dayIdx) {
+function renderLesson(l, state, dayIdx, itemIdx) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
   const startTime = parseTime(l.time);
   const endTime = parseTime(l.time.split("–")[1]);
@@ -251,8 +251,9 @@ function renderLesson(l, state, dayIdx) {
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   const roomText = l.room ? `<div class="lesson-room">${l.room}</div>` : "";
+  const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('school',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   return `
-    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle}>
+    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle} ${editMode ? 'onclick="showEditModal(\'school\',' + dayIdx + ',' + itemIdx + ')"' : ''}>
       <div class="lesson-body">
         <div class="lesson-icon">${icon}</div>
         <div class="lesson-num">${num}</div>
@@ -262,11 +263,12 @@ function renderLesson(l, state, dayIdx) {
           ${roomText}
           ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
+        ${editBtn}
       </div>
     </div>`;
 }
 
-function renderExtendedItem(item, state, dayIdx) {
+function renderExtendedItem(item, state, dayIdx, itemIdx) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
   const startTime = parseTime(item.time);
   const endTime = parseTime(item.time.split("–")[1]);
@@ -279,8 +281,10 @@ function renderExtendedItem(item, state, dayIdx) {
     const pct = Math.max(0, Math.min(100, ((cur - startTime) / (endTime - startTime)) * 100));
     return `style="--progress:${pct}%"`;
   })() : "";
+  const type = item._type || "extended";
+  const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${type}',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   return `
-    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle}>
+    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle} ${editMode ? `onclick="showEditModal('${type}',${dayIdx},${itemIdx})"` : ''}>
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num" style="color:var(--accent);font-size:11px;">⏰</div>
@@ -290,6 +294,7 @@ function renderExtendedItem(item, state, dayIdx) {
           ${item.room ? `<div class="lesson-room">${item.room}</div>` : ""}
           ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
+        ${editBtn}
       </div>
     </div>`;
 }
@@ -327,8 +332,9 @@ function renderMergeCard(group, dayIdx) {
     const cdText = rowState === "next" ? countdownSec(itemStart) : rowState === "current" ? remainingSec(itemEnd) : "";
     const num = item._type === "school" ? (item.subj && (item.subj.startsWith("Факультатив") || item.subj.startsWith("Кружок")) ? "⭐" : (item.n != null ? item.n : "")) : "⏰";
     const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
+    const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${item._type}',${dayIdx},${item._itemIdx})">✏️</button></div>` : "";
     return `
-      <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${rowProgressStyle}>
+      <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${rowProgressStyle} ${editMode ? `onclick="showEditModal('${item._type}',${dayIdx},${item._itemIdx})"` : ''}>
         <div class="merge-icon ${labelCls}">${item._icon || "📋"}</div>
         <div class="merge-info">
           <div class="merge-label ${labelCls}">${labelText}</div>
@@ -337,6 +343,7 @@ function renderMergeCard(group, dayIdx) {
           ${item.room ? `<div class="merge-room">${item.room}</div>` : ""}
           ${cdAttr ? `<div class="merge-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
+        ${editBtn}
       </div>`;
   }).join("");
 
@@ -468,6 +475,138 @@ function toggleTheme() {
   localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
 }
 
+let editMode = false;
+let modalData = { type: null, dayIdx: -1, itemIdx: -1 };
+
+function toggleEditMode() {
+  editMode = !editMode;
+  document.body.classList.toggle("edit-mode", editMode);
+  const btn = document.getElementById("editToggle");
+  const addBtn = document.getElementById("addBtn");
+  if (btn) btn.classList.toggle("active", editMode);
+  if (addBtn) addBtn.style.display = editMode ? "block" : "none";
+  renderAll();
+}
+
+function showAddModal() {
+  modalData = { type: "school", dayIdx: currentDayIdx, itemIdx: -1 };
+  document.getElementById("modalTitle").textContent = "Добавить урок";
+  document.getElementById("modalDeleteBtn").style.display = "none";
+  const daySelect = document.getElementById("modalDay");
+  daySelect.innerHTML = SCHEDULE.map((d, i) => `<option value="${i}" ${i === currentDayIdx ? 'selected' : ''}>${d.name}</option>`).join("");
+  document.getElementById("modalNum").value = "";
+  document.getElementById("modalSubj").value = "";
+  document.getElementById("modalTime").value = "";
+  document.getElementById("modalRoom").value = "";
+  document.getElementById("modalType").value = "school";
+  document.getElementById("modalOverlay").style.display = "flex";
+}
+
+function showEditModal(type, dayIdx, itemIdx) {
+  modalData = { type, dayIdx, itemIdx };
+  document.getElementById("modalTitle").textContent = "Редактировать";
+  document.getElementById("modalDeleteBtn").style.display = "inline-block";
+  const daySelect = document.getElementById("modalDay");
+  daySelect.innerHTML = SCHEDULE.map((d, i) => `<option value="${i}" ${i === dayIdx ? 'selected' : ''}>${d.name}</option>`).join("");
+  document.getElementById("modalType").value = type;
+  let item;
+  if (type === "school") {
+    item = SCHEDULE[dayIdx].lessons[itemIdx];
+    document.getElementById("modalNum").value = item.n || "";
+    document.getElementById("modalSubj").value = item.subj || "";
+    document.getElementById("modalTime").value = item.time || "";
+    document.getElementById("modalRoom").value = item.room || "";
+  } else if (type === "personal") {
+    item = (PERSONAL[dayIdx] || [])[itemIdx];
+    document.getElementById("modalNum").value = "";
+    document.getElementById("modalSubj").value = item.subj || "";
+    document.getElementById("modalTime").value = item.time || "";
+    document.getElementById("modalRoom").value = item.room || "";
+  } else {
+    item = EXTENDED[itemIdx];
+    document.getElementById("modalNum").value = "";
+    document.getElementById("modalSubj").value = item.subj || "";
+    document.getElementById("modalTime").value = item.time || "";
+    document.getElementById("modalRoom").value = item.room || "";
+  }
+  document.getElementById("modalOverlay").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("modalOverlay").style.display = "none";
+}
+
+function saveModal() {
+  const dayIdx = parseInt(document.getElementById("modalDay").value);
+  const type = document.getElementById("modalType").value;
+  const num = document.getElementById("modalNum").value.trim();
+  const subj = document.getElementById("modalSubj").value.trim();
+  const time = document.getElementById("modalTime").value.trim();
+  const room = document.getElementById("modalRoom").value.trim();
+  if (!subj || !time) { alert("Заполните предмет и время"); return; }
+  const data = loadLocalData() || { schedule: JSON.parse(JSON.stringify(SCHEDULE)), personal: JSON.parse(JSON.stringify(PERSONAL)), extended: JSON.parse(JSON.stringify(EXTENDED)) };
+  if (type === "school") {
+    const lesson = { subj, time };
+    if (num) lesson.n = parseInt(num);
+    if (room) lesson.room = room;
+    while (data.schedule.length <= dayIdx) data.schedule.push({ name: SCHEDULE[data.schedule.length]?.name || "", lessons: [] });
+    if (modalData.itemIdx >= 0) {
+      data.schedule[dayIdx].lessons[modalData.itemIdx] = lesson;
+    } else {
+      data.schedule[dayIdx].lessons.push(lesson);
+      data.schedule[dayIdx].lessons.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+    }
+  } else if (type === "personal") {
+    const item = { subj, time, icon: "🤸" };
+    if (room) item.room = room;
+    if (!data.personal) data.personal = {};
+    if (!data.personal[dayIdx]) data.personal[dayIdx] = [];
+    if (modalData.itemIdx >= 0) {
+      data.personal[dayIdx][modalData.itemIdx] = item;
+    } else {
+      data.personal[dayIdx].push(item);
+      data.personal[dayIdx].sort((a, b) => parseTime(a.time) - parseTime(b.time));
+    }
+  } else {
+    const item = { subj, time, icon: "🎒" };
+    if (room) item.room = room;
+    if (!data.extended) data.extended = [];
+    if (modalData.itemIdx >= 0) {
+      data.extended[modalData.itemIdx] = item;
+    } else {
+      data.extended.push(item);
+      data.extended.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+    }
+  }
+  saveLocalData(data);
+  if (type === "school") { while (SCHEDULE.length <= dayIdx) SCHEDULE.push({ name: "", lessons: [] }); SCHEDULE[dayIdx].lessons = data.schedule[dayIdx].lessons; }
+  else if (type === "personal") { PERSONAL[dayIdx] = data.personal[dayIdx] || []; }
+  else { EXTENDED = data.extended; }
+  closeModal();
+  buildToggles();
+  renderAll();
+}
+
+function deleteFromModal() {
+  if (!confirm("Удалить?")) return;
+  const data = loadLocalData();
+  if (!data) return;
+  if (modalData.type === "school" && modalData.dayIdx >= 0 && modalData.itemIdx >= 0) {
+    data.schedule[modalData.dayIdx].lessons.splice(modalData.itemIdx, 1);
+    SCHEDULE[modalData.dayIdx].lessons = data.schedule[modalData.dayIdx].lessons;
+  } else if (modalData.type === "personal" && modalData.dayIdx >= 0 && modalData.itemIdx >= 0) {
+    data.personal[modalData.dayIdx].splice(modalData.itemIdx, 1);
+    PERSONAL[modalData.dayIdx] = data.personal[modalData.dayIdx];
+  } else if (modalData.type === "extended" && modalData.itemIdx >= 0) {
+    data.extended.splice(modalData.itemIdx, 1);
+    EXTENDED = data.extended;
+  }
+  saveLocalData(data);
+  closeModal();
+  buildToggles();
+  renderAll();
+}
+
 function renderAll() {
   const todayIdx = getTodayIndex();
   const content = document.getElementById("dayContent");
@@ -502,12 +641,12 @@ function renderAll() {
 
   function renderDayLessons(d, dayIdx) {
     const school = d.lessons.map((l, li) => ({
-      ...l, _type: "school", _icon: ICONS[l.subj] || "📋",
+      ...l, _type: "school", _icon: ICONS[l.subj] || "📋", _itemIdx: li,
       _state: getLessonState(dayIdx, li, d),
       _noMerge: l.subj === "ФКиЗ"
     }));
-    const personal = (personalOn ? (PERSONAL[dayIdx] || []) : []).map(p => ({
-      ...p, _type: "personal", _icon: p.icon || "🤸",
+    const personal = (personalOn ? (PERSONAL[dayIdx] || []) : []).map((p, pi) => ({
+      ...p, _type: "personal", _icon: p.icon || "🤸", _itemIdx: pi,
       _state: (function() {
         if (dayIdx < todayIdx) return "past";
         if (dayIdx > todayIdx) return "future";
@@ -521,15 +660,15 @@ function renderAll() {
         return "future";
       })()
     }));
-    const extended = (extendedOn ? EXTENDED : []).map(ext => ({
-      ...ext, _type: "extended", _icon: ext.icon,
+    const extended = (extendedOn ? EXTENDED : []).map((ext, ei) => ({
+      ...ext, _type: "extended", _icon: ext.icon, _itemIdx: ei,
       _state: getExtState(EXTENDED.indexOf(ext), dayIdx)
     }));
     const all = [...school, ...personal, ...extended];
     if (all.length <= 1) {
       return all.map(item => {
-        if (item._type === "school") return renderLesson(item, item._state, dayIdx);
-        return renderExtendedItem(item, item._state, dayIdx);
+        if (item._type === "school") return renderLesson(item, item._state, dayIdx, item._itemIdx);
+        return renderExtendedItem(item, item._state, dayIdx, item._itemIdx);
       }).join("");
     }
 
@@ -567,8 +706,8 @@ function renderAll() {
 
     return merged.map(item => {
       if (item.type === "merge") return renderMergeCard(item.items, dayIdx);
-      if (item._type === "school") return renderLesson(item, item._state, dayIdx);
-      return renderExtendedItem(item, item._state, dayIdx);
+      if (item._type === "school") return renderLesson(item, item._state, dayIdx, item._itemIdx);
+      return renderExtendedItem(item, item._state, dayIdx, item._itemIdx);
     }).join("");
   }
 
