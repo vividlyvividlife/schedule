@@ -129,7 +129,14 @@ class MainActivity : AppCompatActivity() {
     private fun openFilePicker() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/json"
+            type = "*/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
+                "application/json",
+                "application/octet-stream",
+                "text/plain",
+                "text/json",
+                "application/x-json"
+            ))
         }
         startActivityForResult(intent, FILE_PICKER_REQUEST)
     }
