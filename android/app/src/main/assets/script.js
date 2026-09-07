@@ -448,6 +448,8 @@ function buildToggles() {
   let html = "";
   const hasExtended = EXTENDED.length > 0;
   const hasPersonal = Object.keys(PERSONAL).length > 0;
+  if (hasExtended && localStorage.getItem("extended") === null) { extendedOn = true; localStorage.setItem("extended", true); }
+  if (hasPersonal && localStorage.getItem("personal") === null) { personalOn = true; localStorage.setItem("personal", true); }
   if (hasExtended) {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="extendedToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="extendedToggle">Продлёнка</label></div>`;
   }
@@ -804,9 +806,9 @@ async function init() {
 
   const local = loadLocalData();
   if (local) {
-    if (local.schedule) SCHEDULE = local.schedule;
-    if (local.personal) PERSONAL = local.personal;
-    if (local.extended) EXTENDED = local.extended;
+    if (local.schedule && local.schedule.length) SCHEDULE = local.schedule;
+    if (local.personal && Object.keys(local.personal).length) PERSONAL = local.personal;
+    if (local.extended && local.extended.length) EXTENDED = local.extended;
   }
 
   buildToggles();
