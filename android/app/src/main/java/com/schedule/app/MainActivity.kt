@@ -467,12 +467,13 @@ class MainActivity : AppCompatActivity() {
                 val key = r.getString("key")
 
                 val typeLabel = when(type) { "school" -> "Урок"; "personal" -> "Занятие"; "extended" -> "Продлёнка"; else -> "Занятие" }
+                val whenType = r.optString("when", "start")
+                val whenLabel = if (whenType == "end") "Конец" else "Начало"
 
                 val parts = time.split("–")
-                val startParts = parts[0].split(":")
-                val startHour = startParts[0].toInt()
-                val startMin = startParts[1].toInt()
-                val startTotalMin = startHour * 60 + startMin
+                val refParts = if (whenType == "end") parts[1].split(":") else parts[0].split(":")
+                val refHour = refParts[0].toInt()
+                val refMin = refParts[1].toInt()
 
                 val cal = java.util.Calendar.getInstance().apply {
                     set(java.util.Calendar.DAY_OF_WEEK, when(dayIdx) {
@@ -485,8 +486,8 @@ class MainActivity : AppCompatActivity() {
                         6 -> java.util.Calendar.SUNDAY
                         else -> java.util.Calendar.MONDAY
                     })
-                    set(java.util.Calendar.HOUR_OF_DAY, startHour)
-                    set(java.util.Calendar.MINUTE, startMin - mins)
+                    set(java.util.Calendar.HOUR_OF_DAY, refHour)
+                    set(java.util.Calendar.MINUTE, refMin - mins)
                     set(java.util.Calendar.SECOND, 0)
                     set(java.util.Calendar.MILLISECOND, 0)
                 }
@@ -499,8 +500,8 @@ class MainActivity : AppCompatActivity() {
                 val sound = r.optString("sound", "")
                 val vibro = r.optBoolean("vibro", true)
                 val intent = Intent(this, NotificationReceiver::class.java).apply {
-                    putExtra(NotificationReceiver.EXTRA_TITLE, "$typeLabel: $subj")
-                    putExtra(NotificationReceiver.EXTRA_TEXT, "${dayNamesFull[dayIdx]} · Начало в ${parts[0]} · Через $mins мин")
+                    putExtra(NotificationReceiver.EXTRA_TITLE, "$typeLabel · $whenLabel")
+                    putExtra(NotificationReceiver.EXTRA_TEXT, "${dayNamesFull[dayIdx]} · $time · $subj · За $mins мин")
                     putExtra(NotificationReceiver.EXTRA_NOTIF_ID, notifId)
                     putExtra(NotificationReceiver.EXTRA_SOUND, sound)
                     putExtra(NotificationReceiver.EXTRA_VIBRO, vibro)

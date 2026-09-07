@@ -252,7 +252,7 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   const roomText = l.room ? `<div class="lesson-room">${l.room}</div>` : "";
-  const bellActive = hasReminder("school", dayIdx, itemIdx, l.time);
+  const bellActive = hasReminder("school", dayIdx, itemIdx, l.time, "start") || hasReminder("school", dayIdx, itemIdx, l.time, "end");
   const bellCls = bellActive ? " bell-active" : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('school',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   return `
@@ -286,7 +286,7 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
     return `style="--progress:${pct}%"`;
   })() : "";
   const type = item._type || "extended";
-  const bellActive = hasReminder(type, dayIdx, itemIdx, item.time);
+  const bellActive = hasReminder(type, dayIdx, itemIdx, item.time, "start") || hasReminder(type, dayIdx, itemIdx, item.time, "end");
   const bellCls = bellActive ? " bell-active" : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${type}',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   return `
@@ -339,7 +339,7 @@ function renderMergeCard(group, dayIdx) {
     const cdText = rowState === "next" ? countdownSec(itemStart) : rowState === "current" ? remainingSec(itemEnd) : "";
     const num = item._type === "school" ? (item.subj && (item.subj.startsWith("Факультатив") || item.subj.startsWith("Кружок")) ? "⭐" : (item.n != null ? item.n : "")) : "⏰";
     const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
-    const bellActive = hasReminder(item._type, dayIdx, item._itemIdx, item.time);
+    const bellActive = hasReminder(item._type, dayIdx, item._itemIdx, item.time, "start") || hasReminder(item._type, dayIdx, item._itemIdx, item.time, "end");
     const bellCls = bellActive ? " bell-active" : "";
     const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${item._type}',${dayIdx},${item._itemIdx})">✏️</button></div>` : "";
     return `
@@ -505,17 +505,17 @@ function saveReminders() {
   }
 }
 
-function getReminderKey(type, dayIdx, itemIdx, time) {
-  return type + "_" + dayIdx + "_" + itemIdx + "_" + time;
+function getReminderKey(type, dayIdx, itemIdx, time, when) {
+  return type + "_" + dayIdx + "_" + itemIdx + "_" + time + "_" + (when || "start");
 }
 
-function getReminder(type, dayIdx, itemIdx, time) {
-  const key = getReminderKey(type, dayIdx, itemIdx, time);
+function getReminder(type, dayIdx, itemIdx, time, when) {
+  const key = getReminderKey(type, dayIdx, itemIdx, time, when);
   return reminders.find(r => r.key === key);
 }
 
 function toggleReminder(type, dayIdx, itemIdx, time, subj) {
-  const existing = getReminder(type, dayIdx, itemIdx, time);
+  const existing = getReminder(type, dayIdx, itemIdx, time, "start") || getReminder(type, dayIdx, itemIdx, time, "end");
   if (existing) {
     reminders = reminders.filter(r => r.key !== existing.key);
     saveReminders();
@@ -523,7 +523,7 @@ function toggleReminder(type, dayIdx, itemIdx, time, subj) {
     if (window.Android) Android.showToast("Напоминание отменено");
     return;
   }
-  showReminderDialog(type, dayIdx, itemIdx, time, subj);
+  showReminderDialog(type, dayIdx, itemIdx, time, subj, null);
 }
 
 function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
@@ -538,6 +538,11 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
       <div style="font-size:16px;font-weight:600;margin-bottom:12px;">🔔 Напоминание</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
         ${labels[type]} · ${dayNames[dayIdx]} · ${time}<br>${subj}
+      </div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Когда напомнить:</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;" id="whenGroup">
+        <button class="reminder-chip when-chip active" data-when="start">🔔 До начала</button>
+        <button class="reminder-chip when-chip" data-when="end">⏰ До конца</button>
       </div>
       <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Повтор:</div>
       <div style="display:flex;gap:6px;margin-bottom:12px;" id="repeatGroup">
@@ -576,6 +581,18 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
   d._selectedMin = existing ? existing.mins : null;
   d._selectedSound = existing ? (existing.sound || "android.resource://com.schedule.app/raw/notif_ding") : "android.resource://com.schedule.app/raw/notif_ding";
   d._selectedVibro = existing ? (existing.vibro !== false) : true;
+  d._selectedWhen = existing ? (existing.when || "start") : "start";
+
+  d.querySelectorAll(".when-chip").forEach(chip => {
+    chip.style.cssText = "padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
+    if (chip.dataset.when === d._selectedWhen) { chip.style.background = "var(--accent)"; chip.style.color = "#fff"; }
+    chip.onclick = () => {
+      d.querySelectorAll(".when-chip").forEach(c => { c.style.background = "transparent"; c.style.color = "var(--text)"; });
+      chip.style.background = "var(--accent)";
+      chip.style.color = "#fff";
+      d._selectedWhen = chip.dataset.when;
+    };
+  });
 
   d.querySelectorAll(".repeat-chip").forEach(chip => {
     chip.style.cssText = "padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
@@ -657,7 +674,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
     if (!mins || mins < 1) { if (window.Android) Android.showToast("Укажи минуты"); return; }
     const key = getReminderKey(type, dayIdx, itemIdx, time);
     reminders = reminders.filter(r => r.key !== key);
-    reminders.push({ key, type, dayIdx, itemIdx, time, subj, mins, repeat: d._selectedRepeat, sound: d._selectedSound, vibro: d._selectedVibro });
+    reminders.push({ key, type, dayIdx, itemIdx, time, subj, mins, repeat: d._selectedRepeat, sound: d._selectedSound, vibro: d._selectedVibro, when: d._selectedWhen });
     saveReminders();
     d.remove();
     renderAll();
@@ -681,8 +698,8 @@ window._ringtonePicked = function(uri) {
   }
 };
 
-function hasReminder(type, dayIdx, itemIdx, time) {
-  return !!getReminder(type, dayIdx, itemIdx, time);
+function hasReminder(type, dayIdx, itemIdx, time, when) {
+  return !!getReminder(type, dayIdx, itemIdx, time, when);
 }
 
 function toggleEditMode() {
