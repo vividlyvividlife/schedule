@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Schedule" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.Schedule" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <item name="colorPrimary">#5b6abf</item>
         <item name="colorPrimaryVariant">#4a5aae</item>
         <item name="colorOnPrimary">#ffffff</item>
