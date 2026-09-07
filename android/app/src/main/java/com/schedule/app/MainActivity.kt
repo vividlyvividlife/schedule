@@ -552,15 +552,30 @@ class MainActivity : AppCompatActivity() {
             activity.scheduleRemindersFromJson(json)
         }
         @JavascriptInterface fun getInstalledRingtones(): String {
-            val manager = android.media.RingtoneManager(activity)
-            manager.setType(android.media.RingtoneManager.TYPE_ALL)
-            val cursor = manager.cursor
             val list = org.json.JSONArray()
+
+            val bundled = arrayOf(
+                Pair("🔔 Ding", "android.resource://com.schedule.app/raw/notif_ding"),
+                Pair("🎵 Chime", "android.resource://com.schedule.app/raw/notif_chime"),
+                Pair("🌿 Gentle", "android.resource://com.schedule.app/raw/notif_gentle"),
+                Pair("⚡ Urgent", "android.resource://com.schedule.app/raw/notif_urgent"),
+                Pair("🛎 Bell", "android.resource://com.schedule.app/raw/notif_bell")
+            )
+            for ((title, uri) in bundled) {
+                val obj = org.json.JSONObject()
+                obj.put("title", title)
+                obj.put("uri", uri)
+                list.put(obj)
+            }
+
+            val manager = android.media.RingtoneManager(activity)
+            manager.setType(android.media.RingtoneManager.TYPE_NOTIFICATION)
+            val cursor = manager.cursor
             while (cursor.moveToNext()) {
                 val title = cursor.getString(android.media.RingtoneManager.TITLE_COLUMN_INDEX)
                 val uri = manager.getRingtoneUri(cursor.position).toString()
                 val obj = org.json.JSONObject()
-                obj.put("title", title)
+                obj.put("title", "📱 $title")
                 obj.put("uri", uri)
                 list.put(obj)
             }
