@@ -4,31 +4,26 @@
 
     <item
         android:id="@+id/menu_export"
-        android:title="📤 Экспорт"
-        android:icon="@android:drawable/ic_menu_save"
+        android:title="💾 Экспорт JSON"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/menu_import"
-        android:title="📥 Импорт"
-        android:icon="@android:drawable/ic_menu_upload"
+        android:title="📥 Импорт JSON"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/menu_edit"
-        android:title="✏️ Редактировать"
-        android:icon="@android:drawable/ic_menu_edit"
+        android:title="✏️ Редактировать урок"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/menu_delete"
-        android:title="🗑 Удалить"
-        android:icon="@android:drawable/ic_menu_delete"
+        android:title="🗑 Удалить урок"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/menu_sync"
-        android:title="🔄 Синхронизация"
-        android:icon="@android:drawable/ic_menu_rotate"
+        android:id="@+id/menu_reset"
+        android:title="🔄 Сбросить к оригиналу"
         app:showAsAction="never" />
 </menu>
