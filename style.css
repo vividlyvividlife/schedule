@@ -118,6 +118,8 @@ body {
   padding: 0 16px 16px;
   font-size: 13px;
   color: var(--muted);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .status .highlight { color: var(--accent); font-weight: 600; }
 
@@ -134,7 +136,7 @@ body {
 .day-tabs::-webkit-scrollbar { display: none; }
 .day-tab {
   flex-shrink: 0;
-  padding: 8px 14px;
+  padding: 6px 10px;
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
@@ -393,6 +395,21 @@ body {
   background: var(--accent);
   border-radius: 3px;
   transition: width 0.5s;
+}
+
+@media (max-width: 400px) {
+  .day-tab { padding: 5px 8px; font-size: 12px; }
+  .day-tabs { gap: 4px; padding: 0 12px 12px; }
+  .header h1 { font-size: 18px; }
+  .header .date { font-size: 14px; }
+  .lesson-body { padding: 10px 10px; gap: 8px; }
+  .lesson-icon { width: 28px; height: 28px; font-size: 18px; }
+  .lesson-subject { font-size: 13px; }
+  .lesson-num { font-size: 12px; min-width: 16px; }
+  .merge-row { padding: 8px 10px; }
+  .merge-icon { width: 24px; height: 24px; font-size: 12px; }
+  .merge-subj { font-size: 13px; }
+  .countdown-item { padding: 8px 10px; font-size: 12px; }
 }
 
 @media (min-width: 768px) {
