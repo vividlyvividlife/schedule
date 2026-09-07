@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.webkit.JavascriptInterface
@@ -23,6 +24,10 @@ import java.io.FileOutputStream
 import java.io.InputStreamReader
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "ScheduleApp"
+    }
 
     private lateinit var webView: WebView
     private val FILE_PICKER_REQUEST = 1001
@@ -60,7 +65,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        webView.webChromeClient = WebChromeClient()
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(msg: android.webkit.ConsoleMessage?): Boolean {
+                msg?.let { Log.d(TAG, "JS: ${it.message()} [${it.sourceId()}:${it.lineNumber()}]") }
+                return true
+            }
+        }
+        Log.d(TAG, "onCreate: loading schedule")
         webView.loadUrl("https://appassets.androidplatform.net/index.html")
     }
 
@@ -84,6 +95,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        Log.d(TAG, "Menu: ${item.title}")
         return when (item.itemId) {
             R.id.menu_export -> { showExportDialog(); true }
             R.id.menu_import -> { openFilePicker(); true }
@@ -193,10 +205,12 @@ class MainActivity : AppCompatActivity() {
             val r = result?.removeSurrounding("\"") ?: "Ошибка"
             if (r.startsWith("ok")) {
                 val what = r.removePrefix("ok:")
+                Log.d(TAG, "Import OK: $what")
                 Toast.makeText(this, "$what импортировано! Перезапускаю...", Toast.LENGTH_SHORT).show()
                 webView.reload()
                 webView.postDelayed({ queryDataState { invalidateOptionsMenu() } }, 2000)
             } else {
+                Log.e(TAG, "Import error: $r")
                 Toast.makeText(this, "Ошибка: $r", Toast.LENGTH_LONG).show()
             }
         }
@@ -205,6 +219,7 @@ class MainActivity : AppCompatActivity() {
     // ── Edit Mode ─────────────────────────────────────────────────────
 
     private fun toggleEditMode() {
+        Log.d(TAG, "Toggle edit mode")
         webView.evaluateJavascript("toggleEditMode(); 'ok'") {
             val s = it?.removeSurrounding("\"") ?: ""
             Toast.makeText(this, if (s == "ok") "Режим редактирования" else "Ошибка", Toast.LENGTH_SHORT).show()
@@ -222,6 +237,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun deleteType(type: String) {
+        Log.d(TAG, "Delete type: $type")
         webView.evaluateJavascript(
             """(function() {
                 try {
@@ -282,7 +298,8 @@ class MainActivity : AppCompatActivity() {
                 hasSchedule = json.optBoolean("schedule", false)
                 hasPersonal = json.optBoolean("personal", false)
                 hasExtended = json.optBoolean("extended", false)
-            } catch (_: Exception) {}
+                Log.d(TAG, "Data state: schedule=$hasSchedule personal=$hasPersonal extended=$hasExtended")
+            } catch (e: Exception) { Log.e(TAG, "queryDataState parse error: $s", e) }
             runOnUiThread { onDone() }
         }
     }
