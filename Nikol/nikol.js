@@ -134,7 +134,7 @@ function getItemsForDay(dayIdx) {
 function renderSingle(item, dayIdx) {
   const state = getCardState(dayIdx, item.time);
   const cls = `lesson ${state}`;
-  const num = item.type === "school" ? (item.subj && item.subj.startsWith("Факультатив") ? "⭐" : item.n) : "⭐";
+  const num = item.type === "school" ? (item.subj && (item.subj.startsWith("Факультатив") || item.subj.startsWith("Кружок")) ? "⭐" : (item.n != null ? item.n : "")) : "⭐";
   const startTime = parseTime(item.time);
   const endTime = parseTime(item.time.split("–")[1]);
   const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";

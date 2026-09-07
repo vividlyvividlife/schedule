@@ -238,7 +238,7 @@ function renderLesson(l, state, dayIdx) {
   const endTime = parseTime(l.time.split("–")[1]);
   const icon = ICONS[l.subj] || "📋";
   const paidBadge = l.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
-  const num = l.subj && l.subj.startsWith("Факультатив") ? "⭐" : (l.n != null ? l.n : "");
+  const num = (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) ? "⭐" : (l.n != null ? l.n : "");
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   const progressStyle = state === "current" ? (() => {
     const now = new Date();
@@ -320,7 +320,7 @@ function renderMergeCard(group, dayIdx) {
     })() : "";
     const cdAttr = rowState === "next" ? `data-cd="${itemStart}"` : rowState === "current" ? `data-cd-end="${itemEnd}"` : "";
     const cdText = rowState === "next" ? countdownSec(itemStart) : rowState === "current" ? remainingSec(itemEnd) : "";
-    const num = item._type === "school" ? (item.subj && item.subj.startsWith("Факультатив") ? "⭐" : item.n) : "⏰";
+    const num = item._type === "school" ? (item.subj && (item.subj.startsWith("Факультатив") || item.subj.startsWith("Кружок")) ? "⭐" : (item.n != null ? item.n : "")) : "⏰";
     const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
     return `
       <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${rowProgressStyle}>
