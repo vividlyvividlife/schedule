@@ -612,33 +612,40 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
   });
 
   if (window.Android) {
-    try {
-      const ringtones = JSON.parse(Android.getInstalledRingtones());
-      const list = d.querySelector("#ringtoneList");
-      list.innerHTML = "";
-      ringtones.forEach((r, i) => {
-        const item = document.createElement("div");
-        item.style.cssText = "padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--line);color:var(--text);";
-        if (r.uri === d._selectedSound) { item.style.background = "var(--accent)"; item.style.color = "#fff"; }
-        item.textContent = r.title;
-        item.onclick = () => {
-          if (d._selectedSound === r.uri && d._playingUri === r.uri) {
-            if (window.Android) Android.stopRingtone();
-            d._playingUri = null;
-            return;
-          }
-          list.querySelectorAll("div").forEach(el => { el.style.background = ""; el.style.color = "var(--text)"; });
-          item.style.background = "var(--accent)";
-          item.style.color = "#fff";
-          d._selectedSound = r.uri;
-          d._playingUri = r.uri;
-          if (window.Android) Android.playRingtone(r.uri);
-        };
-        list.appendChild(item);
-      });
-    } catch (e) {
-      d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">🔔 Ding (по умолчанию)</div>';
-    }
+    const bundled = [
+      { title: "🔔 Ding", uri: "android.resource://com.schedule.app/raw/notif_ding" },
+      { title: "🎵 Chime", uri: "android.resource://com.schedule.app/raw/notif_chime" },
+      { title: "🌿 Gentle", uri: "android.resource://com.schedule.app/raw/notif_gentle" },
+      { title: "⚡ Urgent", uri: "android.resource://com.schedule.app/raw/notif_urgent" },
+      { title: "🛎 Bell", uri: "android.resource://com.schedule.app/raw/notif_bell" }
+    ];
+    const list = d.querySelector("#ringtoneList");
+    list.innerHTML = "";
+    bundled.forEach(r => {
+      const item = document.createElement("div");
+      item.style.cssText = "padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--line);color:var(--text);";
+      if (r.uri === d._selectedSound) { item.style.background = "var(--accent)"; item.style.color = "#fff"; }
+      item.textContent = r.title;
+      item.onclick = () => {
+        if (d._selectedSound === r.uri && d._playingUri === r.uri) {
+          if (window.Android) Android.stopRingtone();
+          d._playingUri = null;
+          return;
+        }
+        list.querySelectorAll("div").forEach(el => { el.style.background = ""; el.style.color = "var(--text)"; });
+        item.style.background = "var(--accent)";
+        item.style.color = "#fff";
+        d._selectedSound = r.uri;
+        d._playingUri = r.uri;
+        if (window.Android) Android.playRingtone(r.uri);
+      };
+      list.appendChild(item);
+    });
+    const pickBtn = document.createElement("div");
+    pickBtn.style.cssText = "padding:8px 10px;font-size:12px;cursor:pointer;color:var(--accent);font-weight:600;";
+    pickBtn.textContent = "📱 Выбрать на устройстве...";
+    pickBtn.onclick = () => { if (window.Android) Android.openRingtonePicker(); };
+    list.appendChild(pickBtn);
   } else {
     d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">🔔 Ding (по умолчанию)</div>';
   }
@@ -659,6 +666,20 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
   };
   d.onclick = (e) => { if (e.target === d) { if (window.Android) Android.stopRingtone(); d.remove(); } };
 }
+
+window._ringtonePicked = function(uri) {
+  const dlg = document.querySelector('.reminder-dialog-overlay');
+  if (!dlg) return;
+  dlg._selectedSound = uri;
+  dlg._playingUri = null;
+  const list = dlg.querySelector("#ringtoneList");
+  if (list) {
+    list.querySelectorAll("div").forEach(el => { el.style.background = ""; el.style.color = "var(--text)"; });
+    const items = list.querySelectorAll("div");
+    items[items.length - 1].style.background = "var(--accent)";
+    items[items.length - 1].style.color = "#fff";
+  }
+};
 
 function hasReminder(type, dayIdx, itemIdx, time) {
   return !!getReminder(type, dayIdx, itemIdx, time);

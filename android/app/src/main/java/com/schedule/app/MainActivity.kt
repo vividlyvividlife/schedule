@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private var hasPersonal = false
     private var hasExtended = false
     internal var _ringtonePlayer: android.media.Ringtone? = null
+    internal var pickerCallback: ((android.net.Uri?) -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -434,6 +435,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onBackPressed() { if (webView.canGoBack()) webView.goBack() else super.onBackPressed() }
 
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 9999 && resultCode == RESULT_OK) {
+            val uri = data?.getParcelableExtra<android.net.Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            pickerCallback?.invoke(uri)
+        }
+        pickerCallback = null
+    }
+
     // ── Reminders / Notifications ────────────────────────────────────
 
     fun scheduleRemindersFromJson(json: String) {
@@ -551,35 +562,24 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "syncReminders: $json")
             activity.scheduleRemindersFromJson(json)
         }
-        @JavascriptInterface fun getInstalledRingtones(): String {
-            val list = org.json.JSONArray()
-
-            val bundled = arrayOf(
-                Pair("🔔 Ding", "android.resource://com.schedule.app/raw/notif_ding"),
-                Pair("🎵 Chime", "android.resource://com.schedule.app/raw/notif_chime"),
-                Pair("🌿 Gentle", "android.resource://com.schedule.app/raw/notif_gentle"),
-                Pair("⚡ Urgent", "android.resource://com.schedule.app/raw/notif_urgent"),
-                Pair("🛎 Bell", "android.resource://com.schedule.app/raw/notif_bell")
-            )
-            for ((title, uri) in bundled) {
-                val obj = org.json.JSONObject()
-                obj.put("title", title)
-                obj.put("uri", uri)
-                list.put(obj)
+        @JavascriptInterface fun openRingtonePicker() {
+            activity.runOnUiThread {
+                val intent = android.content.Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                    putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                    putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                    putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_NOTIFICATION)
+                    putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TITLE, "Выбери мелодию")
+                }
+                activity.pickerCallback = { uri ->
+                    if (uri != null) {
+                        val jsUri = uri.toString()
+                        activity.runOnUiThread {
+                            activity.webView.evaluateJavascript("window._ringtonePicked && window._ringtonePicked('$jsUri')") {}
+                        }
+                    }
+                }
+                activity.startActivityForResult(intent, 9999)
             }
-
-            val manager = android.media.RingtoneManager(activity)
-            manager.setType(android.media.RingtoneManager.TYPE_NOTIFICATION)
-            val cursor = manager.cursor
-            while (cursor.moveToNext()) {
-                val title = cursor.getString(android.media.RingtoneManager.TITLE_COLUMN_INDEX)
-                val uri = manager.getRingtoneUri(cursor.position).toString()
-                val obj = org.json.JSONObject()
-                obj.put("title", "📱 $title")
-                obj.put("uri", uri)
-                list.put(obj)
-            }
-            return list.toString()
         }
         @JavascriptInterface fun playRingtone(uri: String) {
             try {
