@@ -13,11 +13,6 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.ArrayAdapter
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.Spinner
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -34,9 +29,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        webView = WebView(this)
-        setContentView(webView)
+        val toolbar = findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = "Расписание 2026–2027"
+
+        webView = findViewById(R.id.webView)
 
         val assetLoader = WebViewAssetLoader.Builder()
             .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(this))
@@ -71,8 +70,10 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.menu_export -> { showExportDialog(); true }
             R.id.menu_import -> { openFilePicker(); true }
-            R.id.menu_edit -> { showEditDialog(); true }
-            R.id.menu_delete -> { showDeleteDialog(); true }
+            R.id.menu_edit_mode -> { toggleEditMode(); true }
+            R.id.menu_delete_schedule -> { confirmDeleteType("schedule", "все уроки"); true }
+            R.id.menu_delete_personal -> { confirmDeleteType("personal", "все занятия"); true }
+            R.id.menu_delete_extended -> { confirmDeleteType("extended", "продлёнку"); true }
             R.id.menu_reset -> { resetData(); true }
             else -> super.onOptionsItemSelected(item)
         }
@@ -82,8 +83,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun showExportDialog() {
         val options = arrayOf(
-            "💾 Всё расписание (JSON — для резервной копии)",
-            "📄 Уроки (TXT — для чтения)"
+            "💾 Всё расписание (JSON)",
+            "📄 Только уроки (JSON)",
+            "🤸 Только занятия (JSON)",
+            "🎒 Только продлёнка (JSON)"
         )
         AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
             .setTitle("Экспорт")
@@ -187,96 +190,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Edit ───────────────────────────────────────────────────────────
+    // ── Edit Mode ─────────────────────────────────────────────────────
 
-    private fun showEditDialog() {
-        val days = arrayOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
-        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(60, 40, 60, 20) }
-        val daySpinner = Spinner(this).apply { adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, days) }
-        layout.addView(TextView(this).apply { text = "День:" }); layout.addView(daySpinner)
-        val numInput = EditText(this).apply { hint = "№ урока"; inputType = android.text.InputType.TYPE_CLASS_NUMBER }
-        layout.addView(TextView(this).apply { text = "Урок:" }); layout.addView(numInput)
-        val subjInput = EditText(this).apply { hint = "Предмет" }
-        layout.addView(TextView(this).apply { text = "Предмет:" }); layout.addView(subjInput)
-        val timeInput = EditText(this).apply { hint = "08:30-09:15" }
-        layout.addView(TextView(this).apply { text = "Время:" }); layout.addView(timeInput)
-        val roomInput = EditText(this).apply { hint = "Кабинет" }
-        layout.addView(TextView(this).apply { text = "Кабинет:" }); layout.addView(roomInput)
-
-        AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
-            .setTitle("Редактировать урок")
-            .setView(layout)
-            .setPositiveButton("Сохранить") { _, _ ->
-                val day = daySpinner.selectedItemPosition
-                val num = numInput.text.toString().toIntOrNull()
-                val subj = subjInput.text.toString().trim()
-                val time = timeInput.text.toString().trim()
-                val room = roomInput.text.toString().trim()
-                if (num != null && subj.isNotEmpty()) editLesson(day, num, subj, time, room)
-                else Toast.makeText(this, "Номер + предмет обязательны", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Отмена", null).show()
-    }
-
-    private fun editLesson(day: Int, num: Int, subj: String, time: String, room: String) {
-        val es = subj.replace("'", "\\'").replace("\\", "\\\\")
-        val er = room.replace("'", "\\'").replace("\\", "\\\\")
-        webView.evaluateJavascript(
-            """(function() {
-                try {
-                    var d = JSON.parse(localStorage.getItem('tg_local_data') || '{"schedule":[]}');
-                    if (!d.schedule) d.schedule = [];
-                    while (d.schedule.length <= $day) d.schedule.push({lessons:[]});
-                    var ls = d.schedule[$day].lessons || [];
-                    var i = ls.findIndex(function(l){return l.n===$num;});
-                    var item = {n:$num, subj:'$es', time:'$time'};
-                    if ('$er') item.room='$er';
-                    if (i>=0) ls[i]=item; else {ls.push(item); ls.sort(function(a,b){return a.n-b.n;});}
-                    d.schedule[$day].lessons = ls;
-                    localStorage.setItem('tg_local_data', JSON.stringify(d));
-                    return 'ok';
-                } catch(e) { return e.message; }
-            })()"""
-        ) { r ->
-            val s = r?.removeSurrounding("\"") ?: ""
-            if (s == "ok") { Toast.makeText(this, "Сохранено!", Toast.LENGTH_SHORT).show(); webView.reload() }
-            else Toast.makeText(this, "Ошибка: $s", Toast.LENGTH_SHORT).show()
+    private fun toggleEditMode() {
+        webView.evaluateJavascript("toggleEditMode(); 'ok'") {
+            val s = it?.removeSurrounding("\"") ?: ""
+            Toast.makeText(this, if (s == "ok") "Режим редактирования" else "Ошибка", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // ── Delete ─────────────────────────────────────────────────────────
+    // ── Delete by Type ────────────────────────────────────────────────
 
-    private fun showDeleteDialog() {
-        val days = arrayOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
-        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(60, 40, 60, 20) }
-        val daySpinner = Spinner(this).apply { adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, days) }
-        layout.addView(TextView(this).apply { text = "День:" }); layout.addView(daySpinner)
-        val numInput = EditText(this).apply { hint = "№ урока"; inputType = android.text.InputType.TYPE_CLASS_NUMBER }
-        layout.addView(TextView(this).apply { text = "Урок:" }); layout.addView(numInput)
-
+    private fun confirmDeleteType(type: String, label: String) {
         AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
-            .setTitle("Удалить урок")
-            .setView(layout)
-            .setPositiveButton("Удалить") { _, _ ->
-                val day = daySpinner.selectedItemPosition
-                val num = numInput.text.toString().toIntOrNull()
-                if (num != null) deleteLesson(day, num)
-                else Toast.makeText(this, "Введите номер", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Отмена", null).show()
+            .setTitle("Удалить $label?")
+            .setMessage("Вы уверены?")
+            .setPositiveButton("Да") { _, _ -> deleteType(type) }
+            .setNegativeButton("Нет", null).show()
     }
 
-    private fun deleteLesson(day: Int, num: Int) {
+    private fun deleteType(type: String) {
         webView.evaluateJavascript(
             """(function() {
                 try {
-                    var d = JSON.parse(localStorage.getItem('tg_local_data') || '{"schedule":[]}');
-                    if (!d.schedule || !d.schedule[$day]) return 'no data';
-                    var ls = d.schedule[$day].lessons || [];
-                    var i = ls.findIndex(function(l){return l.n===$num;});
-                    if (i<0) return 'not found';
-                    ls.splice(i, 1);
-                    d.schedule[$day].lessons = ls;
+                    var d = JSON.parse(localStorage.getItem('tg_local_data') || '{"schedule":[],"personal":{},"extended":[]}');
+                    if ('$type' === 'schedule') { d.schedule = []; }
+                    else if ('$type' === 'personal') { d.personal = {}; }
+                    else if ('$type' === 'extended') { d.extended = []; }
                     localStorage.setItem('tg_local_data', JSON.stringify(d));
                     return 'ok';
                 } catch(e) { return e.message; }
@@ -289,12 +229,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Sync ───────────────────────────────────────────────────────────
-
-    private fun syncFromFile() {
-        val f = File(filesDir, "exports/raspisanie_2A.json")
-        if (!f.exists()) { Toast.makeText(this, "Сначала экспортируйте JSON", Toast.LENGTH_SHORT).show(); return }
-        importJson(f.readText(Charsets.UTF_8))
-    }
 
     private fun resetData() {
         AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)

@@ -3,27 +3,37 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/menu_export"
-        android:title="💾 Экспорт JSON"
-        app:showAsAction="ifRoom" />
-
-    <item
         android:id="@+id/menu_import"
-        android:title="📥 Импорт JSON"
+        android:title="📥 Импорт"
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/menu_edit"
-        android:title="✏️ Редактировать урок"
+        android:id="@+id/menu_export"
+        android:title="📤 Экспорт"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_edit_mode"
+        android:title="✏️ Режим редактирования"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/menu_delete"
-        android:title="🗑 Удалить урок"
+        android:id="@+id/menu_delete_schedule"
+        android:title="❌ Удалить все уроки"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_delete_personal"
+        android:title="❌ Удалить все занятия"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_delete_extended"
+        android:title="❌ Удалить продлёнку"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/menu_reset"
-        android:title="🔄 Сбросить к оригиналу"
+        android:title="🔄 Сбросить всё"
         app:showAsAction="never" />
 </menu>
