@@ -534,13 +534,13 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
   d.className = "reminder-dialog-overlay";
   d.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center;";
   d.innerHTML = `
-    <div style="background:var(--card);border-radius:16px;padding:20px;width:290px;color:var(--text);">
+    <div style="background:var(--card);border-radius:16px;padding:20px;width:300px;color:var(--text);max-height:80vh;overflow-y:auto;">
       <div style="font-size:16px;font-weight:600;margin-bottom:12px;">🔔 Напоминание</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
         ${labels[type]} · ${dayNames[dayIdx]} · ${time}<br>${subj}
       </div>
       <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Повтор:</div>
-      <div style="display:flex;gap:6px;margin-bottom:14px;" id="repeatGroup">
+      <div style="display:flex;gap:6px;margin-bottom:12px;" id="repeatGroup">
         <button class="reminder-chip repeat-chip active" data-repeat="weekly">🔄 Еженедельно</button>
         <button class="reminder-chip repeat-chip" data-repeat="once">1️⃣ Один раз</button>
       </div>
@@ -551,20 +551,22 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
         <button class="reminder-chip min-chip" data-min="15">15 мин</button>
         <button class="reminder-chip min-chip" data-min="30">30 мин</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <span style="font-size:13px;color:var(--text);">Своё:</span>
         <input id="reminderCustomMin" type="number" min="1" max="1440" placeholder="мин"
           style="flex:1;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;">
       </div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Вибрация:</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;" id="vibroGroup">
+        <button class="reminder-chip vibro-chip active" data-vibro="on">📳 Вкл</button>
+        <button class="reminder-chip vibro-chip" data-vibro="off">📴 Выкл</button>
+      </div>
       <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Мелодия:</div>
-      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;" id="soundGroup">
-        <button class="reminder-chip sound-chip active" data-sound="default">🔔 Системный</button>
-        <button class="reminder-chip sound-chip" data-sound="school">🏫 Звонок</button>
-        <button class="reminder-chip sound-chip" data-sound="gentle">🎵 Мягкий</button>
-        <button class="reminder-chip sound-chip" data-sound="urgent">⚡ Срочный</button>
+      <div id="ringtoneList" style="max-height:140px;overflow-y:auto;border:1.5px solid var(--line);border-radius:8px;margin-bottom:14px;background:var(--bg);">
+        <div style="padding:10px;color:var(--muted);font-size:12px;">Загрузка...</div>
       </div>
       <div style="display:flex;gap:8px;">
-        <button onclick="this.closest('.reminder-dialog-overlay').remove()" style="flex:1;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;">Отмена</button>
+        <button onclick="if(window.Android)Android.stopRingtone();this.closest('.reminder-dialog-overlay').remove()" style="flex:1;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;">Отмена</button>
         <button id="reminderSaveBtn" style="flex:1;padding:10px;border:none;border-radius:10px;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Сохранить</button>
       </div>
     </div>`;
@@ -572,14 +574,8 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
 
   d._selectedRepeat = existing ? existing.repeat : "weekly";
   d._selectedMin = existing ? existing.mins : null;
-  d._selectedSound = existing ? (existing.sound || "default") : "default";
-
-  const soundUris = {
-    default: "content://settings/system/notification_sound",
-    school: "content://settings/system/notification_sound",
-    gentle: "content://settings/system/notification_sound",
-    urgent: "content://settings/system/notification_sound"
-  };
+  d._selectedSound = existing ? (existing.sound || "content://settings/system/notification_sound") : "content://settings/system/notification_sound";
+  d._selectedVibro = existing ? (existing.vibro !== false) : true;
 
   d.querySelectorAll(".repeat-chip").forEach(chip => {
     chip.style.cssText = "padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
@@ -604,31 +600,58 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
     };
   });
 
-  d.querySelectorAll(".sound-chip").forEach(chip => {
+  d.querySelectorAll(".vibro-chip").forEach(chip => {
     chip.style.cssText = "padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
-    if (chip.dataset.sound === d._selectedSound) { chip.style.background = "var(--accent)"; chip.style.color = "#fff"; }
+    if ((chip.dataset.vibro === "on") === d._selectedVibro) { chip.style.background = "var(--accent)"; chip.style.color = "#fff"; }
     chip.onclick = () => {
-      d.querySelectorAll(".sound-chip").forEach(c => { c.style.background = "transparent"; c.style.color = "var(--text)"; });
+      d.querySelectorAll(".vibro-chip").forEach(c => { c.style.background = "transparent"; c.style.color = "var(--text)"; });
       chip.style.background = "var(--accent)";
       chip.style.color = "#fff";
-      d._selectedSound = chip.dataset.sound;
+      d._selectedVibro = chip.dataset.vibro === "on";
     };
   });
 
+  if (window.Android) {
+    try {
+      const ringtones = JSON.parse(Android.getInstalledRingtones());
+      const list = d.querySelector("#ringtoneList");
+      list.innerHTML = "";
+      ringtones.forEach((r, i) => {
+        const item = document.createElement("div");
+        item.style.cssText = "padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--line);color:var(--text);";
+        if (r.uri === d._selectedSound) { item.style.background = "var(--accent)"; item.style.color = "#fff"; }
+        item.textContent = r.title;
+        item.onclick = () => {
+          list.querySelectorAll("div").forEach(el => { el.style.background = ""; el.style.color = "var(--text)"; });
+          item.style.background = "var(--accent)";
+          item.style.color = "#fff";
+          d._selectedSound = r.uri;
+          if (window.Android) Android.playRingtone(r.uri);
+        };
+        list.appendChild(item);
+      });
+    } catch (e) {
+      d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">Системный звонок</div>';
+    }
+  } else {
+    d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">Системный звонок</div>';
+  }
+
   d.querySelector("#reminderSaveBtn").onclick = () => {
+    if (window.Android) Android.stopRingtone();
     const custom = parseInt(d.querySelector("#reminderCustomMin").value);
     const mins = custom || d._selectedMin;
     if (!mins || mins < 1) { if (window.Android) Android.showToast("Укажи минуты"); return; }
     const key = getReminderKey(type, dayIdx, itemIdx, time);
     reminders = reminders.filter(r => r.key !== key);
-    reminders.push({ key, type, dayIdx, itemIdx, time, subj, mins, repeat: d._selectedRepeat, sound: d._selectedSound });
+    reminders.push({ key, type, dayIdx, itemIdx, time, subj, mins, repeat: d._selectedRepeat, sound: d._selectedSound, vibro: d._selectedVibro });
     saveReminders();
     d.remove();
     renderAll();
     const rptLabel = d._selectedRepeat === "weekly" ? "еженедельно" : "один раз";
     if (window.Android) Android.showToast("Напоминание за " + mins + " мин ✓ (" + rptLabel + ")");
   };
-  d.onclick = (e) => { if (e.target === d) d.remove(); };
+  d.onclick = (e) => { if (e.target === d) { if (window.Android) Android.stopRingtone(); d.remove(); } };
 }
 
 function hasReminder(type, dayIdx, itemIdx, time) {

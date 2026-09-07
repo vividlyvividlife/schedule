@@ -19,21 +19,22 @@ class NotificationReceiver : BroadcastReceiver() {
         const val EXTRA_TEXT = "text"
         const val EXTRA_NOTIF_ID = "notif_id"
         const val EXTRA_SOUND = "sound"
+        const val EXTRA_VIBRO = "vibro"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Расписание"
         val text = intent.getStringExtra(EXTRA_TEXT) ?: ""
         val notifId = intent.getIntExtra(EXTRA_NOTIF_ID, System.currentTimeMillis().toInt())
-        val soundType = intent.getStringExtra(EXTRA_SOUND) ?: "default"
+        val soundUri = intent.getStringExtra(EXTRA_SOUND) ?: ""
+        val vibro = intent.getBooleanExtra(EXTRA_VIBRO, true)
 
         createChannel(context)
 
-        val soundUri: Uri = when (soundType) {
-            "school" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            "gentle" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            "urgent" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            else -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val uri: Uri = if (soundUri.isNotEmpty()) {
+            try { android.net.Uri.parse(soundUri) } catch (_: Exception) { RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION) }
+        } else {
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         }
 
         val launchIntent = Intent(context, MainActivity::class.java).apply {
@@ -44,7 +45,7 @@ class NotificationReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(title)
             .setContentText(text)
@@ -52,9 +53,13 @@ class NotificationReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
-            .setSound(soundUri)
-            .setVibrate(longArrayOf(0, 300, 200, 300))
-            .build()
+            .setSound(uri)
+
+        if (vibro) {
+            builder.setVibrate(longArrayOf(0, 300, 200, 300))
+        }
+
+        val notification = builder.build()
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(notifId, notification)

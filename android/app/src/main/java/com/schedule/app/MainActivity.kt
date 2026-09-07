@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private var hasSchedule = false
     private var hasPersonal = false
     private var hasExtended = false
+    private var _ringtonePlayer: android.media.Ringtone? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -484,12 +485,14 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val notifId = key.hashCode()
-                val sound = r.optString("sound", "default")
+                val sound = r.optString("sound", "")
+                val vibro = r.optBoolean("vibro", true)
                 val intent = Intent(this, NotificationReceiver::class.java).apply {
                     putExtra(NotificationReceiver.EXTRA_TITLE, "$typeLabel: $subj")
                     putExtra(NotificationReceiver.EXTRA_TEXT, "${dayNamesFull[dayIdx]} · Начало в ${parts[0]} · Через $mins мин")
                     putExtra(NotificationReceiver.EXTRA_NOTIF_ID, notifId)
                     putExtra(NotificationReceiver.EXTRA_SOUND, sound)
+                    putExtra(NotificationReceiver.EXTRA_VIBRO, vibro)
                 }
                 val pending = PendingIntent.getBroadcast(
                     this, notifId, intent,
@@ -547,6 +550,30 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface fun syncReminders(json: String) {
             Log.d(TAG, "syncReminders: $json")
             activity.scheduleRemindersFromJson(json)
+        }
+        @JavascriptInterface fun getInstalledRingtones(): String {
+            val manager = android.media.RingtoneManager(activity)
+            manager.setType(android.media.RingtoneManager.TYPE_ALL)
+            val cursor = manager.cursor
+            val list = org.json.JSONArray()
+            while (cursor.moveToNext()) {
+                val title = cursor.getString(android.media.RingtoneManager.TITLE_COLUMN_INDEX)
+                val uri = manager.getRingtoneUri(cursor.position).toString()
+                val obj = org.json.JSONObject()
+                obj.put("title", title)
+                obj.put("uri", uri)
+                list.put(obj)
+            }
+            return list.toString()
+        }
+        @JavascriptInterface fun playRingtone(uri: String) {
+            try {
+                val r = android.media.RingtoneManager.getRingtone(activity, android.net.Uri.parse(uri))
+                r?.play()
+            } catch (_: Exception) {}
+        }
+        @JavascriptInterface fun stopRingtone() {
+            try { _ringtonePlayer?.stop() } catch (_: Exception) {}
         }
     }
 }
