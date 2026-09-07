@@ -206,11 +206,6 @@ function saveLocalData(data) {
 function isEditMode() {
   return localStorage.getItem(EDIT_KEY) === "true";
 }
-function toggleEditMode() {
-  const v = !isEditMode();
-  localStorage.setItem(EDIT_KEY, v);
-  return v;
-}
 
 function getScheduleData() {
   const local = loadLocalData();

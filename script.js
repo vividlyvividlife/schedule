@@ -475,11 +475,12 @@ function toggleTheme() {
   localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
 }
 
-let editMode = false;
+let editMode = isEditMode();
 let modalData = { type: null, dayIdx: -1, itemIdx: -1 };
 
 function toggleEditMode() {
   editMode = !editMode;
+  localStorage.setItem(EDIT_KEY, editMode);
   document.body.classList.toggle("edit-mode", editMode);
   const btn = document.getElementById("editToggle");
   const addBtn = document.getElementById("addBtn");
@@ -815,6 +816,12 @@ async function init() {
     document.querySelector(".theme-btn").textContent = "☾";
   }
 
+  if (editMode) {
+    document.body.classList.add("edit-mode");
+    const addBtn = document.getElementById("addBtn");
+    if (addBtn) addBtn.style.display = "block";
+  }
+
   currentDayIdx = getTodayIndex();
   renderDate();
   renderTabs();
@@ -835,6 +842,18 @@ function exportSchool() {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "Уроки_2А.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportPersonal() {
+  const local = loadLocalData();
+  const data = (local && local.personal) ? local.personal : PERSONAL;
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "Занятия_2А.json";
   a.click();
   URL.revokeObjectURL(a.href);
 }

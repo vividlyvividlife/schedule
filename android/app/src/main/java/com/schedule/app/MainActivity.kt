@@ -26,6 +26,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private val FILE_PICKER_REQUEST = 1001
+    private var hasSchedule = false
+    private var hasPersonal = false
+    private var hasExtended = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +66,20 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
+        queryDataState {
+            menu?.findItem(R.id.menu_delete_schedule)?.isVisible = hasSchedule
+            menu?.findItem(R.id.menu_delete_personal)?.isVisible = hasPersonal
+            menu?.findItem(R.id.menu_delete_extended)?.isVisible = hasExtended
+            menu?.findItem(R.id.menu_reset)?.isVisible = hasSchedule || hasPersonal || hasExtended
+        }
+        return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        menu?.findItem(R.id.menu_delete_schedule)?.isVisible = hasSchedule
+        menu?.findItem(R.id.menu_delete_personal)?.isVisible = hasPersonal
+        menu?.findItem(R.id.menu_delete_extended)?.isVisible = hasExtended
+        menu?.findItem(R.id.menu_reset)?.isVisible = hasSchedule || hasPersonal || hasExtended
         return true
     }
 
@@ -82,20 +99,14 @@ class MainActivity : AppCompatActivity() {
     // ── Export ─────────────────────────────────────────────────────────
 
     private fun showExportDialog() {
-        val options = arrayOf(
-            "💾 Всё расписание (JSON)",
-            "📄 Только уроки (JSON)",
-            "🤸 Только занятия (JSON)",
-            "🎒 Только продлёнка (JSON)"
-        )
+        val options = mutableListOf("💾 Всё расписание (JSON)")
+        val handlers = mutableListOf(Runnable { exportFullJson() })
+        if (hasSchedule) { options.add("📄 Только уроки (JSON)"); handlers.add(Runnable { webView.evaluateJavascript("exportSchool()", null) }) }
+        if (hasPersonal) { options.add("🤸 Только занятия (JSON)"); handlers.add(Runnable { webView.evaluateJavascript("exportPersonal()", null) }) }
+        if (hasExtended) { options.add("🎒 Только продлёнка (JSON)"); handlers.add(Runnable { webView.evaluateJavascript("exportExtended()", null) }) }
         AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
             .setTitle("Экспорт")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> exportFullJson()
-                    1 -> webView.evaluateJavascript("exportSchool()", null)
-                }
-            }
+            .setItems(options.toTypedArray()) { _, which -> handlers[which].run() }
             .setNegativeButton("Отмена", null)
             .show()
     }
@@ -184,6 +195,7 @@ class MainActivity : AppCompatActivity() {
                 val what = r.removePrefix("ok:")
                 Toast.makeText(this, "$what импортировано! Перезапускаю...", Toast.LENGTH_SHORT).show()
                 webView.reload()
+                webView.postDelayed({ queryDataState { invalidateOptionsMenu() } }, 2000)
             } else {
                 Toast.makeText(this, "Ошибка: $r", Toast.LENGTH_LONG).show()
             }
@@ -223,8 +235,11 @@ class MainActivity : AppCompatActivity() {
             })()"""
         ) { r ->
             val s = r?.removeSurrounding("\"") ?: ""
-            if (s == "ok") { Toast.makeText(this, "Удалено!", Toast.LENGTH_SHORT).show(); webView.reload() }
-            else Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
+            if (s == "ok") {
+                Toast.makeText(this, "Удалено!", Toast.LENGTH_SHORT).show()
+                webView.reload()
+                webView.postDelayed({ queryDataState { invalidateOptionsMenu() } }, 1000)
+            } else Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -233,14 +248,43 @@ class MainActivity : AppCompatActivity() {
     private fun resetData() {
         AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
             .setTitle("Сбросить?")
-            .setMessage("Удалить все правки и вернуть оригинальное расписание?")
+            .setMessage("Удалить все данные?")
             .setPositiveButton("Да") { _, _ ->
                 webView.evaluateJavascript("localStorage.removeItem('tg_local_data'); 'ok'") {
+                    hasSchedule = false; hasPersonal = false; hasExtended = false
                     Toast.makeText(this, "Сброшено!", Toast.LENGTH_SHORT).show()
+                    invalidateOptionsMenu()
                     webView.reload()
                 }
             }
             .setNegativeButton("Нет", null).show()
+    }
+
+    // ── Data State ────────────────────────────────────────────────────
+
+    private fun queryDataState(onDone: () -> Unit = {}) {
+        webView.evaluateJavascript(
+            """(function() {
+                try {
+                    var d = JSON.parse(localStorage.getItem('tg_local_data') || '{}');
+                    var sch = d.schedule || [];
+                    var hasSch = sch.some(function(day){ return day.lessons && day.lessons.length > 0; });
+                    var pers = d.personal || {};
+                    var hasPers = Object.keys(pers).some(function(k){ return Array.isArray(pers[k]) && pers[k].length > 0; });
+                    var ext = d.extended || [];
+                    return JSON.stringify({schedule:hasSch, personal:hasPers, extended:ext.length>0});
+                } catch(e) { return '{"schedule":false,"personal":false,"extended":false}'; }
+            })()"""
+        ) { result ->
+            val s = result?.removeSurrounding("\"") ?: ""
+            try {
+                val json = org.json.JSONObject(s)
+                hasSchedule = json.optBoolean("schedule", false)
+                hasPersonal = json.optBoolean("personal", false)
+                hasExtended = json.optBoolean("extended", false)
+            } catch (_: Exception) {}
+            runOnUiThread { onDone() }
+        }
     }
 
     // ── Helpers ────────────────────────────────────────────────────────
