@@ -261,11 +261,11 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const paidBadge = l.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
   const num = (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) ? "⭐" : (l.n != null ? l.n : "");
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
-  const progressStyle = state === "current" ? (() => {
+  const progressProp = state === "current" ? (() => {
     const now = new Date();
     const cur = now.getHours() * 60 + now.getMinutes();
     const pct = Math.max(0, Math.min(100, ((cur - startTime) / (endTime - startTime)) * 100));
-    return `style="--progress:${pct}%"`;
+    return `--progress:${pct}%;`;
   })() : "";
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
@@ -274,10 +274,11 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const bellCls = bellActive ? " bell-active" : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('school',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   const colorStyle = l.color ? `border-left:4px solid ${l.color};` : "";
+  const combinedStyle = (colorStyle + progressProp).trim();
   const teacherText = l.teacher ? `<div class="lesson-teacher">${l.teacher}</div>` : "";
   const locationText = l.location ? `<div class="lesson-location">${l.location}</div>` : "";
   return `
-    <div class="lesson${cls}" style="${colorStyle}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle} ${editMode ? 'onclick="showEditModal(\'school\',' + dayIdx + ',' + itemIdx + ')"' : ''}>
+    <div class="lesson${cls}" ${combinedStyle ? `style="${combinedStyle}"` : ""} data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${editMode ? 'onclick="showEditModal(\'school\',' + dayIdx + ',' + itemIdx + ')"' : ''}>
       <div class="lesson-body">
         <div class="lesson-icon">${icon}</div>
         <div class="lesson-num">${num}</div>
@@ -302,19 +303,20 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
-  const progressStyle = state === "current" ? (() => {
+  const progressProp = state === "current" ? (() => {
     const now = new Date();
     const cur = now.getHours() * 60 + now.getMinutes();
     const pct = Math.max(0, Math.min(100, ((cur - startTime) / (endTime - startTime)) * 100));
-    return `style="--progress:${pct}%"`;
+    return `--progress:${pct}%;`;
   })() : "";
   const type = item._type || "extended";
   const bellActive = hasReminder(type, dayIdx, itemIdx, item.time, "start") || hasReminder(type, dayIdx, itemIdx, item.time, "end");
   const bellCls = bellActive ? " bell-active" : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${type}',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   const colorStyle = item.color ? `border-left:4px solid ${item.color};` : "";
+  const combinedStyle = (colorStyle + progressProp).trim();
   return `
-    <div class="lesson${cls}" style="${colorStyle}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle} ${editMode ? `onclick="showEditModal('${type}',${dayIdx},${itemIdx})"` : ''}>
+    <div class="lesson${cls}" ${combinedStyle ? `style="${combinedStyle}"` : ""} data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${editMode ? `onclick="showEditModal('${type}',${dayIdx},${itemIdx})"` : ''}>
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num" style="color:var(--accent);font-size:11px;">⏰</div>
@@ -355,12 +357,6 @@ function renderMergeCard(group, dayIdx) {
     const itemEnd = parseTime(item.time.split(/[–\-]/)[1]);
     const rowState = getCardState(dayIdx, item.time);
     const rowProgressAttr = rowState === "current" ? `data-progress="${itemStart}" data-end="${itemEnd}"` : "";
-    const rowProgressStyle = rowState === "current" ? (() => {
-      const now = new Date();
-      const cur = now.getHours() * 60 + now.getMinutes();
-      const pct = Math.max(0, Math.min(100, ((cur - itemStart) / (itemEnd - itemStart)) * 100));
-      return `style="--progress:${pct}%"`;
-    })() : "";
     const cdAttr = rowState === "next" ? `data-cd="${itemStart}"` : rowState === "current" ? `data-cd-end="${itemEnd}"` : "";
     const cdText = rowState === "next" ? countdownSec(itemStart) : rowState === "current" ? remainingSec(itemEnd) : "";
     const num = item._type === "school" ? (item.subj && (item.subj.startsWith("Факультатив") || item.subj.startsWith("Кружок")) ? "⭐" : (item.n != null ? item.n : "")) : "⏰";
@@ -369,8 +365,15 @@ function renderMergeCard(group, dayIdx) {
     const bellCls = bellActive ? " bell-active" : "";
     const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${item._type}',${dayIdx},${item._itemIdx})">✏️</button></div>` : "";
     const colorStyle = item.color ? `border-left:3px solid ${item.color};` : "";
+    const progressStyle = rowState === "current" ? (() => {
+      const now = new Date();
+      const cur = now.getHours() * 60 + now.getMinutes();
+      const pct = Math.max(0, Math.min(100, ((cur - itemStart) / (itemEnd - itemStart)) * 100));
+      return `--progress:${pct}%;`;
+    })() : "";
+    const combinedStyle = (colorStyle + progressStyle).trim();
     return `
-      <div class="merge-row" style="${colorStyle}" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${rowProgressStyle} ${editMode ? `onclick="showEditModal('${item._type}',${dayIdx},${item._itemIdx})"` : ''}>
+      <div class="merge-row" ${combinedStyle ? `style="${combinedStyle}"` : ""} data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${editMode ? `onclick="showEditModal('${item._type}',${dayIdx},${item._itemIdx})"` : ''}>
         <div class="merge-icon ${labelCls}">${item._icon || "📋"}</div>
         <div class="merge-info">
           <div class="merge-label ${labelCls}">${labelText}</div>
