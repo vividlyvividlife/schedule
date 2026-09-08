@@ -437,11 +437,12 @@ function renderStatus() {
 }
 
 function renderProgress() {
+  try {
   const today = getTodayIndex();
   const day = SCHEDULE[today];
   const fill = document.getElementById("progressFill");
   const lbl = document.getElementById("progressLabel");
-  if (!fill) return;
+  if (!fill) { console.error("progressFill not found"); return; }
   if (!day || !day.lessons || !day.lessons.length) {
     fill.style.width = "0%";
     if (lbl) lbl.textContent = "";
@@ -480,6 +481,7 @@ function renderProgress() {
   const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
   fill.style.width = pct + "%";
   if (lbl) lbl.textContent = Math.round(pct) + "%";
+  } catch(err) { console.error("renderProgress:", err); }
 }
 
 function renderTabs() {
