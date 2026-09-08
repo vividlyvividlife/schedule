@@ -439,7 +439,7 @@ function renderStatus() {
 function renderProgress() {
   const today = getTodayIndex();
   const day = SCHEDULE[today];
-  if (!day.lessons.length) {
+  if (!day || !day.lessons || !day.lessons.length) {
     document.getElementById("progressFill").style.width = "0%";
     return;
   }
@@ -448,15 +448,32 @@ function renderProgress() {
   let first = parseTime(day.lessons[0].time);
   let last = parseTime(day.lessons[day.lessons.length - 1].time) + 45;
 
-  if (extendedOn && EXTENDED.length) {
-    const lastLessonEnd = last;
-    const filtered = EXTENDED.filter(ext => parseTime(ext.time) >= lastLessonEnd);
-    if (filtered.length) {
-      const lastExt = filtered[filtered.length - 1];
-      last = parseTime(lastExt.time.split(/[–\-]/)[1]);
+  const personal = PERSONAL[today] || [];
+  const ext = extendedOn ? EXTENDED.filter(ext => {
+    const eS = parseTime(ext.time);
+    for (const l of day.lessons) {
+      if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
+      const lS = parseTime(l.time);
+      const lE = parseTime(l.time.split(/[–\-]/)[1]);
+      if (eS < lE && parseTime(ext.time.split(/[–\-]/)[1]) > lS) return false;
     }
+    return true;
+  }) : [];
+
+  const allTimes = [...day.lessons, ...personal, ...ext];
+  if (allTimes.length) {
+    first = Math.min(...allTimes.map(i => parseTime(i.time)));
+    const ends = allTimes.map(i => {
+      const end = i.time.split(/[–\-]/)[1];
+      return end ? parseTime(end) : parseTime(i.time) + 45;
+    });
+    last = Math.max(...ends);
   }
 
+  if (last <= first) {
+    document.getElementById("progressFill").style.width = "0%";
+    return;
+  }
   const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
   document.getElementById("progressFill").style.width = pct + "%";
 }
