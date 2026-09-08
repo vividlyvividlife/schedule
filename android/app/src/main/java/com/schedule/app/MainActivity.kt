@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.title = "Расписание 2026–2027"
 
         webView = findViewById(R.id.webView)
+        webView.clearCache(true)
 
         val assetLoader = WebViewAssetLoader.Builder()
             .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(this))
