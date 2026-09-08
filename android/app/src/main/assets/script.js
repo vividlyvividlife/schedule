@@ -256,7 +256,7 @@ function renderCountdowns() {
 function renderLesson(l, state, dayIdx, itemIdx) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
   const startTime = parseTime(l.time);
-  const endTime = parseTime(l.time.split("–")[1]);
+  const endTime = parseTime(l.time.split(/[–\-]/)[1]);
   const icon = ICONS[l.subj] || "📋";
   const paidBadge = l.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
   const num = (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) ? "⭐" : (l.n != null ? l.n : "");
@@ -298,7 +298,7 @@ function renderLesson(l, state, dayIdx, itemIdx) {
 function renderExtendedItem(item, state, dayIdx, itemIdx) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
   const startTime = parseTime(item.time);
-  const endTime = parseTime(item.time.split("–")[1]);
+  const endTime = parseTime(item.time.split(/[–\-]/)[1]);
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
@@ -334,14 +334,14 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
 
 function timeRangeOverlap(a, b) {
   const aS = parseTime(a.time);
-  const aE = parseTime(a.time.split("–")[1]);
+  const aE = parseTime(a.time.split(/[–\-]/)[1]);
   const bS = parseTime(b.time);
-  const bE = parseTime(b.time.split("–")[1]);
+  const bE = parseTime(b.time.split(/[–\-]/)[1]);
   return aS < bE && bS < aE;
 }
 
 function renderMergeCard(group, dayIdx) {
-  const times = group.map(i => i.time.split("–").map(parseTime));
+  const times = group.map(i => i.time.split(/[–\-]/).map(parseTime));
   const earliestS = Math.min(...times.map(t => t[0]));
   const earliestE = Math.max(...times.map(t => t[1]));
   const timeStr = `${Math.floor(earliestS/60)}:${String(earliestS%60).padStart(2,"0")}–${Math.floor(earliestE/60)}:${String(earliestE%60).padStart(2,"0")}`;
@@ -352,7 +352,7 @@ function renderMergeCard(group, dayIdx) {
     const labelCls = item._type;
     const labelText = item._type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item._type === "personal" ? "Занятие" : "Продлёнка";
     const itemStart = parseTime(item.time);
-    const itemEnd = parseTime(item.time.split("–")[1]);
+    const itemEnd = parseTime(item.time.split(/[–\-]/)[1]);
     const rowState = getCardState(dayIdx, item.time);
     const rowProgressAttr = rowState === "current" ? `data-progress="${itemStart}" data-end="${itemEnd}"` : "";
     const rowProgressStyle = rowState === "current" ? (() => {
@@ -427,7 +427,7 @@ function renderStatus() {
   }
   const l = day.lessons[info.idx];
   if (info.type === "current") {
-    const endTime = parseTime(l.time.split("–")[1]);
+    const endTime = parseTime(l.time.split(/[–\-]/)[1]);
     el.innerHTML = `Сейчас: <span class="highlight">${l.subj}</span> · ${l.time} · <span data-cd-end="${endTime}">${remainingSec(endTime)}</span>`;
   } else if (info.type === "next") {
     el.innerHTML = `Следующий: <span class="highlight">${l.subj}</span> · ${l.time} · <span data-cd="${parseTime(l.time)}">${countdownSec(parseTime(l.time))}</span>`;
@@ -453,7 +453,7 @@ function renderProgress() {
     const filtered = EXTENDED.filter(ext => parseTime(ext.time) >= lastLessonEnd);
     if (filtered.length) {
       const lastExt = filtered[filtered.length - 1];
-      last = parseTime(lastExt.time.split("–")[1]);
+      last = parseTime(lastExt.time.split(/[–\-]/)[1]);
     }
   }
 
@@ -936,7 +936,7 @@ function renderAll() {
     const cur = now.getHours() * 60 + now.getMinutes();
     const item = EXTENDED[itemIdx];
     const s = parseTime(item.time);
-    const e = parseTime(item.time.split("–")[1]);
+    const e = parseTime(item.time.split(/[–\-]/)[1]);
     if (cur >= s && cur < e) return "current";
     if (cur >= e) return "past";
     if (cur < s && (s - cur) <= 120) return "next";
@@ -957,7 +957,7 @@ function renderAll() {
         const now = new Date();
         const cur = now.getHours() * 60 + now.getMinutes();
         const s = parseTime(p.time);
-        const e = parseTime(p.time.split("–")[1]);
+        const e = parseTime(p.time.split(/[–\-]/)[1]);
         if (cur >= s && cur < e) return "current";
         if (cur >= e) return "past";
         if (cur < s && (s - cur) <= 120) return "next";
@@ -969,11 +969,11 @@ function renderAll() {
       _state: getExtState(ei, dayIdx)
     })).filter(ext => {
       const eS = parseTime(ext.time);
-      const eE = parseTime(ext.time.split("–")[1]);
+      const eE = parseTime(ext.time.split(/[–\-]/)[1]);
       for (const l of d.lessons) {
         if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
         const lS = parseTime(l.time);
-        const lE = parseTime(l.time.split("–")[1]);
+        const lE = parseTime(l.time.split(/[–\-]/)[1]);
         if (eS < lE && eE > lS) return false;
       }
       return true;

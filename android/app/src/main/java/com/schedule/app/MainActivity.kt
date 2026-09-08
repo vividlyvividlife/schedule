@@ -476,7 +476,7 @@ class MainActivity : AppCompatActivity() {
                 val whenType = r.optString("when", "start")
                 val whenLabel = if (whenType == "end") "Конец" else "Начало"
 
-                val parts = time.split("–")
+                val parts = time.split(Regex("[–\\-]"))
                 val refParts = if (whenType == "end") parts[1].split(":") else parts[0].split(":")
                 val refHour = refParts[0].toInt()
                 val refMin = refParts[1].toInt()

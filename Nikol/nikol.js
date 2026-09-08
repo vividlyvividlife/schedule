@@ -63,8 +63,8 @@ function getWeekendMessage(dayIdx) {
   return msgs[getDaySeed() % msgs.length];
 }
 function timeRangeOverlap(a, b) {
-  const [aS, aE] = a.time.split("–").map(parseTime);
-  const [bS, bE] = b.time.split("–").map(parseTime);
+  const [aS, aE] = a.time.split(/[–\-]/).map(parseTime);
+  const [bS, bE] = b.time.split(/[–\-]/).map(parseTime);
   return aS < bE && bS < aE;
 }
 
@@ -89,11 +89,11 @@ function getItemsForDay(dayIdx) {
   if (showExtended && !isWeekend && school.length > 0) {
     extended = EXTENDED.map(e => ({...e, type:"extended"})).filter(ext => {
       const eS = parseTime(ext.time);
-      const eE = parseTime(ext.time.split("–")[1]);
+      const eE = parseTime(ext.time.split(/[–\-]/)[1]);
       for (const l of daySchedule.lessons) {
         if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
         const lS = parseTime(l.time);
-        const lE = parseTime(l.time.split("–")[1]);
+        const lE = parseTime(l.time.split(/[–\-]/)[1]);
         if (eS < lE && eE > lS) return false;
       }
       return true;
@@ -146,7 +146,7 @@ function renderSingle(item, dayIdx) {
   const cls = `lesson ${state}`;
   const num = item.type === "school" ? (item.subj && (item.subj.startsWith("Факультатив") || item.subj.startsWith("Кружок")) ? "⭐" : (item.n != null ? item.n : "")) : "⭐";
   const startTime = parseTime(item.time);
-  const endTime = parseTime(item.time.split("–")[1]);
+  const endTime = parseTime(item.time.split(/[–\-]/)[1]);
   const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   const progressStyle = state === "current" ? (() => {
@@ -173,7 +173,7 @@ function renderSingle(item, dayIdx) {
 }
 
 function renderMerge(group, dayIdx) {
-  const times = group.items.map(i => i.time.split("–").map(parseTime));
+  const times = group.items.map(i => i.time.split(/[–\-]/).map(parseTime));
   const earliestS = Math.min(...times.map(t => t[0]));
   const earliestE = Math.max(...times.map(t => t[1]));
   const state = getCardState(dayIdx, `${Math.floor(earliestS/60)}:${String(earliestS%60).padStart(2,"0")}–${Math.floor(earliestE/60)}:${String(earliestE%60).padStart(2,"0")}`);
@@ -183,7 +183,7 @@ function renderMerge(group, dayIdx) {
     const labelCls = item.type;
     const labelText = item.type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item.type === "personal" ? "Занятие" : "Продлёнка";
     const itemStart = parseTime(item.time);
-    const itemEnd = parseTime(item.time.split("–")[1]);
+    const itemEnd = parseTime(item.time.split(/[–\-]/)[1]);
     const rowState = getCardState(dayIdx, item.time);
     const rowProgressAttr = rowState === "current" ? `data-progress="${itemStart}" data-end="${itemEnd}"` : "";
     const rowProgressStyle = rowState === "current" ? (() => {
@@ -238,13 +238,13 @@ function renderStatus() {
   let current = null, next = null;
   for (const item of items) {
     if (item.type === "merge") {
-      const times = item.items.map(i => i.time.split("–").map(parseTime));
+      const times = item.items.map(i => i.time.split(/[–\-]/).map(parseTime));
       const s = Math.min(...times.map(t => t[0]));
       const e = Math.max(...times.map(t => t[1]));
       if (cur >= s && cur < e) { current = item; break; }
       if (!next && cur < s) next = item;
     } else {
-      const [s, e] = item.time.split("–").map(parseTime);
+      const [s, e] = item.time.split(/[–\-]/).map(parseTime);
       if (cur >= s && cur < e) { current = item; break; }
       if (!next && cur < s) next = item;
     }
@@ -352,12 +352,12 @@ function renderProgress() {
       item.items.forEach(i => {
         const s = parseTime(i.time);
         if (s < first) first = s;
-        const e = parseTime(i.time.split("–")[1]);
+        const e = parseTime(i.time.split(/[–\-]/)[1]);
         if (e > last) last = e;
       });
     } else {
       const s = parseTime(item.time);
-      const e = parseTime(item.time.split("–")[1]);
+      const e = parseTime(item.time.split(/[–\-]/)[1]);
       if (s < first) first = s;
       if (e > last) last = e;
     }

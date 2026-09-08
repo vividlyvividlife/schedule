@@ -4,7 +4,7 @@
 
 function parseTime(t) {
   if (!t || typeof t !== "string") return 0;
-  const cleaned = t.split("–")[0].replace(".", ":");
+  const cleaned = t.split(/[–\-]/)[0].replace(/\./g, ":");
   const [h, m] = cleaned.split(":").map(Number);
   return (h || 0) * 60 + (m || 0);
 }
@@ -89,7 +89,7 @@ function getCardState(dayIdx, time) {
   if (dayIdx > todayIdx) return "future";
   const cur = new Date().getHours() * 60 + new Date().getMinutes();
   const s = parseTime(time);
-  const e = parseTime(time.split("–")[1]);
+  const e = parseTime(time.split(/[–\-]/)[1]);
   if (cur >= s && cur < e) return "current";
   if (cur >= e) return "past";
   if (cur < s && (s - cur) <= 120) return "next";
@@ -102,7 +102,7 @@ function renderLessonCard(item, extraClass) {
   const state = getCardState(item._dayIdx, item.time);
   const cls = `${extraClass || "lesson"} ${state}`;
   const startTime = parseTime(item.time);
-  const endTime = parseTime(item.time.split("–")[1]);
+  const endTime = parseTime(item.time.split(/[–\-]/)[1]);
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
