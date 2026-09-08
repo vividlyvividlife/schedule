@@ -164,7 +164,7 @@ function updateCardStates() {
       el.style.setProperty("--progress", pct + "%");
       let progEl = el.querySelector(".row-progress");
       if (!progEl) { progEl = document.createElement("div"); progEl.className = "row-progress"; el.insertBefore(progEl, el.firstChild); }
-      progEl.style.width = pct + "%";
+      progEl.style.width = (100 - pct) + "%";
       if (!cdEl) {
         cdEl = document.createElement("div");
         cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";

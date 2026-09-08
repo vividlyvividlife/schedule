@@ -265,7 +265,7 @@ function renderLesson(l, state, dayIdx, itemIdx) {
     const now = new Date();
     const cur = now.getHours() * 60 + now.getMinutes();
     const pct = Math.max(0, Math.min(100, ((cur - startTime) / (endTime - startTime)) * 100));
-    return `<div class="row-progress" style="width:${pct}%"></div>`;
+    return `<div class="row-progress" style="width:${100 - pct}%"></div>`;
   })() : "";
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
@@ -307,7 +307,7 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
     const now = new Date();
     const cur = now.getHours() * 60 + now.getMinutes();
     const pct = Math.max(0, Math.min(100, ((cur - startTime) / (endTime - startTime)) * 100));
-    return `<div class="row-progress" style="width:${pct}%"></div>`;
+    return `<div class="row-progress" style="width:${100 - pct}%"></div>`;
   })() : "";
   const type = item._type || "extended";
   const bellActive = hasReminder(type, dayIdx, itemIdx, item.time, "start") || hasReminder(type, dayIdx, itemIdx, item.time, "end");
@@ -369,7 +369,7 @@ function renderMergeCard(group, dayIdx) {
       const now = new Date();
       const cur = now.getHours() * 60 + now.getMinutes();
       const pct = Math.max(0, Math.min(100, ((cur - itemStart) / (itemEnd - itemStart)) * 100));
-      return `<div class="row-progress" style="width:${pct}%"></div>`;
+      return `<div class="row-progress" style="width:${100 - pct}%"></div>`;
     })() : "";
     return `
       <div class="merge-row" ${colorStyle ? `style="${colorStyle}"` : ""} data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${editMode ? `onclick="showEditModal('${item._type}',${dayIdx},${item._itemIdx})"` : ''}>
