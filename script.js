@@ -513,7 +513,7 @@ function buildToggles() {
   let html = "";
   const hasExtended = EXTENDED.length > 0;
   const hasSchool = SCHEDULE.some(d => d.lessons.length > 0);
-  const hasPersonal = Object.keys(PERSONAL).some(k => Array.isArray(PERSONAL[k]) && PERSONAL[k].length > 0);
+  const hasPersonal = typeof Android !== "undefined" && Object.keys(PERSONAL).some(k => Array.isArray(PERSONAL[k]) && PERSONAL[k].length > 0);
   if (hasExtended && localStorage.getItem("extended") === null) { extendedOn = true; localStorage.setItem("extended", true); }
   if (hasSchool) {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="schoolToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="schoolToggle">Уроки</label></div>`;
