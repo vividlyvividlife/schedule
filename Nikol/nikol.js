@@ -88,6 +88,7 @@ function getItemsForDay(dayIdx) {
   let extended = [];
   if (showExtended && !isWeekend && school.length > 0) {
     extended = EXTENDED.map(e => ({...e, type:"extended"})).filter(ext => {
+      if (ext.days && !ext.days.includes(dayIdx)) return false;
       const eS = parseTime(ext.time);
       const eE = parseTime(ext.time.split(/[–\-]/)[1]);
       for (const l of daySchedule.lessons) {

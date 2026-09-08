@@ -451,10 +451,9 @@ function renderProgress() {
   const cur = now.getHours() * 60 + now.getMinutes();
 
   const allItems = [...day.lessons];
-  const personal = PERSONAL[today] || [];
-  for (const p of personal) allItems.push(p);
   if (extendedOn) {
     for (const e of EXTENDED) {
+      if (e.days && !e.days.includes(today)) continue;
       const eS = parseTime(e.time);
       let overlaps = false;
       for (const l of day.lessons) {
@@ -508,23 +507,18 @@ function buildToggles() {
   if (!c) return;
   let html = "";
   const hasExtended = EXTENDED.length > 0;
-  const hasPersonal = Object.keys(PERSONAL).length > 0;
   const hasSchool = SCHEDULE.some(d => d.lessons.length > 0);
+  personalOn = false;
   if (hasExtended && localStorage.getItem("extended") === null) { extendedOn = true; localStorage.setItem("extended", true); }
-  if (hasPersonal && localStorage.getItem("personal") === null) { personalOn = true; localStorage.setItem("personal", true); }
   if (hasSchool) {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="schoolToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="schoolToggle">Уроки</label></div>`;
   }
   if (hasExtended) {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="extendedToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="extendedToggle">Продлёнка</label></div>`;
   }
-  if (hasPersonal) {
-    html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="personalToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="personalToggle">Занятия</label></div>`;
-  }
   c.innerHTML = html;
   if (schoolOn && hasSchool) document.getElementById("schoolToggle").checked = true;
   if (extendedOn && hasExtended) document.getElementById("extendedToggle").checked = true;
-  if (personalOn && hasPersonal) document.getElementById("personalToggle").checked = true;
 }
 
 function onToggle() {
@@ -990,6 +984,7 @@ function renderAll() {
       ...ext, _type: "extended", _icon: ext.icon, _itemIdx: ei,
       _state: getExtState(ei, dayIdx)
     })).filter(ext => {
+      if (ext.days && !ext.days.includes(dayIdx)) return false;
       const eS = parseTime(ext.time);
       const eE = parseTime(ext.time.split(/[–\-]/)[1]);
       for (const l of d.lessons) {
