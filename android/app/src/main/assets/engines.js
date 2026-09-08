@@ -152,6 +152,7 @@ function updateCardStates() {
     const info = el.querySelector(".lesson-info, .merge-info");
     const isMergeWrapper = el.classList.contains("merge-card");
     if (!info && !isMergeWrapper) return;
+    if (isMergeWrapper) return;
     let cdEl = info ? info.querySelector(".lesson-countdown, .merge-countdown") : null;
 
     if (newState === "current" && !isMergeWrapper) {
