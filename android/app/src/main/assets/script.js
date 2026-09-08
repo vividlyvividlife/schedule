@@ -64,6 +64,23 @@ const ICONS = {
   "Кружок \"Ритмика и танец\"": "💃",
 };
 
+const CARD_COLORS = [
+  "", "#e74c3c","#e67e22","#f1c40f","#2ecc71","#1abc9c",
+  "#3498db","#9b59b6","#e84393","#fd79a8","#00b894",
+  "#00cec9","#0984e3","#6c5ce7","#a29bfe","#fab1a0",
+  "#ff7675","#74b9ff","#55efc4","#ffeaa7","#dfe6e9",
+  "#636e72","#2d3436","#b33939","#cd6133","#cc8e35",
+  "#28746b","#1e6fa0","#6c3483","#7d3c98","#4a235a"
+];
+const COLOR_NAMES = [
+  "Без цвета","Красный","Оранжевый","Жёлтый","Зелёный","Бирюзовый",
+  "Синий","Фиолетовый","Розовый","Свет-розовый","Мятный",
+  "Голубой","Индиго","Лавандовый","Свет-синий","Персиковый",
+  "Коралловый","Небесный","Салатовый","Лимонный","Серый",
+  "Тёмно-серый","Чёрный","Бордовый","Терракотовый","Золотой",
+  "Тёмно-зелёный","Тёмно-синий","Тёмно-фиолетовый","Пурпурный","Тёмно-пурпурный"
+];
+
 let SCHEDULE = [];
 let PERSONAL = {};
 let EXTENDED = [];
@@ -255,8 +272,11 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const bellActive = hasReminder("school", dayIdx, itemIdx, l.time, "start") || hasReminder("school", dayIdx, itemIdx, l.time, "end");
   const bellCls = bellActive ? " bell-active" : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('school',${dayIdx},${itemIdx})">✏️</button></div>` : "";
+  const colorStyle = l.color ? `border-left:4px solid ${l.color};` : "";
+  const teacherText = l.teacher ? `<div class="lesson-teacher">${l.teacher}</div>` : "";
+  const locationText = l.location ? `<div class="lesson-location">${l.location}</div>` : "";
   return `
-    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle} ${editMode ? 'onclick="showEditModal(\'school\',' + dayIdx + ',' + itemIdx + ')"' : ''}>
+    <div class="lesson${cls}" style="${colorStyle}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle} ${editMode ? 'onclick="showEditModal(\'school\',' + dayIdx + ',' + itemIdx + ')"' : ''}>
       <div class="lesson-body">
         <div class="lesson-icon">${icon}</div>
         <div class="lesson-num">${num}</div>
@@ -264,6 +284,8 @@ function renderLesson(l, state, dayIdx, itemIdx) {
           <div class="lesson-time">${l.time}</div>
           <div class="lesson-subject">${l.subj}${paidBadge}</div>
           ${roomText}
+          ${teacherText}
+          ${locationText}
           ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
         <button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${(l.subj||'').replace(/'/g,"\\'")}')">🔔</button>
@@ -289,8 +311,9 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
   const bellActive = hasReminder(type, dayIdx, itemIdx, item.time, "start") || hasReminder(type, dayIdx, itemIdx, item.time, "end");
   const bellCls = bellActive ? " bell-active" : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${type}',${dayIdx},${itemIdx})">✏️</button></div>` : "";
+  const colorStyle = item.color ? `border-left:4px solid ${item.color};` : "";
   return `
-    <div class="lesson${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle} ${editMode ? `onclick="showEditModal('${type}',${dayIdx},${itemIdx})"` : ''}>
+    <div class="lesson${cls}" style="${colorStyle}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle} ${editMode ? `onclick="showEditModal('${type}',${dayIdx},${itemIdx})"` : ''}>
       <div class="lesson-body">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num" style="color:var(--accent);font-size:11px;">⏰</div>
@@ -298,6 +321,8 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
           <div class="lesson-time">${item.time}</div>
           <div class="lesson-subject">${item.subj}</div>
           ${item.room ? `<div class="lesson-room">${item.room}</div>` : ""}
+          ${item.teacher ? `<div class="lesson-teacher">${item.teacher}</div>` : ""}
+          ${item.location ? `<div class="lesson-location">${item.location}</div>` : ""}
           ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
         <button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${(item.subj||'').replace(/'/g,"\\'")}')">🔔</button>
@@ -342,14 +367,17 @@ function renderMergeCard(group, dayIdx) {
     const bellActive = hasReminder(item._type, dayIdx, item._itemIdx, item.time, "start") || hasReminder(item._type, dayIdx, item._itemIdx, item.time, "end");
     const bellCls = bellActive ? " bell-active" : "";
     const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${item._type}',${dayIdx},${item._itemIdx})">✏️</button></div>` : "";
+    const colorStyle = item.color ? `border-left:3px solid ${item.color};` : "";
     return `
-      <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${rowProgressStyle} ${editMode ? `onclick="showEditModal('${item._type}',${dayIdx},${item._itemIdx})"` : ''}>
+      <div class="merge-row" style="${colorStyle}" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${rowProgressStyle} ${editMode ? `onclick="showEditModal('${item._type}',${dayIdx},${item._itemIdx})"` : ''}>
         <div class="merge-icon ${labelCls}">${item._icon || "📋"}</div>
         <div class="merge-info">
           <div class="merge-label ${labelCls}">${labelText}</div>
           <div class="merge-time">${item.time}</div>
           <div class="merge-subj">${item.subj}${paidBadge}</div>
           ${item.room ? `<div class="merge-room">${item.room}</div>` : ""}
+          ${item.teacher ? `<div class="lesson-teacher">${item.teacher}</div>` : ""}
+          ${item.location ? `<div class="lesson-location">${item.location}</div>` : ""}
           ${cdAttr ? `<div class="merge-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
         <button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${(item.subj||'').replace(/'/g,"\\'")}')">🔔</button>
@@ -723,7 +751,10 @@ function showAddModal() {
   document.getElementById("modalSubj").value = "";
   document.getElementById("modalTime").value = "";
   document.getElementById("modalRoom").value = "";
+  document.getElementById("modalLocation").value = "";
+  document.getElementById("modalTeacher").value = "";
   document.getElementById("modalType").value = "school";
+  initColorPicker("");
   document.getElementById("modalOverlay").style.display = "flex";
 }
 
@@ -741,24 +772,53 @@ function showEditModal(type, dayIdx, itemIdx) {
     document.getElementById("modalSubj").value = item.subj || "";
     document.getElementById("modalTime").value = item.time || "";
     document.getElementById("modalRoom").value = item.room || "";
+    document.getElementById("modalLocation").value = item.location || "";
+    document.getElementById("modalTeacher").value = item.teacher || "";
+    initColorPicker(item.color || "");
   } else if (type === "personal") {
     item = (PERSONAL[dayIdx] || [])[itemIdx];
     document.getElementById("modalNum").value = "";
     document.getElementById("modalSubj").value = item.subj || "";
     document.getElementById("modalTime").value = item.time || "";
     document.getElementById("modalRoom").value = item.room || "";
+    document.getElementById("modalLocation").value = item.location || "";
+    document.getElementById("modalTeacher").value = item.teacher || "";
+    initColorPicker(item.color || "");
   } else {
     item = EXTENDED[itemIdx];
     document.getElementById("modalNum").value = "";
     document.getElementById("modalSubj").value = item.subj || "";
     document.getElementById("modalTime").value = item.time || "";
     document.getElementById("modalRoom").value = item.room || "";
+    document.getElementById("modalLocation").value = item.location || "";
+    document.getElementById("modalTeacher").value = item.teacher || "";
+    initColorPicker(item.color || "");
   }
   document.getElementById("modalOverlay").style.display = "flex";
 }
 
 function closeModal() {
   document.getElementById("modalOverlay").style.display = "none";
+}
+
+let _selectedColor = "";
+
+function initColorPicker(color) {
+  _selectedColor = color || "";
+  const picker = document.getElementById("modalColorPicker");
+  if (!picker) return;
+  picker.innerHTML = CARD_COLORS.map((c, i) => {
+    const cls = c === _selectedColor ? " active" : "";
+    if (i === 0) return `<div class="color-swatch no-color${cls}" data-color="" title="Без цвета">✕</div>`;
+    return `<div class="color-swatch${cls}" style="background:${c}" data-color="${c}" title="${COLOR_NAMES[i]}"></div>`;
+  }).join("");
+  picker.querySelectorAll(".color-swatch").forEach(sw => {
+    sw.onclick = () => {
+      picker.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
+      sw.classList.add("active");
+      _selectedColor = sw.dataset.color;
+    };
+  });
 }
 
 function saveModal() {
@@ -768,12 +828,18 @@ function saveModal() {
   const subj = document.getElementById("modalSubj").value.trim();
   const time = document.getElementById("modalTime").value.trim();
   const room = document.getElementById("modalRoom").value.trim();
+  const location = document.getElementById("modalLocation").value.trim();
+  const teacher = document.getElementById("modalTeacher").value.trim();
+  const color = _selectedColor;
   if (!subj || !time) { alert("Заполните предмет и время"); return; }
   const data = loadLocalData() || { schedule: JSON.parse(JSON.stringify(SCHEDULE)), personal: JSON.parse(JSON.stringify(PERSONAL)), extended: JSON.parse(JSON.stringify(EXTENDED)) };
   if (type === "school") {
     const lesson = { subj, time };
     if (num) lesson.n = parseInt(num);
     if (room) lesson.room = room;
+    if (location) lesson.location = location;
+    if (teacher) lesson.teacher = teacher;
+    if (color) lesson.color = color;
     while (data.schedule.length <= dayIdx) data.schedule.push({ name: SCHEDULE[data.schedule.length]?.name || "", lessons: [] });
     if (modalData.itemIdx >= 0) {
       data.schedule[dayIdx].lessons[modalData.itemIdx] = lesson;
@@ -784,6 +850,9 @@ function saveModal() {
   } else if (type === "personal") {
     const item = { subj, time, icon: "🤸" };
     if (room) item.room = room;
+    if (location) item.location = location;
+    if (teacher) item.teacher = teacher;
+    if (color) item.color = color;
     if (!data.personal) data.personal = {};
     if (!data.personal[dayIdx]) data.personal[dayIdx] = [];
     if (modalData.itemIdx >= 0) {
@@ -795,6 +864,9 @@ function saveModal() {
   } else {
     const item = { subj, time, icon: "🎒" };
     if (room) item.room = room;
+    if (location) item.location = location;
+    if (teacher) item.teacher = teacher;
+    if (color) item.color = color;
     if (!data.extended) data.extended = [];
     if (modalData.itemIdx >= 0) {
       data.extended[modalData.itemIdx] = item;
