@@ -488,7 +488,6 @@ function renderProgress() {
     console.error("renderProgress error:", err);
   }
 }
-}
 
 function renderTabs() {
   const wrap = document.getElementById("dayTabs");
