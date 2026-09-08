@@ -3,6 +3,7 @@
 /* ===== ЧАСЫ И ОТСЧЁТ ===== */
 
 function parseTime(t) {
+  if (!t || typeof t !== "string") return 0;
   const [h, m] = t.split("–")[0].split(":").map(Number);
   return h * 60 + m;
 }
