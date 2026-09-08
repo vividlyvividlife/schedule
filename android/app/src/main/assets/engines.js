@@ -162,6 +162,9 @@ function updateCardStates() {
       const curMin = now.getHours() * 60 + now.getMinutes();
       const pct = Math.max(0, Math.min(100, ((curMin - startTime) / (endTime - startTime)) * 100));
       el.style.setProperty("--progress", pct + "%");
+      let progEl = el.querySelector(".row-progress");
+      if (!progEl) { progEl = document.createElement("div"); progEl.className = "row-progress"; el.insertBefore(progEl, el.firstChild); }
+      progEl.style.width = pct + "%";
       if (!cdEl) {
         cdEl = document.createElement("div");
         cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";
