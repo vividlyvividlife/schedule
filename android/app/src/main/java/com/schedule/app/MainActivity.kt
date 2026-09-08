@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         swipeRefresh.setColorSchemeColors(0xFF6200EE.toInt())
         swipeRefresh.setOnRefreshListener {
             webView.clearCache(true)
-            webView.reload()
+            webView.loadUrl("https://appassets.androidplatform.net/index.html?t=${System.currentTimeMillis()}")
             swipeRefresh.isRefreshing = false
         }
 
