@@ -437,56 +437,50 @@ function renderStatus() {
 }
 
 function renderProgress() {
-  try {
-    const today = getTodayIndex();
-    const day = SCHEDULE[today];
-    const fill = document.getElementById("progressFill");
-    const lbl = document.getElementById("progressLabel");
-    console.log("renderProgress: today=", today, "day=", day?.name, "lessons=", day?.lessons?.length, "fill=", !!fill);
-    if (!fill) return;
-    if (!day || !day.lessons || !day.lessons.length) {
-      fill.style.width = "0%";
-      if (lbl) lbl.textContent = "";
-      return;
-    }
-    const now = new Date();
-    const cur = now.getHours() * 60 + now.getMinutes();
-
-    const allItems = [...day.lessons];
-    const personal = PERSONAL[today] || [];
-    for (const p of personal) allItems.push(p);
-    if (extendedOn) {
-      for (const e of EXTENDED) {
-        const eS = parseTime(e.time);
-        let overlaps = false;
-        for (const l of day.lessons) {
-          if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
-          const lS = parseTime(l.time);
-          const lE = parseTime(l.time.split(/[–\-]/)[1] || "");
-          const eE = parseTime(e.time.split(/[–\-]/)[1] || "");
-          if (eS < lE && eE > lS) { overlaps = true; break; }
-        }
-        if (!overlaps) allItems.push(e);
-      }
-    }
-
-    if (!allItems.length) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
-    let first = Infinity, last = 0;
-    for (const item of allItems) {
-      const s = parseTime(item.time);
-      const endStr = (item.time.split(/[–\-]/)[1] || "").trim();
-      const e = endStr ? parseTime(endStr) : s + 45;
-      if (s < first) first = s;
-      if (e > last) last = e;
-    }
-    if (first === Infinity || last <= first) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
-    const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
-    console.log("renderProgress: first=", first, "last=", last, "cur=", cur, "pct=", pct);
-    fill.style.width = pct + "%";
-    if (lbl) lbl.textContent = Math.round(pct) + "%";
-  } catch (err) {
-    console.error("renderProgress error:", err);
+  const today = getTodayIndex();
+  const day = SCHEDULE[today];
+  const fill = document.getElementById("progressFill");
+  const lbl = document.getElementById("progressLabel");
+  if (!fill) return;
+  if (!day || !day.lessons || !day.lessons.length) {
+    fill.style.width = "0%";
+    if (lbl) lbl.textContent = "";
+    return;
   }
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+
+  const allItems = [...day.lessons];
+  const personal = PERSONAL[today] || [];
+  for (const p of personal) allItems.push(p);
+  if (extendedOn) {
+    for (const e of EXTENDED) {
+      const eS = parseTime(e.time);
+      let overlaps = false;
+      for (const l of day.lessons) {
+        if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
+        const lS = parseTime(l.time);
+        const lE = parseTime(l.time.split(/[–\-]/)[1] || "");
+        const eE = parseTime(e.time.split(/[–\-]/)[1] || "");
+        if (eS < lE && eE > lS) { overlaps = true; break; }
+      }
+      if (!overlaps) allItems.push(e);
+    }
+  }
+
+  if (!allItems.length) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
+  let first = Infinity, last = 0;
+  for (const item of allItems) {
+    const s = parseTime(item.time);
+    const endStr = (item.time.split(/[–\-]/)[1] || "").trim();
+    const e = endStr ? parseTime(endStr) : s + 45;
+    if (s < first) first = s;
+    if (e > last) last = e;
+  }
+  if (first === Infinity || last <= first) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
+  const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
+  fill.style.width = pct + "%";
+  if (lbl) lbl.textContent = Math.round(pct) + "%";
 }
 
 function renderTabs() {
@@ -1134,42 +1128,29 @@ document.addEventListener("touchend", (e) => {
 }, { passive: true });
 
 async function init() {
-  var dbg = document.createElement("div");
-  dbg.id = "debugPanel";
-  dbg.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff0;color:#000;padding:8px;font-size:11px;font-family:monospace;max-height:300px;overflow:auto;";
-  document.body.appendChild(dbg);
-  function log(m) { dbg.innerHTML += m + "<br>"; }
-  log("init start");
   try {
     const [scheduleRes, holidaysRes] = await Promise.all([
       fetch("timeSchedule.json?" + Date.now()),
       fetch("holidays.json?" + Date.now())
     ]);
-    log("fetch ok " + scheduleRes.status);
     const scheduleData = await scheduleRes.json();
     SCHEDULE = scheduleData.schedule;
     PERSONAL = scheduleData.personal || {};
     EXTENDED = scheduleData.extended;
     HOLIDAYS = await holidaysRes.json();
-    log("data: sch=" + SCHEDULE.length + " per=" + Object.keys(PERSONAL).length + " ext=" + EXTENDED.length);
   } catch (e) {
-    log("FETCH ERROR: " + e.message);
     console.error("Failed to load data:", e);
     return;
   }
 
   const local = loadLocalData();
-  log("local=" + (local ? "yes" : "no"));
   if (local) {
     if (local.schedule && local.schedule.length) SCHEDULE = local.schedule;
     if (local.personal && Object.keys(local.personal).length) PERSONAL = local.personal;
     if (local.extended && local.extended.length) EXTENDED = local.extended;
   }
-  log("schoolOn=" + schoolOn + " per=" + personalOn + " ext=" + extendedOn);
-  log("sch=" + SCHEDULE.length + " lessons0=" + (SCHEDULE[0] ? SCHEDULE[0].lessons.length : "?"));
 
   buildToggles();
-  log("toggles html=" + document.getElementById("togglesContainer").innerHTML.length);
 
   if (localStorage.getItem("theme") === "dark") {
     document.body.classList.add("dark");
@@ -1185,24 +1166,15 @@ async function init() {
   }
 
   currentDayIdx = getTodayIndex();
-  log("today=" + currentDayIdx);
   renderDate();
   renderTabs();
-  log("tabs=" + document.getElementById("dayTabs").innerHTML.length);
-  try {
-    renderAll();
-  } catch(err) {
-    log("renderAll ERROR: " + err.message);
-    console.error("renderAll error:", err);
-  }
-  log("content=" + document.getElementById("dayContent").innerHTML.length);
+  renderAll();
   renderStatus();
   renderProgress();
   renderCountdowns();
 
   startEngines(() => { renderStatus(); renderProgress(); renderCountdowns(); });
   window.addEventListener("resize", renderAll);
-  log("init done ✓");
 }
 
 function exportSchool() {
