@@ -213,8 +213,13 @@ function renderCountdowns() {
         <span>${nextHoliday.emoji} До ${getGenitive(nextHoliday.name)} — ${daysUntil} дн.</span>
         <div class="mini-progress"><div class="mini-progress-fill" style="width:${pctHoliday}%"></div></div>
       </div>`;
-    }
   }
+  } catch(err) {
+    console.error("renderAll error:", err);
+    var c = document.getElementById("dayContent");
+    if (c) c.innerHTML = '<div style="padding:20px;color:red;background:#fff3f3;margin:10px;border-radius:8px;font-size:13px;">renderAll error: ' + err.message + '<br>' + (err.stack || "").substring(0, 500) + '</div>';
+  }
+}
 
   const newYear = new Date("2027-01-01");
   if (today < newYear) {
@@ -739,7 +744,9 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
     const rptLabel = d._selectedRepeat === "weekly" ? "еженедельно" : "один раз";
     if (window.Android) Android.showToast("Напоминание за " + mins + " мин ✓ (" + rptLabel + ")");
   };
-  d.onclick = (e) => { if (e.target === d) { if (window.Android) Android.stopRingtone(); d.remove(); } };
+  d.onclick = (e) => { if (e.target === d) { if (window.Android) Android.stopRingtone(); d.remove();   }
+} catch(err) { console.error("renderAll error:", err); }
+};
 }
 
 window._ringtonePicked = function(uri) {
@@ -941,8 +948,10 @@ function deleteFromModal() {
 }
 
 function renderAll() {
+  try {
   const todayIdx = getTodayIndex();
   const content = document.getElementById("dayContent");
+  if (!content) return;
   const isMobile = window.innerWidth < 768;
 
   function getLessonState(dayIdx, lessonIdx, day) {
@@ -1135,29 +1144,42 @@ document.addEventListener("touchend", (e) => {
 }, { passive: true });
 
 async function init() {
+  var dbg = document.createElement("div");
+  dbg.id = "debugPanel";
+  dbg.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff0;color:#000;padding:8px;font-size:11px;font-family:monospace;max-height:300px;overflow:auto;";
+  document.body.appendChild(dbg);
+  function log(m) { dbg.innerHTML += m + "<br>"; }
+  log("init start");
   try {
     const [scheduleRes, holidaysRes] = await Promise.all([
       fetch("timeSchedule.json?" + Date.now()),
       fetch("holidays.json?" + Date.now())
     ]);
+    log("fetch ok status=" + scheduleRes.status);
     const scheduleData = await scheduleRes.json();
     SCHEDULE = scheduleData.schedule;
     PERSONAL = scheduleData.personal || {};
     EXTENDED = scheduleData.extended;
     HOLIDAYS = await holidaysRes.json();
+    log("data parsed: sch=" + SCHEDULE.length + " per=" + Object.keys(PERSONAL).length + " ext=" + EXTENDED.length);
   } catch (e) {
+    log("FETCH ERROR: " + e.message);
     console.error("Failed to load data:", e);
     return;
   }
 
   const local = loadLocalData();
+  log("local=" + (local ? "yes" : "no"));
   if (local) {
     if (local.schedule && local.schedule.length) SCHEDULE = local.schedule;
     if (local.personal && Object.keys(local.personal).length) PERSONAL = local.personal;
     if (local.extended && local.extended.length) EXTENDED = local.extended;
   }
+  log("schoolOn=" + schoolOn + " personalOn=" + personalOn + " extendedOn=" + extendedOn);
+  log("sch=" + SCHEDULE.length + " per=" + Object.keys(PERSONAL).length + " ext=" + EXTENDED.length);
 
   buildToggles();
+  log("toggles built, container=" + document.getElementById("togglesContainer").innerHTML.length);
 
   if (localStorage.getItem("theme") === "dark") {
     document.body.classList.add("dark");
@@ -1173,15 +1195,19 @@ async function init() {
   }
 
   currentDayIdx = getTodayIndex();
+  log("today=" + currentDayIdx);
   renderDate();
   renderTabs();
+  log("tabs=" + document.getElementById("dayTabs").innerHTML.length);
   renderAll();
+  log("content=" + document.getElementById("dayContent").innerHTML.length);
   renderStatus();
   renderProgress();
   renderCountdowns();
 
   startEngines(() => { renderStatus(); renderProgress(); renderCountdowns(); });
   window.addEventListener("resize", renderAll);
+  log("init done");
 }
 
 function exportSchool() {
@@ -1220,4 +1246,6 @@ function exportExtended() {
   URL.revokeObjectURL(a.href);
 }
 
-init();
+try { init(); } catch(e) {
+  document.body.innerHTML = '<pre style="color:red;background:#fff;padding:20px;white-space:pre-wrap;">INIT ERROR: ' + e.message + '\n' + e.stack + '</pre>';
+}
