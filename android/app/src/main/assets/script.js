@@ -513,7 +513,7 @@ function buildToggles() {
   let html = "";
   const hasExtended = EXTENDED.length > 0;
   const hasSchool = SCHEDULE.some(d => d.lessons.length > 0);
-  personalOn = false;
+  const hasPersonal = Object.keys(PERSONAL).some(k => Array.isArray(PERSONAL[k]) && PERSONAL[k].length > 0);
   if (hasExtended && localStorage.getItem("extended") === null) { extendedOn = true; localStorage.setItem("extended", true); }
   if (hasSchool) {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="schoolToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="schoolToggle">Уроки</label></div>`;
@@ -521,9 +521,16 @@ function buildToggles() {
   if (hasExtended) {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="extendedToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="extendedToggle">Продлёнка</label></div>`;
   }
+  if (hasPersonal) {
+    html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="personalToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="personalToggle">Занятия</label></div>`;
+  }
   c.innerHTML = html;
   if (schoolOn && hasSchool) document.getElementById("schoolToggle").checked = true;
   if (extendedOn && hasExtended) document.getElementById("extendedToggle").checked = true;
+  if (hasPersonal) {
+    if (localStorage.getItem("personal") === null) { personalOn = true; localStorage.setItem("personal", true); }
+    if (personalOn) document.getElementById("personalToggle").checked = true;
+  }
 }
 
 function onToggle() {
