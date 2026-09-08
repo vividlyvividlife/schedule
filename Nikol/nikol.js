@@ -87,7 +87,17 @@ function getItemsForDay(dayIdx) {
 
   let extended = [];
   if (showExtended && !isWeekend && school.length > 0) {
-    extended = EXTENDED.map(e => ({...e, type:"extended"}));
+    extended = EXTENDED.map(e => ({...e, type:"extended"})).filter(ext => {
+      const eS = parseTime(ext.time);
+      const eE = parseTime(ext.time.split("–")[1]);
+      for (const l of daySchedule.lessons) {
+        if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
+        const lS = parseTime(l.time);
+        const lE = parseTime(l.time.split("–")[1]);
+        if (eS < lE && eE > lS) return false;
+      }
+      return true;
+    });
   }
 
   if (personal.length === 0 && extended.length === 0) return school;

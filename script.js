@@ -832,7 +832,11 @@ function saveModal() {
   const location = document.getElementById("modalLocation").value.trim();
   const teacher = document.getElementById("modalTeacher").value.trim();
   const color = _selectedColor;
-  if (!subj || !time) { alert("Заполните предмет и время"); return; }
+  if (!subj || !time) {
+    if (window.Android) Android.showToast("Заполните предмет и время");
+    else alert("Заполните предмет и время");
+    return;
+  }
   const data = loadLocalData() || { schedule: JSON.parse(JSON.stringify(SCHEDULE)), personal: JSON.parse(JSON.stringify(PERSONAL)), extended: JSON.parse(JSON.stringify(EXTENDED)) };
   if (type === "school") {
     const lesson = { subj, time };
@@ -886,7 +890,9 @@ function saveModal() {
 }
 
 function deleteFromModal() {
-  if (!confirm("Удалить?")) return;
+  if (window.Android) {
+    Android.showConfirm("Удалить?");
+  } else if (!confirm("Удалить?")) return;
   const data = loadLocalData();
   if (!data) return;
   if (modalData.type === "school" && modalData.dayIdx >= 0 && modalData.itemIdx >= 0) {
