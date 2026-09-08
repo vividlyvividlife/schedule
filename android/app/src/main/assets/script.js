@@ -887,7 +887,7 @@ function renderAll() {
     }));
     const extended = (extendedOn ? EXTENDED : []).map((ext, ei) => ({
       ...ext, _type: "extended", _icon: ext.icon, _itemIdx: ei,
-      _state: getExtState(EXTENDED.indexOf(ext), dayIdx)
+      _state: getExtState(ei, dayIdx)
     }));
     const all = [...school, ...personal, ...extended];
     if (all.length <= 1) {

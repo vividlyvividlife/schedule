@@ -4,8 +4,9 @@
 
 function parseTime(t) {
   if (!t || typeof t !== "string") return 0;
-  const [h, m] = t.split("–")[0].split(":").map(Number);
-  return h * 60 + m;
+  const cleaned = t.split("–")[0].replace(".", ":");
+  const [h, m] = cleaned.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
 }
 
 function getTodayIndex() {
