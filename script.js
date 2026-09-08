@@ -437,45 +437,57 @@ function renderStatus() {
 }
 
 function renderProgress() {
-  const today = getTodayIndex();
-  const day = SCHEDULE[today];
-  if (!day || !day.lessons || !day.lessons.length) {
-    document.getElementById("progressFill").style.width = "0%";
-    return;
-  }
-  const now = new Date();
-  const cur = now.getHours() * 60 + now.getMinutes();
-  let first = parseTime(day.lessons[0].time);
-  let last = parseTime(day.lessons[day.lessons.length - 1].time) + 45;
-
-  const personal = PERSONAL[today] || [];
-  const ext = extendedOn ? EXTENDED.filter(ext => {
-    const eS = parseTime(ext.time);
-    for (const l of day.lessons) {
-      if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
-      const lS = parseTime(l.time);
-      const lE = parseTime(l.time.split(/[–\-]/)[1]);
-      if (eS < lE && parseTime(ext.time.split(/[–\-]/)[1]) > lS) return false;
+  try {
+    const today = getTodayIndex();
+    const day = SCHEDULE[today];
+    const fill = document.getElementById("progressFill");
+    const lbl = document.getElementById("progressLabel");
+    console.log("renderProgress: today=", today, "day=", day?.name, "lessons=", day?.lessons?.length, "fill=", !!fill);
+    if (!fill) return;
+    if (!day || !day.lessons || !day.lessons.length) {
+      fill.style.width = "0%";
+      if (lbl) lbl.textContent = "";
+      return;
     }
-    return true;
-  }) : [];
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
 
-  const allTimes = [...day.lessons, ...personal, ...ext];
-  if (allTimes.length) {
-    first = Math.min(...allTimes.map(i => parseTime(i.time)));
-    const ends = allTimes.map(i => {
-      const end = i.time.split(/[–\-]/)[1];
-      return end ? parseTime(end) : parseTime(i.time) + 45;
-    });
-    last = Math.max(...ends);
-  }
+    const allItems = [...day.lessons];
+    const personal = PERSONAL[today] || [];
+    for (const p of personal) allItems.push(p);
+    if (extendedOn) {
+      for (const e of EXTENDED) {
+        const eS = parseTime(e.time);
+        let overlaps = false;
+        for (const l of day.lessons) {
+          if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
+          const lS = parseTime(l.time);
+          const lE = parseTime(l.time.split(/[–\-]/)[1] || "");
+          const eE = parseTime(e.time.split(/[–\-]/)[1] || "");
+          if (eS < lE && eE > lS) { overlaps = true; break; }
+        }
+        if (!overlaps) allItems.push(e);
+      }
+    }
 
-  if (last <= first) {
-    document.getElementById("progressFill").style.width = "0%";
-    return;
+    if (!allItems.length) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
+    let first = Infinity, last = 0;
+    for (const item of allItems) {
+      const s = parseTime(item.time);
+      const endStr = (item.time.split(/[–\-]/)[1] || "").trim();
+      const e = endStr ? parseTime(endStr) : s + 45;
+      if (s < first) first = s;
+      if (e > last) last = e;
+    }
+    if (first === Infinity || last <= first) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
+    const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
+    console.log("renderProgress: first=", first, "last=", last, "cur=", cur, "pct=", pct);
+    fill.style.width = pct + "%";
+    if (lbl) lbl.textContent = Math.round(pct) + "%";
+  } catch (err) {
+    console.error("renderProgress error:", err);
   }
-  const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
-  document.getElementById("progressFill").style.width = pct + "%";
+}
 }
 
 function renderTabs() {
