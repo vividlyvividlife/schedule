@@ -1143,6 +1143,20 @@ async function init() {
     return;
   }
 
+  var isEmpty = !SCHEDULE || SCHEDULE.every(function(d) { return !d.lessons || d.lessons.length === 0; });
+  if (isEmpty && !loadLocalData()) {
+    try {
+      var defRes = await Promise.all([
+        fetch("main_lesson.json"),
+        fetch("extended.json")
+      ]);
+      var defSch = await defRes[0].json();
+      var defExt = await defRes[1].json();
+      if (defSch && defSch.length) SCHEDULE = defSch;
+      if (defExt && defExt.length) EXTENDED = defExt;
+    } catch (e) { /* нет дефолтных файлов — ок */ }
+  }
+
   const local = loadLocalData();
   if (local) {
     if (local.schedule && local.schedule.length) SCHEDULE = local.schedule;
