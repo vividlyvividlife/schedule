@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate: loading schedule")
 
         val swipeRefresh = findViewById<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>(R.id.swipeRefresh)
-        swipeRefresh.setColorSchemeResources(R.color.purple_500)
+        swipeRefresh.setColorSchemeColors(0xFF6200EE.toInt())
         swipeRefresh.setOnRefreshListener {
             webView.clearCache(true)
             webView.reload()
