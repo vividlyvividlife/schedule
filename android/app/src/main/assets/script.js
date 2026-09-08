@@ -964,7 +964,7 @@ function renderAll() {
     })).filter(ext => {
       const eS = parseTime(ext.time);
       const eE = parseTime(ext.time.split("–")[1]);
-      for (const l of school) {
+      for (const l of d.lessons) {
         if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
         const lS = parseTime(l.time);
         const lE = parseTime(l.time.split("–")[1]);
