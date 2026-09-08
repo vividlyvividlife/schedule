@@ -940,7 +940,8 @@ function renderAll() {
     content.innerHTML = SCHEDULE.map((d, i) => {
       const hasSchool = schoolOn && d.lessons.length > 0;
       const hasPersonal = personalOn && PERSONAL[i] && PERSONAL[i].length > 0;
-      if (!hasSchool && !hasPersonal) {
+      const hasExtended = extendedOn && EXTENDED.length > 0;
+      if (!hasSchool && !hasPersonal && !hasExtended) {
         return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
       }
       return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderDayLessons(d, i)}</div>`;
@@ -952,7 +953,8 @@ function renderAll() {
       const dayIdx = SCHEDULE.indexOf(d);
       const hasSchool = schoolOn && d.lessons.length > 0;
       const hasPersonal = personalOn && PERSONAL[dayIdx] && PERSONAL[dayIdx].length > 0;
-      if (!hasSchool && !hasPersonal) {
+      const hasExtended = extendedOn && EXTENDED.length > 0;
+      if (!hasSchool && !hasPersonal && !hasExtended) {
         return `
           <div class="diary-day">
             <div class="diary-day-name">${d.name}</div>
