@@ -213,13 +213,8 @@ function renderCountdowns() {
         <span>${nextHoliday.emoji} До ${getGenitive(nextHoliday.name)} — ${daysUntil} дн.</span>
         <div class="mini-progress"><div class="mini-progress-fill" style="width:${pctHoliday}%"></div></div>
       </div>`;
+    }
   }
-  } catch(err) {
-    console.error("renderAll error:", err);
-    var c = document.getElementById("dayContent");
-    if (c) c.innerHTML = '<div style="padding:20px;color:red;background:#fff3f3;margin:10px;border-radius:8px;font-size:13px;">renderAll error: ' + err.message + '<br>' + (err.stack || "").substring(0, 500) + '</div>';
-  }
-}
 
   const newYear = new Date("2027-01-01");
   if (today < newYear) {
@@ -744,9 +739,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
     const rptLabel = d._selectedRepeat === "weekly" ? "еженедельно" : "один раз";
     if (window.Android) Android.showToast("Напоминание за " + mins + " мин ✓ (" + rptLabel + ")");
   };
-  d.onclick = (e) => { if (e.target === d) { if (window.Android) Android.stopRingtone(); d.remove();   }
-} catch(err) { console.error("renderAll error:", err); }
-};
+  d.onclick = (e) => { if (e.target === d) { if (window.Android) Android.stopRingtone(); d.remove(); } };
 }
 
 window._ringtonePicked = function(uri) {
@@ -948,10 +941,8 @@ function deleteFromModal() {
 }
 
 function renderAll() {
-  try {
   const todayIdx = getTodayIndex();
   const content = document.getElementById("dayContent");
-  if (!content) return;
   const isMobile = window.innerWidth < 768;
 
   function getLessonState(dayIdx, lessonIdx, day) {
@@ -1155,13 +1146,13 @@ async function init() {
       fetch("timeSchedule.json?" + Date.now()),
       fetch("holidays.json?" + Date.now())
     ]);
-    log("fetch ok status=" + scheduleRes.status);
+    log("fetch ok " + scheduleRes.status);
     const scheduleData = await scheduleRes.json();
     SCHEDULE = scheduleData.schedule;
     PERSONAL = scheduleData.personal || {};
     EXTENDED = scheduleData.extended;
     HOLIDAYS = await holidaysRes.json();
-    log("data parsed: sch=" + SCHEDULE.length + " per=" + Object.keys(PERSONAL).length + " ext=" + EXTENDED.length);
+    log("data: sch=" + SCHEDULE.length + " per=" + Object.keys(PERSONAL).length + " ext=" + EXTENDED.length);
   } catch (e) {
     log("FETCH ERROR: " + e.message);
     console.error("Failed to load data:", e);
@@ -1175,11 +1166,11 @@ async function init() {
     if (local.personal && Object.keys(local.personal).length) PERSONAL = local.personal;
     if (local.extended && local.extended.length) EXTENDED = local.extended;
   }
-  log("schoolOn=" + schoolOn + " personalOn=" + personalOn + " extendedOn=" + extendedOn);
-  log("sch=" + SCHEDULE.length + " per=" + Object.keys(PERSONAL).length + " ext=" + EXTENDED.length);
+  log("schoolOn=" + schoolOn + " per=" + personalOn + " ext=" + extendedOn);
+  log("sch=" + SCHEDULE.length + " lessons0=" + (SCHEDULE[0] ? SCHEDULE[0].lessons.length : "?"));
 
   buildToggles();
-  log("toggles built, container=" + document.getElementById("togglesContainer").innerHTML.length);
+  log("toggles html=" + document.getElementById("togglesContainer").innerHTML.length);
 
   if (localStorage.getItem("theme") === "dark") {
     document.body.classList.add("dark");
@@ -1199,7 +1190,12 @@ async function init() {
   renderDate();
   renderTabs();
   log("tabs=" + document.getElementById("dayTabs").innerHTML.length);
-  renderAll();
+  try {
+    renderAll();
+  } catch(err) {
+    log("renderAll ERROR: " + err.message);
+    console.error("renderAll error:", err);
+  }
   log("content=" + document.getElementById("dayContent").innerHTML.length);
   renderStatus();
   renderProgress();
@@ -1207,7 +1203,7 @@ async function init() {
 
   startEngines(() => { renderStatus(); renderProgress(); renderCountdowns(); });
   window.addEventListener("resize", renderAll);
-  log("init done");
+  log("init done ✓");
 }
 
 function exportSchool() {
@@ -1246,6 +1242,4 @@ function exportExtended() {
   URL.revokeObjectURL(a.href);
 }
 
-try { init(); } catch(e) {
-  document.body.innerHTML = '<pre style="color:red;background:#fff;padding:20px;white-space:pre-wrap;">INIT ERROR: ' + e.message + '\n' + e.stack + '</pre>';
-}
+init();
