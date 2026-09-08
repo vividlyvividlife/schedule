@@ -193,16 +193,8 @@ body {
   pointer-events: none;
   z-index: 0;
   transition: width 0.3s linear;
-}
-.lesson.current::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--accent);
-  pointer-events: none;
-  z-index: 2;
+  border-radius: 0 8px 8px 0;
+  border-left: 2px solid var(--accent);
 }
 .lesson.past { opacity: 0.4; }
 .lesson.future { border-left: 3px solid transparent; background: var(--card); }
@@ -282,16 +274,8 @@ body {
   pointer-events: none;
   z-index: 0;
   transition: width 0.3s linear;
-}
-.merge-row.current::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--accent);
-  pointer-events: none;
-  z-index: 2;
+  border-radius: 0 8px 8px 0;
+  border-left: 2px solid var(--accent);
 }
 .merge-row + .merge-row {
   border-top: 1px dashed var(--line);
@@ -590,6 +574,8 @@ body {
   display: flex;
   gap: 4px;
   margin-left: auto;
+  position: relative;
+  z-index: 1;
 }
 .edit-btn-sm {
   width: 28px;
@@ -716,6 +702,8 @@ body.edit-mode .merge-row:hover { opacity: 0.85; }
   transition: opacity 0.2s, transform 0.2s;
   flex-shrink: 0;
   align-self: center;
+  position: relative;
+  z-index: 1;
 }
 .bell-btn:hover { opacity: 0.8; transform: scale(1.2); }
 .bell-btn.bell-active { opacity: 1; animation: bellRing 0.5s; }
