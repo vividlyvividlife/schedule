@@ -961,7 +961,17 @@ function renderAll() {
     const extended = (extendedOn ? EXTENDED : []).map((ext, ei) => ({
       ...ext, _type: "extended", _icon: ext.icon, _itemIdx: ei,
       _state: getExtState(ei, dayIdx)
-    }));
+    })).filter(ext => {
+      const eS = parseTime(ext.time);
+      const eE = parseTime(ext.time.split("–")[1]);
+      for (const l of school) {
+        if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
+        const lS = parseTime(l.time);
+        const lE = parseTime(l.time.split("–")[1]);
+        if (eS < lE && eE > lS) return false;
+      }
+      return true;
+    });
     const all = [...school, ...personal, ...extended];
     if (all.length <= 1) {
       return all.map(item => {
