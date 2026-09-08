@@ -183,21 +183,18 @@ body {
 }
 .lesson:active { transform: scale(0.98); }
 .lesson.current {
-  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e8eaf4) var(--progress, 0%), var(--progress-fill, #e8eaf4) 100%);
-  border-left: 3px solid var(--accent);
   position: relative;
   overflow: hidden;
 }
-.lesson.current::after {
-  content: "";
+.lesson.current .row-progress {
   position: absolute;
-  top: 0;
-  left: var(--progress, 0%);
-  width: 2px;
-  height: 100%;
-  background: var(--accent);
+  top: 0; right: 0; bottom: 0;
+  background: var(--progress-fill, #e8eaf4);
   pointer-events: none;
-  z-index: 2;
+  z-index: 0;
+  transition: width 0.3s linear;
+  border-radius: 0 8px 8px 0;
+  border-left: 2px solid var(--accent);
 }
 .lesson.past { opacity: 0.4; }
 .lesson.future { border-left: 3px solid transparent; background: var(--card); }
@@ -268,19 +265,17 @@ body {
   border-radius: 8px;
 }
 .merge-row.current {
-  background: linear-gradient(to right, var(--card) 0%, var(--card) var(--progress, 0%), var(--progress-fill, #e0e2f4) var(--progress, 0%), var(--progress-fill, #e0e2f4) 100%);
   overflow: hidden;
 }
-.merge-row.current::after {
-  content: "";
+.merge-row .row-progress {
   position: absolute;
-  top: 0;
-  left: var(--progress, 0%);
-  width: 2px;
-  height: 100%;
-  background: var(--accent);
+  top: 0; right: 0; bottom: 0;
+  background: var(--progress-fill, #e0e2f4);
   pointer-events: none;
-  z-index: 2;
+  z-index: 0;
+  transition: width 0.3s linear;
+  border-radius: 0 8px 8px 0;
+  border-left: 2px solid var(--accent);
 }
 .merge-row + .merge-row {
   border-top: 1px dashed var(--line);
@@ -288,7 +283,7 @@ body {
 .merge-icon {
   font-size: 20px; flex-shrink: 0; width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 6px;
+  border-radius: 6px; position: relative; z-index: 1;
 }
 .merge-icon.school { background: #e8eaff; }
 .dark .merge-icon.school { background: #252840; }
@@ -296,7 +291,7 @@ body {
 .dark .merge-icon.personal { background: #2a2218; }
 .merge-icon.extended { background: #e8f5e9; }
 .dark .merge-icon.extended { background: #1a2a1c; }
-.merge-info { flex: 1; }
+.merge-info { flex: 1; position: relative; z-index: 1; }
 .merge-time { font-size: 11px; color: var(--muted); }
 .merge-subj { font-size: 14px; font-weight: 600; }
 .merge-room { font-size: 11px; color: var(--muted); margin-top: 1px; }
@@ -705,6 +700,8 @@ body.edit-mode .merge-row:hover { opacity: 0.85; }
   transition: opacity 0.2s, transform 0.2s;
   flex-shrink: 0;
   align-self: center;
+  position: relative;
+  z-index: 1;
 }
 .bell-btn:hover { opacity: 0.8; transform: scale(1.2); }
 .bell-btn.bell-active { opacity: 1; animation: bellRing 0.5s; }

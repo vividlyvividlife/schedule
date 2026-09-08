@@ -150,17 +150,18 @@ function renderSingle(item, dayIdx) {
   const endTime = parseTime(item.time.split(/[–\-]/)[1]);
   const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
-  const progressStyle = state === "current" ? (() => {
+  const progressDiv = state === "current" ? (() => {
     const now = new Date();
     const cur = now.getHours() * 60 + now.getMinutes();
     const pct = Math.max(0, Math.min(100, ((cur - startTime) / (endTime - startTime)) * 100));
-    return `style="--progress:${pct}%"`;
+    return `<div class="row-progress" style="width:${100 - pct}%"></div>`;
   })() : "";
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   return `
-    <div class="${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${progressStyle}>
-      <div class="lesson-body">
+    <div class="${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr}>
+      ${progressDiv}
+      <div class="lesson-body" style="position:relative;z-index:1;">
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num">${num}</div>
         <div class="lesson-info">
@@ -187,18 +188,19 @@ function renderMerge(group, dayIdx) {
     const itemEnd = parseTime(item.time.split(/[–\-]/)[1]);
     const rowState = getCardState(dayIdx, item.time);
     const rowProgressAttr = rowState === "current" ? `data-progress="${itemStart}" data-end="${itemEnd}"` : "";
-    const rowProgressStyle = rowState === "current" ? (() => {
+    const rowProgressDiv = rowState === "current" ? (() => {
       const now = new Date();
       const cur = now.getHours() * 60 + now.getMinutes();
       const pct = Math.max(0, Math.min(100, ((cur - itemStart) / (itemEnd - itemStart)) * 100));
-      return `style="--progress:${pct}%"`;
+      return `<div class="row-progress" style="width:${100 - pct}%"></div>`;
     })() : "";
     const cdAttr = rowState === "next" ? `data-cd="${itemStart}"` : rowState === "current" ? `data-cd-end="${itemEnd}"` : "";
     const cdText = rowState === "next" ? countdownSec(itemStart) : rowState === "current" ? remainingSec(itemEnd) : "";
     return `
-      <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${rowProgressStyle}>
-        <div class="merge-icon ${item.type}">${item.icon}</div>
-        <div class="merge-info">
+      <div class="merge-row" data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr}>
+        ${rowProgressDiv}
+        <div class="merge-icon ${item.type}" style="position:relative;z-index:1;">${item.icon}</div>
+        <div class="merge-info" style="position:relative;z-index:1;">
           <div class="merge-label ${labelCls}">${labelText}</div>
           <div class="merge-time">${item.time}</div>
           <div class="merge-subj">${item.subj}</div>
