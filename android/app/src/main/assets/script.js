@@ -919,7 +919,7 @@ function saveModal() {
 
 function deleteFromModal() {
   if (window.Android) {
-    Android.showConfirm("Удалить?");
+    if (!Android.showConfirm("Удалить?")) return;
   } else if (!confirm("Удалить?")) return;
   const data = loadLocalData();
   if (!data) return;

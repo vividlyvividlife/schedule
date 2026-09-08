@@ -565,6 +565,20 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface fun showToast(message: String) {
             activity.runOnUiThread { Toast.makeText(activity, message, Toast.LENGTH_SHORT).show() }
         }
+        @JavascriptInterface fun showConfirm(message: String): Boolean {
+            val latch = java.util.concurrent.CountDownLatch(1)
+            var result = false
+            activity.runOnUiThread {
+                AlertDialog.Builder(activity, R.style.Theme_Schedule_Dialog)
+                    .setTitle(message)
+                    .setPositiveButton("Да") { _, _ -> result = true; latch.countDown() }
+                    .setNegativeButton("Нет") { _, _ -> result = false; latch.countDown() }
+                    .setOnCancelListener { result = false; latch.countDown() }
+                    .show()
+            }
+            latch.await(30, java.util.concurrent.TimeUnit.SECONDS)
+            return result
+        }
         @JavascriptInterface fun syncReminders(json: String) {
             Log.d(TAG, "syncReminders: $json")
             activity.scheduleRemindersFromJson(json)
