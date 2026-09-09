@@ -77,7 +77,8 @@ function updateProgressBars() {
     const now = new Date();
     const cur = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
     const pct = Math.max(0, Math.min(100, ((cur - start * 60) / ((end - start) * 60)) * 100));
-    el.style.setProperty("--progress", pct + "%");
+    const bar = el.querySelector(".row-progress");
+    if (bar) bar.style.width = (100 - pct) + "%";
   });
 }
 
@@ -161,10 +162,13 @@ function updateCardStates() {
       const now = new Date();
       const curMin = now.getHours() * 60 + now.getMinutes();
       const pct = Math.max(0, Math.min(100, ((curMin - startTime) / (endTime - startTime)) * 100));
-      el.style.setProperty("--progress", pct + "%");
-      let progEl = el.querySelector(".row-progress");
-      if (!progEl) { progEl = document.createElement("div"); progEl.className = "row-progress"; el.insertBefore(progEl, el.firstChild); }
-      progEl.style.width = (100 - pct) + "%";
+      let bar = el.querySelector(".row-progress");
+      if (!bar) {
+        bar = document.createElement("div");
+        bar.className = "row-progress";
+        el.insertBefore(bar, el.firstChild);
+      }
+      bar.style.width = (100 - pct) + "%";
       if (!cdEl) {
         cdEl = document.createElement("div");
         cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";
@@ -175,7 +179,8 @@ function updateCardStates() {
       cdEl.textContent = remainingSec(endTime);
     } else if (newState === "next" && !isMergeWrapper) {
       el.removeAttribute("data-progress");
-      el.style.removeProperty("--progress");
+      const bar = el.querySelector(".row-progress");
+      if (bar) bar.remove();
       if (!cdEl) {
         cdEl = document.createElement("div");
         cdEl.className = el.classList.contains("merge-card") || el.classList.contains("merge-row") ? "merge-countdown" : "lesson-countdown";
@@ -186,7 +191,8 @@ function updateCardStates() {
       cdEl.textContent = countdownSec(startTime);
     } else {
       el.removeAttribute("data-progress");
-      el.style.removeProperty("--progress");
+      const bar = el.querySelector(".row-progress");
+      if (bar) bar.remove();
       if (cdEl) {
         cdEl.removeAttribute("data-cd");
         cdEl.removeAttribute("data-cd-end");

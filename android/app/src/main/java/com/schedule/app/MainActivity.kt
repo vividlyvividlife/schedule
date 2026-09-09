@@ -40,6 +40,15 @@ class MainActivity : AppCompatActivity() {
     private var hasExtended = false
     internal var _ringtonePlayer: android.media.Ringtone? = null
     internal var pickerCallback: ((android.net.Uri?) -> Unit)? = null
+    private val liveHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val liveUpdateRunnable = object : Runnable {
+        override fun run() {
+            webView.evaluateJavascript(
+                "(function(){ try{ renderProgress(); updateProgressBars(); updateCountdowns(); } catch(e){} })()"
+            ) {}
+            liveHandler.postDelayed(this, 1000)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +80,7 @@ class MainActivity : AppCompatActivity() {
                 super.onPageFinished(view, url)
                 Log.d(TAG, "Page loaded: $url")
                 webView.postDelayed({ queryDataState {} }, 1000)
+                webView.postDelayed({ liveHandler.removeCallbacks(liveUpdateRunnable); liveHandler.post(liveUpdateRunnable) }, 1500)
             }
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url?.toString() ?: return false
@@ -106,6 +116,16 @@ class MainActivity : AppCompatActivity() {
 
         checkBatteryOptimization()
         requestNotificationPermission()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        liveHandler.post(liveUpdateRunnable)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        liveHandler.removeCallbacks(liveUpdateRunnable)
     }
 
     private fun requestNotificationPermission() {

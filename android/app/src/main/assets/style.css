@@ -205,6 +205,8 @@ body {
   display: flex;
   gap: 10px;
   align-items: flex-start;
+  position: relative;
+  z-index: 1;
 }
 .lesson-icon {
   font-size: 22px;
@@ -283,7 +285,7 @@ body {
 .merge-icon {
   font-size: 20px; flex-shrink: 0; width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 6px;
+  border-radius: 6px; position: relative; z-index: 1;
 }
 .merge-icon.school { background: #e8eaff; }
 .dark .merge-icon.school { background: #252840; }
@@ -291,7 +293,7 @@ body {
 .dark .merge-icon.personal { background: #2a2218; }
 .merge-icon.extended { background: #e8f5e9; }
 .dark .merge-icon.extended { background: #1a2a1c; }
-.merge-info { flex: 1; }
+.merge-info { flex: 1; position: relative; z-index: 1; }
 .merge-time { font-size: 11px; color: var(--muted); }
 .merge-subj { font-size: 14px; font-weight: 600; }
 .merge-room { font-size: 11px; color: var(--muted); margin-top: 1px; }
@@ -574,8 +576,6 @@ body {
   display: flex;
   gap: 4px;
   margin-left: auto;
-  position: relative;
-  z-index: 1;
 }
 .edit-btn-sm {
   width: 28px;

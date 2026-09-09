@@ -270,6 +270,7 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   const roomText = l.room ? `<div class="lesson-room">${l.room}</div>` : "";
+  const typeLabel = l.subj && l.subj.startsWith("Кружок") ? "Кружок" : l.subj && l.subj.startsWith("Факультатив") ? "Факультатив" : "Урок";
   const bellHtml = window.Android ? (() => {
     const bellActive = hasReminder("school", dayIdx, itemIdx, l.time, "start") || hasReminder("school", dayIdx, itemIdx, l.time, "end");
     const bellCls = bellActive ? " bell-active" : "";
@@ -286,6 +287,7 @@ function renderLesson(l, state, dayIdx, itemIdx) {
         <div class="lesson-icon">${icon}</div>
         <div class="lesson-num">${num}</div>
         <div class="lesson-info">
+          <div class="merge-label school">${typeLabel}</div>
           <div class="lesson-time">${l.time}</div>
           <div class="lesson-subject">${l.subj}${paidBadge}</div>
           ${roomText}
@@ -313,6 +315,8 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
     return `<div class="row-progress" style="width:${100 - pct}%"></div>`;
   })() : "";
   const type = item._type || "extended";
+  const typeLabel = type === "personal" ? "Занятие" : "Продлёнка";
+  const typeCls = type === "personal" ? "personal" : "extended";
   const bellHtml = window.Android ? (() => {
     const bellActive = hasReminder(type, dayIdx, itemIdx, item.time, "start") || hasReminder(type, dayIdx, itemIdx, item.time, "end");
     const bellCls = bellActive ? " bell-active" : "";
@@ -327,6 +331,7 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num" style="color:var(--accent);font-size:11px;">⏰</div>
         <div class="lesson-info">
+          <div class="merge-label ${typeCls}">${typeLabel}</div>
           <div class="lesson-time">${item.time}</div>
           <div class="lesson-subject">${item.subj}</div>
           ${item.room ? `<div class="lesson-room">${item.room}</div>` : ""}
@@ -454,26 +459,22 @@ function renderProgress() {
   const day = SCHEDULE[today];
   const fill = document.getElementById("progressFill");
   const lbl = document.getElementById("progressLabel");
-  if (!fill) { console.error("progressFill not found"); return; }
-  if (!day || !day.lessons || !day.lessons.length) {
-    fill.style.width = "0%";
-    if (lbl) lbl.textContent = "";
-    return;
-  }
+  if (!fill) return;
+  if (!day || !day.lessons || !day.lessons.length) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
   const now = new Date();
-  const cur = now.getHours() * 60 + now.getMinutes();
+  const cur = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 
   const allItems = [...day.lessons];
   if (extendedOn) {
     for (const e of EXTENDED) {
       if (e.days && !e.days.includes(today)) continue;
-      const eS = parseTime(e.time);
+      const eS = parseTime(e.time) * 60;
       let overlaps = false;
       for (const l of day.lessons) {
         if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
-        const lS = parseTime(l.time);
-        const lE = parseTime(l.time.split(/[–\-]/)[1] || "");
-        const eE = parseTime(e.time.split(/[–\-]/)[1] || "");
+        const lS = parseTime(l.time) * 60;
+        const lE = parseTime(l.time.split(/[–\-]/)[1] || "") * 60;
+        const eE = parseTime(e.time.split(/[–\-]/)[1] || "") * 60;
         if (eS < lE && eE > lS) { overlaps = true; break; }
       }
       if (!overlaps) allItems.push(e);
@@ -483,9 +484,9 @@ function renderProgress() {
   if (!allItems.length) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
   let first = Infinity, last = 0;
   for (const item of allItems) {
-    const s = parseTime(item.time);
+    const s = parseTime(item.time) * 60;
     const endStr = (item.time.split(/[–\-]/)[1] || "").trim();
-    const e = endStr ? parseTime(endStr) : s + 45;
+    const e = endStr ? parseTime(endStr) * 60 : s + 2700;
     if (s < first) first = s;
     if (e > last) last = e;
   }
@@ -493,7 +494,7 @@ function renderProgress() {
   const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
   fill.style.width = pct + "%";
   if (lbl) lbl.textContent = Math.round(pct) + "%";
-  } catch(err) { console.error("renderProgress:", err); }
+  } catch(err) {}
 }
 
 function renderTabs() {
