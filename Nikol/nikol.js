@@ -158,6 +158,8 @@ function renderSingle(item, dayIdx) {
   })() : "";
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
+  const typeLabel = item.type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : item.subj && item.subj.startsWith("Факультатив") ? "Факультатив" : "Урок") : item.type === "personal" ? "Занятие" : "Продлёнка";
+  const typeCls = item.type || "school";
   return `
     <div class="${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr}>
       ${progressDiv}
@@ -165,6 +167,7 @@ function renderSingle(item, dayIdx) {
         <div class="lesson-icon">${item.icon}</div>
         <div class="lesson-num">${num}</div>
         <div class="lesson-info">
+          <div class="merge-label ${typeCls}">${typeLabel}</div>
           <div class="lesson-time">${item.time}</div>
           <div class="lesson-subject">${item.subj}${paidBadge}</div>
           ${item.room ? `<div class="lesson-room">${item.room}</div>` : ""}
