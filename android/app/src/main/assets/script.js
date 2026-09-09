@@ -270,8 +270,11 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   const roomText = l.room ? `<div class="lesson-room">${l.room}</div>` : "";
-  const bellActive = hasReminder("school", dayIdx, itemIdx, l.time, "start") || hasReminder("school", dayIdx, itemIdx, l.time, "end");
-  const bellCls = bellActive ? " bell-active" : "";
+  const bellHtml = window.Android ? (() => {
+    const bellActive = hasReminder("school", dayIdx, itemIdx, l.time, "start") || hasReminder("school", dayIdx, itemIdx, l.time, "end");
+    const bellCls = bellActive ? " bell-active" : "";
+    return `<button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${(l.subj||'').replace(/'/g,"\\'")}')">🔔</button>`;
+  })() : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('school',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   const colorStyle = l.color ? `border-left:4px solid ${l.color};` : "";
   const teacherText = l.teacher ? `<div class="lesson-teacher">${l.teacher}</div>` : "";
@@ -290,7 +293,7 @@ function renderLesson(l, state, dayIdx, itemIdx) {
           ${locationText}
           ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
-        <button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${(l.subj||'').replace(/'/g,"\\'")}')">🔔</button>
+        ${bellHtml}
         ${editBtn}
       </div>
     </div>`;
@@ -310,8 +313,11 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
     return `<div class="row-progress" style="width:${100 - pct}%"></div>`;
   })() : "";
   const type = item._type || "extended";
-  const bellActive = hasReminder(type, dayIdx, itemIdx, item.time, "start") || hasReminder(type, dayIdx, itemIdx, item.time, "end");
-  const bellCls = bellActive ? " bell-active" : "";
+  const bellHtml = window.Android ? (() => {
+    const bellActive = hasReminder(type, dayIdx, itemIdx, item.time, "start") || hasReminder(type, dayIdx, itemIdx, item.time, "end");
+    const bellCls = bellActive ? " bell-active" : "";
+    return `<button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${(item.subj||'').replace(/'/g,"\\'")}')">🔔</button>`;
+  })() : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${type}',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   const colorStyle = item.color ? `border-left:4px solid ${item.color};` : "";
   return `
@@ -328,7 +334,7 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
           ${item.location ? `<div class="lesson-location">${item.location}</div>` : ""}
           ${cdAttr ? `<div class="lesson-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
-        <button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${(item.subj||'').replace(/'/g,"\\'")}')">🔔</button>
+        ${bellHtml}
         ${editBtn}
       </div>
     </div>`;
@@ -361,8 +367,11 @@ function renderMergeCard(group, dayIdx) {
     const cdText = rowState === "next" ? countdownSec(itemStart) : rowState === "current" ? remainingSec(itemEnd) : "";
     const num = item._type === "school" ? (item.subj && (item.subj.startsWith("Факультатив") || item.subj.startsWith("Кружок")) ? "⭐" : (item.n != null ? item.n : "")) : "⏰";
     const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
-    const bellActive = hasReminder(item._type, dayIdx, item._itemIdx, item.time, "start") || hasReminder(item._type, dayIdx, item._itemIdx, item.time, "end");
-    const bellCls = bellActive ? " bell-active" : "";
+    const bellHtml = window.Android ? (() => {
+      const bellActive = hasReminder(item._type, dayIdx, item._itemIdx, item.time, "start") || hasReminder(item._type, dayIdx, item._itemIdx, item.time, "end");
+      const bellCls = bellActive ? " bell-active" : "";
+      return `<button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${(item.subj||'').replace(/'/g,"\\'")}')">🔔</button>`;
+    })() : "";
     const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${item._type}',${dayIdx},${item._itemIdx})">✏️</button></div>` : "";
     const colorStyle = item.color ? `border-left:3px solid ${item.color};` : "";
     const progressDiv = rowState === "current" ? (() => {
@@ -374,8 +383,8 @@ function renderMergeCard(group, dayIdx) {
     return `
       <div class="merge-row" ${colorStyle ? `style="${colorStyle}"` : ""} data-start="${itemStart}" data-end="${itemEnd}" data-day="${dayIdx}" data-state="${rowState}" ${rowProgressAttr} ${editMode ? `onclick="showEditModal('${item._type}',${dayIdx},${item._itemIdx})"` : ''}>
         ${progressDiv}
-        <div class="merge-icon ${labelCls}" style="position:relative;z-index:1;">${item._icon || "📋"}</div>
-        <div class="merge-info" style="position:relative;z-index:1;">
+        <div class="merge-icon ${labelCls}">${item._icon || "📋"}</div>
+        <div class="merge-info">
           <div class="merge-label ${labelCls}">${labelText}</div>
           <div class="merge-time">${item.time}</div>
           <div class="merge-subj">${item.subj}${paidBadge}</div>
@@ -384,7 +393,7 @@ function renderMergeCard(group, dayIdx) {
           ${item.location ? `<div class="lesson-location">${item.location}</div>` : ""}
           ${cdAttr ? `<div class="merge-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
-        <button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${(item.subj||'').replace(/'/g,"\\'")}')">🔔</button>
+        ${bellHtml}
         ${editBtn}
       </div>`;
   }).join("");
@@ -513,7 +522,8 @@ function buildToggles() {
   let html = "";
   const hasExtended = EXTENDED.length > 0;
   const hasSchool = SCHEDULE.some(d => d.lessons.length > 0);
-  const hasPersonal = Object.keys(PERSONAL).some(k => Array.isArray(PERSONAL[k]) && PERSONAL[k].length > 0);
+  const hasPersonal = typeof Android !== "undefined" && Object.keys(PERSONAL).some(k => Array.isArray(PERSONAL[k]) && PERSONAL[k].length > 0);
+  if (typeof Android === "undefined") personalOn = false;
   if (hasExtended && localStorage.getItem("extended") === null) { extendedOn = true; localStorage.setItem("extended", true); }
   if (hasSchool) {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="schoolToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="schoolToggle">Уроки</label></div>`;
