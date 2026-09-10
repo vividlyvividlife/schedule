@@ -594,16 +594,30 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Да") { _, _ ->
                 cancelAllReminders()
                 webView.evaluateJavascript("try { localStorage.clear(); sessionStorage.clear(); 'ok' } catch(e) { 'err:' + e.message }") {
-                    // Native wipe — guarantees WebView storage is gone even if JS clear is async/ignored.
-                    try { android.webkit.WebStorage.getInstance().deleteAllData() } catch (e: Exception) { Log.e(TAG, "WebStorage wipe error", e) }
-                    webView.clearCache(true)
-                    hasSchedule = false; hasPersonal = false; hasExtended = false; customKeys = emptyList()
-                    Toast.makeText(this, if (it?.trim('"') == "ok") "Сброшено!" else "Сброшено (нативно)", Toast.LENGTH_SHORT).show()
-                    invalidateOptionsMenu()
-                    webView.reload()
+                    // Documented native wipe (androidx.webkit 1.14+): legacy WebStorage.deleteAllData()
+                    // is a no-op on Android 12+, WebStorageCompat is the supported replacement.
+                    try {
+                        androidx.webkit.WebStorageCompat.deleteBrowsingData(
+                            android.webkit.WebStorage.getInstance(),
+                            Runnable { runOnUiThread { finishReset() } }
+                        )
+                    } catch (e: Exception) {
+                        Log.e(TAG, "WebStorage wipe error", e)
+                        finishReset()
+                    }
                 }
             }
             .setNegativeButton("Нет", null).show()
+    }
+
+    private fun finishReset() {
+        runOnUiThread {
+            webView.clearCache(true)
+            hasSchedule = false; hasPersonal = false; hasExtended = false; customKeys = emptyList()
+            Toast.makeText(this, "Сброшено!", Toast.LENGTH_SHORT).show()
+            invalidateOptionsMenu()
+            webView.reload()
+        }
     }
 
     // ── Data State ────────────────────────────────────────────────────
