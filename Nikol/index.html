@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Расписание Николь</title>
-<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="../style.css?v=6">
 </head>
 <body>
 
@@ -18,22 +18,7 @@
   <button class="theme-btn" onclick="toggleTheme()" title="Тёмная тема">☀</button>
 </div>
 
-<div class="toggles">
-  <div class="toggle-item">
-    <label class="toggle">
-      <input type="checkbox" id="personalToggle" onchange="onToggle()">
-      <span class="toggle-slider"></span>
-    </label>
-    <label for="personalToggle">Занятия</label>
-  </div>
-  <div class="toggle-item">
-    <label class="toggle">
-      <input type="checkbox" id="extendedToggle" onchange="onToggle()">
-      <span class="toggle-slider"></span>
-    </label>
-    <label for="extendedToggle">Продлёнка</label>
-  </div>
-</div>
+<div class="toggles" id="togglesContainer"></div>
 
 <div class="status" id="status"></div>
 <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div></div>
@@ -46,7 +31,7 @@
   <button class="export-btn" onclick="exportNikolExtended()">🎒 Продлёнка JSON</button>
 </div>
 
-<script src="../engines.js"></script>
-<script src="nikol.js"></script>
+<script src="../engines.js?v=6"></script>
+<script src="nikol.js?v=6"></script>
 </body>
 </html>

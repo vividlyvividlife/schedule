@@ -45,6 +45,7 @@ const SUN_MSG = [
 
 let SCHOOL = [];
 let PERSONAL = {};
+let CUSTOM = {};
 let EXTENDED = [];
 
 const DAYS = ["ПН","ВТ","СР","ЧТ","ПТ","СБ","ВС"];
@@ -52,7 +53,17 @@ const DAY_NAMES = ["Понедельник","Вторник","Среда","Че�
 
 let showPersonal = localStorage.getItem("nikol_personal") === "true";
 let showExtended = localStorage.getItem("nikol_extended") === "true";
+let schoolOn = localStorage.getItem("nikol_school") !== "false";
 let currentDayIdx = -1;
+
+function customOn(key) { return localStorage.getItem("nikol_custom_" + key) !== "false"; }
+function typeClsOf(key) {
+  if (key === "school" || key === "personal" || key === "extended") return key;
+  const k = (key || "").toLowerCase();
+  if (k.indexOf("факультатив") !== -1) return "custom-facult";
+  if (k.indexOf("кружок") !== -1) return "custom-circle";
+  return "custom";
+}
 
 function getDaySeed() {
   const now = new Date();
@@ -71,7 +82,7 @@ function timeRangeOverlap(a, b) {
 function getItemsForDay(dayIdx) {
   const isWeekend = dayIdx >= 5;
   const daySchedule = SCHOOL[dayIdx] || { lessons: [] };
-  const school = isWeekend ? [] : (daySchedule.lessons || []).map(s => {
+  const school = (schoolOn && !isWeekend) ? (daySchedule.lessons || []).map(s => {
     const iconMap = {
       "Белорусская литература":"📖","Белорусский язык":"💬","ФКиЗ":"⚽",
       "Русская литература":"📖","Русский язык":"✏️","Математика":"🔢",
@@ -82,8 +93,11 @@ function getItemsForDay(dayIdx) {
       "Кружок \"Ритмика и танец\"":"💃"
     };
     return { n: s.n, time: s.time, subj: s.subj, icon: iconMap[s.subj] || "📋", type: "school", paid: s.paid };
-  });
+  }) : [];
   const personal = showPersonal ? (PERSONAL[dayIdx] || []).map(p => ({...p, type:"personal"})) : [];
+  const custom = Object.keys(CUSTOM).filter(customOn).flatMap(k => (((CUSTOM[k] || {})[dayIdx]) || []).map(p => ({
+    ...p, icon: p.icon || "⭐", type: k
+  })));
 
   let extended = [];
   if (showExtended && !isWeekend && school.length > 0) {
@@ -101,9 +115,9 @@ function getItemsForDay(dayIdx) {
     });
   }
 
-  if (personal.length === 0 && extended.length === 0) return school;
+  if (personal.length === 0 && extended.length === 0 && custom.length === 0) return school;
 
-  const all = [...school, ...personal, ...extended];
+  const all = [...school, ...personal, ...custom, ...extended];
   if (all.length <= 1) return all;
 
   const parent = all.map((_, i) => i);
@@ -158,8 +172,8 @@ function renderSingle(item, dayIdx) {
   })() : "";
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
-  const typeLabel = item.type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : item.subj && item.subj.startsWith("Факультатив") ? "Факультатив" : "Урок") : item.type === "personal" ? "Занятие" : "Продлёнка";
-  const typeCls = item.type || "school";
+  const typeLabel = item.type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : item.subj && item.subj.startsWith("Факультатив") ? "Факультатив" : "Урок") : item.type === "personal" ? "Занятие" : item.type === "extended" ? "Продлёнка" : item.type;
+  const typeCls = typeClsOf(item.type);
   return `
     <div class="${cls}" data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr}>
       ${progressDiv}
@@ -185,8 +199,9 @@ function renderMerge(group, dayIdx) {
   const cls = `merge-card ${state}`;
 
   const rows = group.items.map(item => {
-    const labelCls = item.type;
-    const labelText = item.type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item.type === "personal" ? "Занятие" : "Продлёнка";
+    const labelCls = typeClsOf(item.type);
+    const labelText = item.type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item.type === "personal" ? "Занятие" : item.type === "extended" ? "Продлёнка" : item.type;
+    const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
     const itemStart = parseTime(item.time);
     const itemEnd = parseTime(item.time.split(/[–\-]/)[1]);
     const rowState = getCardState(dayIdx, item.time);
@@ -206,7 +221,7 @@ function renderMerge(group, dayIdx) {
         <div class="merge-info" style="position:relative;z-index:1;">
           <div class="merge-label ${labelCls}">${labelText}</div>
           <div class="merge-time">${item.time}</div>
-          <div class="merge-subj">${item.subj}</div>
+          <div class="merge-subj">${item.subj}${paidBadge}</div>
           ${item.room ? `<div class="merge-room">${item.room}</div>` : ""}
           ${cdAttr ? `<div class="merge-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
@@ -328,11 +343,41 @@ function switchDay(idx) {
   document.querySelectorAll(".day-panel").forEach((p, i) => p.classList.toggle("active", i === idx));
 }
 
+function toggleHtml(id, label) {
+  return `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="${id}" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="${id}">${label}</label></div>`;
+}
+
+function buildToggles() {
+  const c = document.getElementById("togglesContainer");
+  if (!c) return;
+  const customKeys = Object.keys(CUSTOM).filter(k => Object.values(CUSTOM[k] || {}).some(arr => Array.isArray(arr) && arr.length > 0));
+  let html = toggleHtml("schoolToggle", "Уроки");
+  if (Object.keys(PERSONAL || {}).some(k => Array.isArray(PERSONAL[k]) && PERSONAL[k].length > 0)) html += toggleHtml("personalToggle", "Занятия");
+  if (EXTENDED.length > 0) html += toggleHtml("extendedToggle", "Продлёнка");
+  for (const k of customKeys) {
+    html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" data-custom-key="${k}" onchange="onToggle()"><span class="toggle-slider"></span></label><label>${k}</label></div>`;
+  }
+  c.innerHTML = html;
+  if (schoolOn) document.getElementById("schoolToggle").checked = true;
+  if (showPersonal) document.getElementById("personalToggle").checked = true;
+  if (showExtended) document.getElementById("extendedToggle").checked = true;
+  customKeys.forEach(k => {
+    if (localStorage.getItem("nikol_custom_" + k) === null) localStorage.setItem("nikol_custom_" + k, "true");
+    const t = document.querySelector('input[data-custom-key="' + k + '"]');
+    if (t && customOn(k)) t.checked = true;
+  });
+}
+
 function onToggle() {
-  showPersonal = document.getElementById("personalToggle").checked;
-  showExtended = document.getElementById("extendedToggle").checked;
-  localStorage.setItem("nikol_personal", showPersonal);
-  localStorage.setItem("nikol_extended", showExtended);
+  const sch = document.getElementById("schoolToggle");
+  const pers = document.getElementById("personalToggle");
+  const ext = document.getElementById("extendedToggle");
+  if (sch) { schoolOn = sch.checked; localStorage.setItem("nikol_school", schoolOn); }
+  if (pers) { showPersonal = pers.checked; localStorage.setItem("nikol_personal", showPersonal); }
+  if (ext) { showExtended = ext.checked; localStorage.setItem("nikol_extended", showExtended); }
+  document.querySelectorAll("#togglesContainer input[data-custom-key]").forEach(t => {
+    localStorage.setItem("nikol_custom_" + t.dataset.customKey, t.checked);
+  });
   renderAll();
   renderStatus();
 }
@@ -403,8 +448,6 @@ if (localStorage.getItem("nikol_theme") === "dark") {
   document.body.classList.add("dark");
   document.querySelector(".theme-btn").textContent = "☾";
 }
-if (showPersonal) document.getElementById("personalToggle").checked = true;
-if (showExtended) document.getElementById("extendedToggle").checked = true;
 
 currentDayIdx = getTodayIndex();
 document.getElementById("dateDisplay").textContent = formatClock();
@@ -414,16 +457,20 @@ fetch("../timeSchedule.json").then(r => r.json()).then(data => {
   SCHOOL = data.schedule || [];
   PERSONAL = data.personal || {};
   EXTENDED = data.extended || [];
+  CUSTOM = data.custom || {};
   const local = loadLocalData();
   if (local) {
     if (local.schedule) SCHOOL = local.schedule;
     if (local.personal) PERSONAL = local.personal;
+    if (local.custom) CUSTOM = local.custom;
     if (local.extended) EXTENDED = local.extended;
   }
+  buildToggles();
   renderAll();
   renderStatus();
   startEngines(() => { renderStatus(); renderProgress(); });
 }).catch(() => {
+  buildToggles();
   renderAll();
   renderStatus();
   startEngines(() => { renderStatus(); renderProgress(); });
