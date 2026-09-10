@@ -1544,7 +1544,7 @@ async function init() {
   }
 
   var isEmpty = !SCHEDULE || SCHEDULE.every(function(d) { return !d.lessons || d.lessons.length === 0; });
-  if (isEmpty && !loadLocalData()) {
+  if (isEmpty && !loadLocalData() && localStorage.getItem('tg_no_defaults') !== 'true') {
     try {
       var defRes = await Promise.all([
         fetch("main_lesson.json"),
