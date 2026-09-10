@@ -816,6 +816,8 @@ function onToggle() {
   document.querySelectorAll("#togglesContainer input[data-custom-key]").forEach(t => {
     localStorage.setItem("custom_" + t.dataset.customKey, t.checked);
   });
+  console.log("[Toggles] school=" + schoolOn + " extended=" + extendedOn + " personal=" + personalOn + " custom=" +
+    JSON.stringify(Array.from(document.querySelectorAll("#togglesContainer input[data-custom-key]")).map(t => ({ k: t.dataset.customKey, on: t.checked }))));
   renderAll();
   renderProgress();
 }
@@ -1522,6 +1524,11 @@ async function init() {
     PERSONAL = scheduleData.personal || {};
     EXTENDED = scheduleData.extended;
     CUSTOM = scheduleData.custom || {};
+    if (localStorage.getItem('tg_no_defaults') === 'true') {
+      // Full reset was performed: start from an empty app instead of built-in defaults.
+      SCHEDULE = SCHEDULE.map(function(d){ return { name: d.name, short: d.short, lessons: [] }; });
+      EXTENDED = []; CUSTOM = {}; PERSONAL = {};
+    }
     HOLIDAYS = await holidaysRes.json();
   } catch (e) {
     console.error("Failed to load data:", e);

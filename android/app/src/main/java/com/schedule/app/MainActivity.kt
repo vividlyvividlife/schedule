@@ -520,6 +520,7 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         throw new Error('Не удалось определить тип данных');
                     }
+                    localStorage.removeItem('tg_no_defaults');
                     localStorage.setItem('tg_local_data', JSON.stringify(merged));
                     return 'ok:' + what;
                 } catch(e) { return 'err:' + e.message; }
@@ -571,11 +572,13 @@ class MainActivity : AppCompatActivity() {
                     else if ('$jsType' === 'personal') { d.personal = {}; }
                     else if ('$jsType' === 'extended') { d.extended = []; }
                     else { if (d.custom) delete d.custom['$jsType']; localStorage.removeItem('custom_$jsType'); }
+                    localStorage.setItem('tg_no_defaults', 'true');
                     localStorage.setItem('tg_local_data', JSON.stringify(d));
                     return 'ok';
                 } catch(e) { return e.message; }
             })()"""
         ) { r ->
+            Log.w(TAG, "Delete type '$jsType' result: $r")
             val s = r?.trim('"') ?: ""
             if (s == "ok") {
                 Toast.makeText(this, "Удалено!", Toast.LENGTH_SHORT).show()
@@ -590,33 +593,87 @@ class MainActivity : AppCompatActivity() {
     private fun resetData() {
         AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
             .setTitle("Сбросить?")
-            .setMessage("Удалить все данные?")
+            .setMessage("Удалить все данные? Приложение станет пустым — стандартные расписания не вернутся, пока не импортируешь свои.")
             .setPositiveButton("Да") { _, _ ->
+                Log.w(TAG, "Reset: user confirmed — wiping web storage")
                 cancelAllReminders()
-                webView.evaluateJavascript("try { localStorage.clear(); sessionStorage.clear(); 'ok' } catch(e) { 'err:' + e.message }") {
-                    // Documented native wipe (androidx.webkit 1.14+): legacy WebStorage.deleteAllData()
-                    // is a no-op on Android 12+, WebStorageCompat is the supported replacement.
-                    try {
-                        androidx.webkit.WebStorageCompat.deleteBrowsingData(
-                            android.webkit.WebStorage.getInstance(),
-                            Runnable { runOnUiThread { finishReset() } }
-                        )
-                    } catch (e: Exception) {
-                        Log.e(TAG, "WebStorage wipe error", e)
-                        finishReset()
-                    }
-                }
+                clearWebStorageAndReload(1)
             }
             .setNegativeButton("Нет", null).show()
     }
 
-    private fun finishReset() {
+    // Clears WebView storage with verification and escalation; honest reporting
+    // instead of a blind "done" toast — the point is to SEE failures on-device.
+    private fun clearWebStorageAndReload(attempt: Int) {
+        webView.evaluateJavascript(
+            "try { localStorage.clear(); sessionStorage.clear(); localStorage.setItem('tg_no_defaults','true'); } catch(e) {}" +
+            "(function(){ var k=[]; for (var i=0;i<localStorage.length;i++) k.push(localStorage.key(i));" +
+            " return JSON.stringify({ n: localStorage.length, tg: !!localStorage.getItem('tg_local_data') }); })()"
+        ) { result ->
+            var leftover = -1
+            try {
+                val v = org.json.JSONTokener(result ?: "").nextValue()
+                val o = when (v) {
+                    is org.json.JSONObject -> v
+                    is String -> org.json.JSONTokener(v).nextValue() as? org.json.JSONObject
+                    else -> null
+                }
+                leftover = o?.optInt("n", -1) ?: -1
+                Log.w(TAG, "Reset verify attempt=$attempt leftover=$leftover raw=$result")
+            } catch (e: Exception) {
+                Log.e(TAG, "Reset verify parse error", e)
+            }
+
+            if (leftover > 0 && attempt < 3) {
+                Log.w(TAG, "Storage survived JS clear — escalating to native per-site wipe")
+                try {
+                    androidx.webkit.WebStorageCompat.deleteBrowsingDataForSite(
+                        android.webkit.WebStorage.getInstance(),
+                        "https://appassets.androidplatform.net",
+                        Runnable { runOnUiThread { clearWebStorageAndReload(attempt + 1) } }
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Per-site wipe error", e)
+                    nativeWipeAndFinish(leftover)
+                }
+                return@evaluateJavascript
+            }
+            nativeWipeAndFinish(leftover)
+        }
+    }
+
+    private fun nativeWipeAndFinish(leftover: Int) {
+        try {
+            androidx.webkit.WebStorageCompat.deleteBrowsingData(
+                android.webkit.WebStorage.getInstance(),
+                Runnable { runOnUiThread { finishReset(leftover) } }
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Full wipe error", e)
+            finishReset(leftover)
+        }
+    }
+
+    private fun finishReset(leftover: Int) {
         runOnUiThread {
             webView.clearCache(true)
             hasSchedule = false; hasPersonal = false; hasExtended = false; customKeys = emptyList()
-            Toast.makeText(this, "Сброшено!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                if (leftover > 0) "⚠️ Сброшено, но осталось ключей: $leftover" else "Сброшено! Ключей: 0",
+                Toast.LENGTH_LONG
+            ).show()
             invalidateOptionsMenu()
             webView.reload()
+            // Resurrection detector: nothing must write tg_local_data after a reset.
+            webView.postDelayed({
+                webView.evaluateJavascript("(function(){ return !!localStorage.getItem('tg_local_data'); })()") { r ->
+                    if (r?.trim('"') == "true") {
+                        Log.e(TAG, "RESURRECTION: tg_local_data reappeared after reset")
+                        Toast.makeText(this, "⚠️ Данные вернулись после сброса — сообщи, пожалуйста", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }, 2500)
         }
     }
 
@@ -820,7 +877,10 @@ class MainActivity : AppCompatActivity() {
                 )
                 am.cancel(pending)
             }
-        } catch (_: Exception) {}
+            Log.w(TAG, "cancelAllReminders: cancelled ${arr.length()} alarms")
+        } catch (e: Exception) {
+            Log.e(TAG, "cancelAllReminders error", e)
+        }
         prefs.edit().remove("reminders_json").apply()
     }
 
