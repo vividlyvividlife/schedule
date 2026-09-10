@@ -334,6 +334,14 @@ body {
 .dark .merge-icon.custom { background: #252840; }
 .merge-label.custom { background: #e8eaff; color: #5b6abf; }
 .dark .merge-label.custom { background: #252840; color: #7b8ad4; }
+.merge-icon.custom-circle { background: #fff3e0; }
+.dark .merge-icon.custom-circle { background: #2a2218; }
+.merge-label.custom-circle { background: #fff3e0; color: #e67e22; }
+.dark .merge-label.custom-circle { background: #2a2218; color: #ed7d31; }
+.merge-icon.custom-facult { background: #f3e5f5; }
+.dark .merge-icon.custom-facult { background: #241a28; }
+.merge-label.custom-facult { background: #f3e5f5; color: #8e24aa; }
+.dark .merge-label.custom-facult { background: #241a28; color: #c05fd6; }
 .merge-countdown { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 2px; }
 
 .weekend-msg {

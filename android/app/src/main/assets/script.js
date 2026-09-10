@@ -182,6 +182,13 @@ function resolveTypeKey(val) {
 function isBuiltInType(key) { return key === "school" || key === "personal" || key === "extended"; }
 function typeName(key) { return TYPE_KEY_TO_NAME[key] || key; }
 function customOn(key) { return localStorage.getItem("custom_" + key) !== "false"; }
+function typeClsOf(key) {
+  if (isBuiltInType(key)) return key;
+  const k = (key || "").toLowerCase();
+  if (k.indexOf("факультатив") !== -1) return "custom-facult";
+  if (k.indexOf("кружок") !== -1) return "custom-circle";
+  return "custom";
+}
 
 const _acInstances = {};
 function setupAutocomplete(inputId, getOptions) {
@@ -486,7 +493,7 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
   })() : "";
   const type = item._type || "extended";
   const typeLabel = item.typeLabel || typeName(type);
-  const typeCls = isBuiltInType(type) ? type : "custom";
+  const typeCls = typeClsOf(type);
   const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
   const bellHtml = window.Android ? (() => {
     const hasStart = hasReminder(type, dayIdx, itemIdx, item.time, "start");
@@ -537,7 +544,7 @@ function renderMergeCard(group, dayIdx) {
   const cls = `merge-card ${state}`;
 
   const rows = group.map(item => {
-    const labelCls = isBuiltInType(item._type) ? item._type : "custom";
+    const labelCls = typeClsOf(item._type);
     const labelText = item._type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item._type === "personal" ? "Занятие" : item._type === "extended" ? "Продлёнка" : item._type;
     const itemStart = parseTime(item.time);
     const itemEnd = parseTime(item.time.split(/[–\-]/)[1]);
