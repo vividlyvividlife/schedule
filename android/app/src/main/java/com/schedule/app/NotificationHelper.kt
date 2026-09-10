@@ -21,7 +21,7 @@ object NotificationHelper {
         "school" -> "Урок"
         "personal" -> "Занятие"
         "extended" -> "Продлёнка"
-        else -> "Занятие"
+        else -> type
     }
 
     fun reminderText(type: String, dayIdx: Int, time: String, subj: String, mins: Int, whenType: String): String {

@@ -14,7 +14,8 @@
 
     <item
         android:id="@+id/menu_edit_mode"
-        android:title="✏️ Режим редактирования"
+        android:title="✏️ Редактирование"
+        android:checkable="true"
         app:showAsAction="never" />
 
     <item

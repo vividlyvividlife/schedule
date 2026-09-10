@@ -136,12 +136,19 @@ const TYPE_NAME_TO_KEY = { "Урок": "school", "Занятие": "personal", "
 const TYPE_KEY_TO_NAME = { "school": "Урок", "personal": "Занятие", "extended": "Продлёнка" };
 
 function resolveTypeKey(val) {
-  if (TYPE_NAME_TO_KEY[val]) return TYPE_NAME_TO_KEY[val];
-  for (const [k, v] of Object.entries(TYPE_NAME_TO_KEY)) {
-    if (v.toLowerCase() === val.toLowerCase()) return k;
+  const v = (val || "").trim();
+  if (!v) return "school";
+  if (TYPE_NAME_TO_KEY[v]) return TYPE_NAME_TO_KEY[v];
+  for (const [k, name] of Object.entries(TYPE_NAME_TO_KEY)) {
+    if (name.toLowerCase() === v.toLowerCase()) return k;
   }
-  return "school";
+  // Any unknown type name becomes its own schedule entity (key = name).
+  return v;
 }
+
+function isBuiltInType(key) { return key === "school" || key === "personal" || key === "extended"; }
+function typeName(key) { return TYPE_KEY_TO_NAME[key] || key; }
+function customOn(key) { return localStorage.getItem("custom_" + key) !== "false"; }
 
 const _acInstances = {};
 function setupAutocomplete(inputId, getOptions) {
@@ -195,7 +202,7 @@ function populateDatalists() {
   const allRoom = [...new Set([...DEFAULT_ROOMS, ...collectUniqueValues("room")])].sort((a, b) => a.localeCompare(b, "ru"));
   const allLoc = [...new Set(collectUniqueValues("location"))].sort((a, b) => a.localeCompare(b, "ru"));
   const allTeacher = [...new Set(collectUniqueValues("teacher"))].sort((a, b) => a.localeCompare(b, "ru"));
-  const allType = [...new Set([...DEFAULT_TYPES])].sort((a, b) => a.localeCompare(b, "ru"));
+  const allType = [...new Set([...DEFAULT_TYPES, ...Object.keys(CUSTOM)])].sort((a, b) => a.localeCompare(b, "ru"));
   setupAutocomplete("modalSubj", () => allSubj);
   setupAutocomplete("modalRoom", () => allRoom);
   setupAutocomplete("modalLocation", () => allLoc);
@@ -205,6 +212,7 @@ function populateDatalists() {
 
 let SCHEDULE = [];
 let PERSONAL = {};
+let CUSTOM = {};
 let EXTENDED = [];
 let HOLIDAYS = null;
 let extendedOn = localStorage.getItem("extended") === "true";
@@ -444,8 +452,8 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
     return `<div class="row-progress" style="width:${100 - pct}%"></div>`;
   })() : "";
   const type = item._type || "extended";
-  const typeLabel = item.typeLabel || (type === "personal" ? "Занятие" : "Продлёнка");
-  const typeCls = type === "personal" ? "personal" : "extended";
+  const typeLabel = item.typeLabel || typeName(type);
+  const typeCls = isBuiltInType(type) ? type : "personal";
   const bellHtml = window.Android ? (() => {
     const hasStart = hasReminder(type, dayIdx, itemIdx, item.time, "start");
     const hasEnd = hasReminder(type, dayIdx, itemIdx, item.time, "end");
@@ -496,7 +504,7 @@ function renderMergeCard(group, dayIdx) {
 
   const rows = group.map(item => {
     const labelCls = item._type;
-    const labelText = item._type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item._type === "personal" ? "Занятие" : "Продлёнка";
+    const labelText = item._type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item._type === "personal" ? "Занятие" : item._type === "extended" ? "Продлёнка" : item._type;
     const itemStart = parseTime(item.time);
     const itemEnd = parseTime(item.time.split(/[–\-]/)[1]);
     const rowState = getCardState(dayIdx, item.time);
@@ -674,6 +682,10 @@ function buildToggles() {
   if (hasPersonal) {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="personalToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="personalToggle">Занятия</label></div>`;
   }
+  const customKeys = Object.keys(CUSTOM).filter(k => Object.values(CUSTOM[k] || {}).some(arr => Array.isArray(arr) && arr.length > 0));
+  for (const k of customKeys) {
+    html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" data-custom-key="${k}" onchange="onToggle()"><span class="toggle-slider"></span></label><label>${k}</label></div>`;
+  }
   c.innerHTML = html;
   if (schoolOn && hasSchool) document.getElementById("schoolToggle").checked = true;
   if (extendedOn && hasExtended) document.getElementById("extendedToggle").checked = true;
@@ -681,6 +693,11 @@ function buildToggles() {
     if (localStorage.getItem("personal") === null) { personalOn = true; localStorage.setItem("personal", true); }
     if (personalOn) document.getElementById("personalToggle").checked = true;
   }
+  customKeys.forEach(k => {
+    if (localStorage.getItem("custom_" + k) === null) localStorage.setItem("custom_" + k, "true");
+    const t = document.querySelector('input[data-custom-key="' + k + '"]');
+    if (t && customOn(k)) t.checked = true;
+  });
 }
 
 function onToggle() {
@@ -690,6 +707,9 @@ function onToggle() {
   if (sch) { schoolOn = sch.checked; localStorage.setItem("school", schoolOn); }
   if (ext) { extendedOn = ext.checked; localStorage.setItem("extended", extendedOn); }
   if (pers) { personalOn = pers.checked; localStorage.setItem("personal", personalOn); }
+  document.querySelectorAll("#togglesContainer input[data-custom-key]").forEach(t => {
+    localStorage.setItem("custom_" + t.dataset.customKey, t.checked);
+  });
   renderAll();
   renderProgress();
 }
@@ -743,6 +763,7 @@ function toggleReminder(type, dayIdx, itemIdx, time, subj, when) {
 
 function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
   const labels = { school: "Урок", personal: "Занятие", extended: "Продлёнка" };
+  const typeLabel = labels[type] || type;
   const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
   const existingRem = existing || getReminder(type, dayIdx, itemIdx, time, when || "start");
   const d = document.createElement("div");
@@ -752,7 +773,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
     <div style="background:var(--card);border-radius:16px;padding:20px;width:300px;color:var(--text);max-height:80vh;overflow-y:auto;">
       <div style="font-size:16px;font-weight:600;margin-bottom:12px;">🔔 Напоминание</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
-        ${labels[type]} · ${dayNames[dayIdx]} · ${time}<br>${subj}
+        ${typeLabel} · ${dayNames[dayIdx]} · ${time}<br>${subj}
       </div>
       <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Когда напомнить:</div>
       <div style="display:flex;gap:6px;margin-bottom:12px;" id="whenGroup">
@@ -957,6 +978,8 @@ function showEditModal(type, dayIdx, itemIdx) {
     item = SCHEDULE[dayIdx].lessons[itemIdx];
   } else if (type === "personal") {
     item = (PERSONAL[dayIdx] || [])[itemIdx];
+  } else if (!isBuiltInType(type)) {
+    item = ((CUSTOM[type] || {})[dayIdx] || [])[itemIdx];
   } else {
     item = EXTENDED[itemIdx];
   }
@@ -1029,6 +1052,8 @@ function saveModal() {
     } else if (modalData.type === "extended" && data.extended) {
       data.extended.splice(modalData.itemIdx, 1);
       EXTENDED.splice(modalData.itemIdx, 1);
+    } else if (!isBuiltInType(modalData.type) && data.custom && data.custom[modalData.type] && data.custom[modalData.type][origDay]) {
+      data.custom[modalData.type][origDay].splice(modalData.itemIdx, 1);
     }
   }
   if (type === "school") {
@@ -1061,6 +1086,22 @@ function saveModal() {
       data.personal[dayIdx].push(item);
       data.personal[dayIdx].sort((a, b) => parseTime(a.time) - parseTime(b.time));
     }
+  } else if (!isBuiltInType(type)) {
+    const item = { subj, time, icon: "⭐" };
+    if (room) item.room = room;
+    if (location) item.location = location;
+    if (teacher) item.teacher = teacher;
+    if (color) item.color = color;
+    if (typeRaw && typeRaw !== type) item.typeLabel = typeRaw;
+    if (!data.custom) data.custom = {};
+    if (!data.custom[type]) data.custom[type] = {};
+    if (!data.custom[type][dayIdx]) data.custom[type][dayIdx] = [];
+    if (isEdit && modalData.type === type) {
+      data.custom[type][dayIdx][modalData.itemIdx] = item;
+    } else {
+      data.custom[type][dayIdx].push(item);
+      data.custom[type][dayIdx].sort((a, b) => parseTime(a.time) - parseTime(b.time));
+    }
   } else {
     const item = { subj, time, icon: "🎒" };
     if (room) item.room = room;
@@ -1079,6 +1120,7 @@ function saveModal() {
   saveLocalData(data);
   if (type === "school") { while (SCHEDULE.length <= dayIdx) SCHEDULE.push({ name: "", lessons: [] }); SCHEDULE[dayIdx].lessons = data.schedule[dayIdx].lessons; }
   else if (type === "personal") { PERSONAL[dayIdx] = data.personal[dayIdx] || []; }
+  else if (!isBuiltInType(type)) { if (!CUSTOM[type]) CUSTOM[type] = {}; CUSTOM[type][dayIdx] = data.custom[type][dayIdx] || []; }
   else { EXTENDED = data.extended; }
   closeModal();
   buildToggles();
@@ -1100,6 +1142,12 @@ function deleteFromModal() {
   } else if (modalData.type === "extended" && modalData.itemIdx >= 0) {
     data.extended.splice(modalData.itemIdx, 1);
     EXTENDED = data.extended;
+  } else if (!isBuiltInType(modalData.type) && modalData.dayIdx >= 0 && modalData.itemIdx >= 0) {
+    if (data.custom && data.custom[modalData.type] && data.custom[modalData.type][modalData.dayIdx]) {
+      data.custom[modalData.type][modalData.dayIdx].splice(modalData.itemIdx, 1);
+      if (!CUSTOM[modalData.type]) CUSTOM[modalData.type] = {};
+      CUSTOM[modalData.type][modalData.dayIdx] = data.custom[modalData.type][modalData.dayIdx];
+    }
   }
   saveLocalData(data);
   closeModal();
@@ -1178,7 +1226,22 @@ function renderAll() {
       }
       return true;
     });
-    const all = [...school, ...personal, ...extended];
+    const custom = Object.keys(CUSTOM).filter(customOn).flatMap(k => (((CUSTOM[k] || {})[dayIdx]) || []).map((p, pi) => ({
+      ...p, icon: p.icon || "⭐", _type: k, _icon: p.icon || "📋", _itemIdx: pi,
+      _state: (function() {
+        if (dayIdx < todayIdx) return "past";
+        if (dayIdx > todayIdx) return "future";
+        const now = new Date();
+        const cur = now.getHours() * 60 + now.getMinutes();
+        const s = parseTime(p.time);
+        const e = parseTime(p.time.split(/[–\-]/)[1]);
+        if (cur >= s && cur < e) return "current";
+        if (cur >= e) return "past";
+        if (cur < s && (s - cur) <= 120) return "next";
+        return "future";
+      })()
+    })));
+    const all = [...school, ...personal, ...custom, ...extended];
     if (all.length <= 1) {
       return all.map(item => {
         if (item._type === "school") return renderLesson(item, item._state, dayIdx, item._itemIdx);
@@ -1230,7 +1293,8 @@ function renderAll() {
       const hasSchool = schoolOn && d.lessons.length > 0;
       const hasPersonal = personalOn && PERSONAL[i] && PERSONAL[i].length > 0;
       const hasExtended = extendedOn && EXTENDED.length > 0;
-      if (!hasSchool && !hasPersonal && !hasExtended) {
+      const hasCustom = Object.keys(CUSTOM).some(k => customOn(k) && CUSTOM[k][i] && CUSTOM[k][i].length > 0);
+      if (!hasSchool && !hasPersonal && !hasExtended && !hasCustom) {
         return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
       }
       return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderDayLessons(d, i)}</div>`;
@@ -1243,7 +1307,8 @@ function renderAll() {
       const hasSchool = schoolOn && d.lessons.length > 0;
       const hasPersonal = personalOn && PERSONAL[dayIdx] && PERSONAL[dayIdx].length > 0;
       const hasExtended = extendedOn && EXTENDED.length > 0;
-      if (!hasSchool && !hasPersonal && !hasExtended) {
+      const hasCustom = Object.keys(CUSTOM).some(k => customOn(k) && CUSTOM[k][dayIdx] && CUSTOM[k][dayIdx].length > 0);
+      if (!hasSchool && !hasPersonal && !hasExtended && !hasCustom) {
         return `
           <div class="diary-day">
             <div class="diary-day-name">${d.name}</div>
@@ -1315,6 +1380,7 @@ async function init() {
     SCHEDULE = scheduleData.schedule;
     PERSONAL = scheduleData.personal || {};
     EXTENDED = scheduleData.extended;
+    CUSTOM = scheduleData.custom || {};
     HOLIDAYS = await holidaysRes.json();
   } catch (e) {
     console.error("Failed to load data:", e);
@@ -1339,6 +1405,7 @@ async function init() {
   if (local) {
     if (local.schedule && local.schedule.length) SCHEDULE = local.schedule;
     if (local.personal && Object.keys(local.personal).length) PERSONAL = local.personal;
+    if (local.custom && Object.keys(local.custom).length) CUSTOM = local.custom;
     if (local.extended && local.extended.length) EXTENDED = local.extended;
   }
 

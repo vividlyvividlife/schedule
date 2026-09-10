@@ -179,6 +179,7 @@ body {
   margin-bottom: 8px;
   box-shadow: var(--shadow);
   overflow: hidden;
+  position: relative;
   transition: background 0.2s, transform 0.15s;
 }
 .lesson:active { transform: scale(0.98); }
@@ -771,3 +772,37 @@ body.edit-mode .merge-row:hover { opacity: 0.85; }
   color: var(--accent);
 }
 .modal-label { position: relative; }
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+}
+.emoji-swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.emoji-swatch:hover {
+  background: var(--active-bg);
+}
+.emoji-swatch.active {
+  background: var(--accent);
+  outline: 2px solid var(--accent);
+}
+@media (max-width: 480px) {
+  .emoji-grid { grid-template-columns: repeat(8, 1fr); }
+  .emoji-swatch { width: 28px; height: 28px; font-size: 16px; }
+}

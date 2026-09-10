@@ -414,6 +414,8 @@ function startEngines(onTick) {
   updateCountdowns();
   if (onTick) onTick();
   if (_enginesTimer) clearInterval(_enginesTimer);
+  // Single shared ticker; updateCountdowns() already refreshes progress bars.
+  // Hidden document (background app / screen off) gets no work at all.
   _enginesTimer = setInterval(() => {
     if (document.hidden) return;
     updateCountdowns();

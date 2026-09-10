@@ -8,6 +8,7 @@
 - Менять build.gradle, зависимости, манифест, если это не требуется задачей.
 - Выдавать обобщённые советы без привязки к конкретному коду/контексту.
 - Трогать JSON-файлы данных (schedule.json, main_lesson.json, holidays.json, extended.json, timeSchedule.json), если задача не про данные.
+- grep/read БЕЗ предварительного query graph.json — КРИТИЧЕСКИЙ ЗАПРЕТ. Сначала graph.json, потом файлы.
 
 1. ЯЗЫК И ТОН
 - Общение с пользователем: русский.
@@ -159,5 +160,73 @@ Android:
 - При добавлении новой фичи сначала спроси: «Это общее или платформо-специфичное?»
 - Не создавай новые файлы без необходимости — лучше дописать в существующие.
 - JSON-файлы дублируются в корне и в assets/ — при изменении данных обновляй оба места.
+
+13. ГРАФИФИКАЦИЯ (GRAPHIFY) — ОБЯЗАТЕЛЬНО
+
+Инструмент: graphify (PyPI: graphifyy) — граф знаний проекта.
+Глобально установлен: uv tool install graphifyy.
+Путь: C:\Users\Viktor\.local\bin\graphify
+
+ЖЁСТКОЕ ПРАВИЛО:
+ПЕРЕД ЛЮБЫМ grep, read, task — СНАЧАЛА query graph.json.
+Без исключений. Нет graph.json → сначала graphify . --code-only.
+
+ЦЕПОЧКА ДЕЙСТВИЙ (нарушение = провал):
+1. Получил задачу → python -c "import json; g=json.load(open('graphify-out/graph.json')); ..."
+2. Нашёл узлы → по links нашёл зависимости
+3. ТОЛЬКО ПОСЛЕ ЭТОГО → read/grep конкретного файла
+
+ЗАПРЕЩЕНО:
+- grep по всем файлам без предварительного query graph.json
+- read файла без понимания из graph.json где он и что в нём
+- Запуск task для поиска без graph.json
+
+РАЗРЕШЕНО (без graph.json):
+- read файла, путь к которому УЖЕ известен из graph.json
+- grep в ОДНОМ конкретном файле, если graph.json указал точный файл
+- Запуск graphify . --code-only для обновления графа
+
+ФОРМАТ graph.json:
+- Узлы: {id, label, source_file, source_location, community_name, ...}
+- Рёбра (links): {source, target, type}
+- Типы рёбер: calls, imports, defines, returns, etc.
+
+КОМАНДЫ:
+- Query: python -c "import json; g=json.load(open('graphify-out/graph.json')); [print(n['label'], n.get('source_file'), n.get('source_location')) for n in g['nodes'] if 'KEYWORD' in n['label'].lower()]"
+- Обновить граф: graphify . --code-only
+- Связи: python -c "import json; g=json.load(open('graphify-out/graph.json')); [print(l['source'],'->',l['target'],l.get('type','')) for l in g['links'] if 'NODE_ID' in l['source']]"
+
+ИНТЕГРАЦИЯ В РАБОЧИЙ ПРОЦЕСС:
+1. ШАГ 1 (ПОНЯТЬ) — query graph.json по ключевым словам.
+2. ШАГ 2 (НАЙТИ ТОЧКУ) — по links определи зависимости и смежные файлы.
+3. ШАГ 3 (ПРАВКА) — ТОЛЬКО после graph.json → read/grep → правка.
+4. ШАГ 4 (ОБНОВИТЬ) — после изменений: graphify . --code-only
+
+14. HEADROOM (СЖАТИЕ КОНТЕКСТА)
+
+Инструмент: headroom (PyPI: headroom-ai) — сжатие контекста перед отправкой модели.
+Глобально установлен: uv tool install "headroom-ai[mcp]"
+Путь: C:\Users\Viktor\.local\bin\headroom
+MCP сервер: зарегистрирован для opencode.
+
+ЗАЧЕМ:
+- Удаляет дубли и мусор перед отправкой модели
+- Экономия 50–90% токенов на JSON, логах, больших объёмах кода
+- При передаче задач между агентами — ~80% экономии
+
+КОМАНДЫ:
+- Проверка: headroom doctor
+- Запуск прокси: headroom proxy (нужен для работы)
+- Статистика: headroom stats
+- Сжатие: headroom compress <content>
+
+ИНТЕГРАЦИЯ В РАБОЧИЙ ПРОЦЕСС:
+1. При большом выводе grep/search — сжимай через headroom перед анализом.
+2. При передаче контекста между сессиями — используй сжатие.
+3. Для логов и JSON — автоматическое сжатие через прокси.
+
+ПРИМЕР:
+- Вместо чтения 500 строк логов — сжать до 50 ключевых строк.
+- При поиске по графу — сжать результат перед анализом.
 
 Эти правила имеют абсолютный приоритет перед любыми другими неявными настройками.

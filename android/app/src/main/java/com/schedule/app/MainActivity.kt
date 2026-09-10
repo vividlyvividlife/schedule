@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
         val toolbar = findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
-        supportActionBar?.title = "Расписание 2026–2027"
+        supportActionBar?.title = "Расписание"
 
         webView = findViewById(R.id.webView)
         webView.clearCache(true)
@@ -338,7 +338,16 @@ class MainActivity : AppCompatActivity() {
         deleteMenu?.findItem(R.id.menu_delete_personal)?.isVisible = hasPersonal
         deleteMenu?.findItem(R.id.menu_delete_extended)?.isVisible = hasExtended
         menu?.findItem(R.id.menu_reset)?.isVisible = hasSchedule || hasPersonal || hasExtended
-        menu?.findItem(R.id.menu_edit_mode)?.title = if (editModeActive) "✏️ Режим редактирования ✔" else "✏️ Режим редактирования"
+
+        val editItem = menu?.findItem(R.id.menu_edit_mode)
+        editItem?.isChecked = editModeActive
+        if (editModeActive) {
+            val s = android.text.SpannableString("✏️ Редактирование")
+            s.setSpan(android.text.style.ForegroundColorSpan(0xFF4CAF50.toInt()), 0, s.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            editItem?.title = s
+        } else {
+            editItem?.title = "✏️ Редактирование"
+        }
         return true
     }
 
@@ -360,14 +369,31 @@ class MainActivity : AppCompatActivity() {
     // ── Export ─────────────────────────────────────────────────────────
 
     private fun showExportDialog() {
+        webView.evaluateJavascript(
+            "(function(){ try { return JSON.stringify(Object.keys((JSON.parse(localStorage.getItem('tg_local_data')||'{}').custom)||{})); } catch(e) { return '[]'; } })()"
+        ) { result ->
+            val customKeys = try {
+                val s = org.json.JSONTokener(result ?: "\"[]\"").nextValue().toString()
+                val arr = org.json.JSONArray(s)
+                (0 until arr.length()).map { arr.getString(it) }
+            } catch (e: Exception) { emptyList<String>() }
+            showExportOptions(customKeys)
+        }
+    }
+
+    private fun showExportOptions(customKeys: List<String>) {
         val options = mutableListOf("💾 Всё расписание (JSON)")
-        val handlers = mutableListOf(Runnable { exportFullJson() })
-        if (hasSchedule) { options.add("📄 Только уроки (JSON)"); handlers.add(Runnable { exportPart("schedule") }) }
-        if (hasPersonal) { options.add("🤸 Только занятия (JSON)"); handlers.add(Runnable { exportPart("personal") }) }
-        if (hasExtended) { options.add("🎒 Только продлёнка (JSON)"); handlers.add(Runnable { exportPart("extended") }) }
+        val types = mutableListOf("full")
+        if (hasSchedule) { options.add("📄 Только уроки (JSON)"); types.add("schedule") }
+        if (hasPersonal) { options.add("🤸 Только занятия (JSON)"); types.add("personal") }
+        if (hasExtended) { options.add("🎒 Только продлёнку (JSON)"); types.add("extended") }
+        for (k in customKeys) { options.add("⭐ $k (JSON)"); types.add(k) }
         AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
             .setTitle("Экспорт")
-            .setItems(options.toTypedArray()) { _, which -> handlers[which].run() }
+            .setItems(options.toTypedArray()) { _, which ->
+                val t = types[which]
+                if (t == "full") exportFullJson() else exportPart(t)
+            }
             .setNegativeButton("Отмена", null)
             .show()
     }
@@ -382,6 +408,7 @@ class MainActivity : AppCompatActivity() {
                     var pers = (local.personal && Object.keys(local.personal).length) ? local.personal : PERSONAL;
                     var ext = (local.extended && local.extended.length) ? local.extended : EXTENDED;
                     var out = { schedule: sch, personal: pers, extended: ext };
+                    if (local.custom && Object.keys(local.custom).length) out.custom = local.custom;
                     return JSON.stringify(out, null, 2);
                 } catch(e) { return '{"error":"' + e.message + '"}'; }
             })()"""
@@ -390,20 +417,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun exportPart(type: String) {
         val names = mapOf("schedule" to "Uroki_2A.json", "personal" to "Zanyatiya_2A.json", "extended" to "Prodlenka_2A.json")
+        val jsType = type.replace("'", "\\'")
         webView.evaluateJavascript(
             """(function() {
                 try {
                     var d = JSON.parse(localStorage.getItem('tg_local_data') || '{}');
-                    var data = d['$type'] || [];
-                    if (Array.isArray(data) && data.length === 0) {
-                        if ('$type' === 'schedule') data = SCHEDULE;
-                        else if ('$type' === 'personal') data = PERSONAL;
-                        else if ('$type' === 'extended') data = EXTENDED;
-                    }
+                    var data;
+                    if ('$jsType' === 'schedule') { data = d['schedule']; if (!Array.isArray(data) || !data.length) data = SCHEDULE; }
+                    else if ('$jsType' === 'personal') { data = d['personal']; if (!data || !Object.keys(data).length) data = PERSONAL; }
+                    else if ('$jsType' === 'extended') { data = d['extended']; if (!Array.isArray(data) || !data.length) data = EXTENDED; }
+                    else data = (d.custom && d.custom['$jsType']) ? { __type: '$jsType', days: d.custom['$jsType'] } : [];
                     return JSON.stringify(data, null, 2);
                 } catch(e) { return '{"error":"' + e.message + '"}'; }
             })()"""
-        ) { result -> handleJsonResult(result, names[type] ?: "export.json") }
+        ) { result -> handleJsonResult(result, names[type] ?: "$type.json") }
     }
 
     private fun handleJsonResult(result: String?, filename: String) {
@@ -468,6 +495,14 @@ class MainActivity : AppCompatActivity() {
                     } else if (typeof data === 'object' && !Array.isArray(data) && data[0] && Array.isArray(data[0])) {
                         merged.personal = data;
                         what = 'Личные занятия';
+                    } else if (typeof data === 'object' && !Array.isArray(data) && data.custom) {
+                        merged.custom = merged.custom || {};
+                        for (var k in data.custom) merged.custom[k] = data.custom[k];
+                        what = 'Доп. расписания';
+                    } else if (typeof data === 'object' && !Array.isArray(data) && data.__type && data.days) {
+                        merged.custom = merged.custom || {};
+                        merged.custom[data.__type] = data.days;
+                        what = data.__type;
                     } else if (data.schedule || data.extended || data.personal) {
                         if (data.schedule) merged.schedule = data.schedule;
                         if (data.personal) merged.personal = data.personal;

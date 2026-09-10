@@ -65,6 +65,39 @@ const ICONS = {
   "Классный час": "🏫",
 };
 
+const EMOJI_LIST = [
+  "📋","📚","✏️","🔢","🎨","🎵","⚽","🏀","🏐","🏊","💃","🤸","⭐","📝","📖","🗣️",
+  "🏫","🛡️","🌍","🔬","💻","🧮","🎹","🎸","🎤","🎭","🎪","🎬","📸","🎯","🎲","🃏",
+  "🧩","♟️","🥋","🥊","⛷️","🚴","🏋️","🤸","🏊","🏄","🚁","✈️","🚀","🛸","⛵","🚂",
+  "🚗","🚌","🚑","🚒","🚐","🛻","🚚","🚛","🚜","🛵","🏍️","🚲","🛴","🛹","🛼","🚏",
+  "🚦","🚥","⚓","🪝","🎣","🧪","🧫","🧬","🔭","📡","💉","🩺","💊","🩹","🩻","🩼",
+  "🧯","🛒","🚬","⚰️","🗿","🪧","🪪","🪫","🔧","🔨","⚒️","🛠️","⛏️","🪚","🔩","⚙️",
+  "🪛","🔬","🧫","🧬","🌡️","🧪","🧯","🧰","🧲","💎","🔑","🗝️","🔒","🔓","🔏","🔐",
+  "💌","📩","📨","📦","📫","📪","📬","📭","📮","🗳️","✏️","✒️","🖋️","🖊️","🖌️","🖍️",
+  "📝","💼","📁","📂","📅","📆","📇","📈","📉","📊","📋","📌","📍","📎","🖇️","📏",
+  "📐","✂️","🗃️","🗄️","🗑️","🔒","🔓","🔏","🔐","🔑","🗝️","❤️","🧡","💛","💚","💙",
+  "💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️",
+  "☯️","✡️","🕉️","☸️","🪯","♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒",
+  "♓","🆔","⚛️","🉑","☢️","☣️","📴","📳","🈶","🈚","🈸","🈺","🈷️","✴️","🆚","💮",
+  "🉐","㊙️","㊗️","🈴","🈵","🈹","🈲","🅰️","🅱️","🆎","🆑","🅾️","🆘","❌","⭕",
+  "🛑","⛔","📛","🚫","💯","💢","♨️","🚷","🚯","🚳","🚱","🔞","📵","🚭","❗","❕",
+  "❓","❔","‼️","⁉️","🔅","🔆","〽️","⚠️","🚸","🔱","⚜️","🔰","♻️","✅","🈯","💹",
+  "❇️","✳️","❎","🌐","💠","Ⓜ️","🌀","💤","🏧","🚾","♿","🅿️","🛗","🈳","🈂️","🛂",
+  "🛃","🛄","🛅","🚹","🚺","🚼","⚧️","🚻","🚮","🎦","📶","🈁","🔣","ℹ️","🔤","🔡",
+  "🔠","🆖","🆗","🆙","🆒","🆕","🆓","0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣",
+  "9️⃣","🔟","🔢","#️⃣","*️⃣","⏏️","▶️","⏸️","⏯️","⏹️","⏺️","⏭️","⏮️","⏩","⏪","⏫",
+  "⏬","◀️","🔼","🔽","➡️","⬅️","⬆️","⬇️","↗️","↘️","↙️","↖️","↕️","↔️","↪️","↩️",
+  "⤴️","⤵️","🔀","🔁","🔂","🔄","🔃","🎵","🎶","➕","➖","➗","✖️","🟰","♾️","💲",
+  "💱","™️","©️","®️","〰️","➰","➿","🔚","🔙","🔛","🔜","🔝","✔️","☑️","🔘","🔴",
+  "🟠","🟡","🟢","🔵","🟣","⚫","⚪","🟤","🔺","🔻","🔼","🔽","🛕","🛗","🛞","🛟",
+  "💍","💎","🪬","🐹","🐰","🦊","🐻","🐼","🐻‍❄️","🐨","🐯","🦁","🐮","🐷","🐽","🐸",
+  "🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺",
+  "🐗","🐴","🦄","🐝","🪱","🐛","🦋","🐌","🐞","🐜","🪰","🪲","🪳","🦟","🦗","🕷️",
+  "🐢","🐍","🦎","🦂","🦞","🦀","🦞","🦐","🦑","🐙","🐠","🐟","🐡","🐬","🦈","🐳",
+  "🐋","🐊","🐆","🐅","🐃","🐂","🐄","🦌","🐪","🐫","🦙","🦒","🐘","🦣","🦏","🦛",
+  "🐁","🐀","🐿️","🦔","🐾","🐕","🦮","🐈","🐩","🦥","🦦","🦨","🦘","🦡","🦫","🦦"
+];
+
 const CARD_COLORS = [
   "", "#e74c3c","#e67e22","#f1c40f","#2ecc71","#1abc9c",
   "#3498db","#9b59b6","#e84393","#fd79a8","#00b894",
@@ -136,12 +169,19 @@ const TYPE_NAME_TO_KEY = { "Урок": "school", "Занятие": "personal", "
 const TYPE_KEY_TO_NAME = { "school": "Урок", "personal": "Занятие", "extended": "Продлёнка" };
 
 function resolveTypeKey(val) {
-  if (TYPE_NAME_TO_KEY[val]) return TYPE_NAME_TO_KEY[val];
-  for (const [k, v] of Object.entries(TYPE_NAME_TO_KEY)) {
-    if (v.toLowerCase() === val.toLowerCase()) return k;
+  const v = (val || "").trim();
+  if (!v) return "school";
+  if (TYPE_NAME_TO_KEY[v]) return TYPE_NAME_TO_KEY[v];
+  for (const [k, name] of Object.entries(TYPE_NAME_TO_KEY)) {
+    if (name.toLowerCase() === v.toLowerCase()) return k;
   }
-  return "school";
+  // Any unknown type name becomes its own schedule entity (key = name).
+  return v;
 }
+
+function isBuiltInType(key) { return key === "school" || key === "personal" || key === "extended"; }
+function typeName(key) { return TYPE_KEY_TO_NAME[key] || key; }
+function customOn(key) { return localStorage.getItem("custom_" + key) !== "false"; }
 
 const _acInstances = {};
 function setupAutocomplete(inputId, getOptions) {
@@ -195,7 +235,7 @@ function populateDatalists() {
   const allRoom = [...new Set([...DEFAULT_ROOMS, ...collectUniqueValues("room")])].sort((a, b) => a.localeCompare(b, "ru"));
   const allLoc = [...new Set(collectUniqueValues("location"))].sort((a, b) => a.localeCompare(b, "ru"));
   const allTeacher = [...new Set(collectUniqueValues("teacher"))].sort((a, b) => a.localeCompare(b, "ru"));
-  const allType = [...new Set([...DEFAULT_TYPES])].sort((a, b) => a.localeCompare(b, "ru"));
+  const allType = [...new Set([...DEFAULT_TYPES, ...Object.keys(CUSTOM)])].sort((a, b) => a.localeCompare(b, "ru"));
   setupAutocomplete("modalSubj", () => allSubj);
   setupAutocomplete("modalRoom", () => allRoom);
   setupAutocomplete("modalLocation", () => allLoc);
@@ -205,6 +245,7 @@ function populateDatalists() {
 
 let SCHEDULE = [];
 let PERSONAL = {};
+let CUSTOM = {};
 let EXTENDED = [];
 let HOLIDAYS = null;
 let extendedOn = localStorage.getItem("extended") === "true";
@@ -379,7 +420,7 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
   const startTime = parseTime(l.time);
   const endTime = parseTime(l.time.split(/[–\-]/)[1]);
-  const rawIcon = ICONS[l.subj] || "📋";
+  const rawIcon = l.icon || ICONS[l.subj] || "📋";
   const iconHtml = Array.isArray(rawIcon)
     ? `<div class="lesson-icon grid">${rawIcon.map(c => `<span>${c}</span>`).join("")}</div>`
     : `<div class="lesson-icon">${rawIcon}</div>`;
@@ -444,8 +485,8 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
     return `<div class="row-progress" style="width:${100 - pct}%"></div>`;
   })() : "";
   const type = item._type || "extended";
-  const typeLabel = item.typeLabel || (type === "personal" ? "Занятие" : "Продлёнка");
-  const typeCls = type === "personal" ? "personal" : "extended";
+  const typeLabel = item.typeLabel || typeName(type);
+  const typeCls = isBuiltInType(type) ? type : "personal";
   const bellHtml = window.Android ? (() => {
     const hasStart = hasReminder(type, dayIdx, itemIdx, item.time, "start");
     const hasEnd = hasReminder(type, dayIdx, itemIdx, item.time, "end");
@@ -496,7 +537,7 @@ function renderMergeCard(group, dayIdx) {
 
   const rows = group.map(item => {
     const labelCls = item._type;
-    const labelText = item._type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item._type === "personal" ? "Занятие" : "Продлёнка";
+    const labelText = item._type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item._type === "personal" ? "Занятие" : item._type === "extended" ? "Продлёнка" : item._type;
     const itemStart = parseTime(item.time);
     const itemEnd = parseTime(item.time.split(/[–\-]/)[1]);
     const rowState = getCardState(dayIdx, item.time);
@@ -559,6 +600,78 @@ function renderWeekendMsg(dayIdx) {
 function renderDate() {
   const el = document.getElementById("dateDisplay");
   if (el) el.textContent = formatClock();
+}
+
+const HEADER_TITLE_KEY = "tg_header_title";
+const HEADER_SUBTITLE_KEY = "tg_header_subtitle";
+
+function loadHeaderText() {
+  const title = localStorage.getItem(HEADER_TITLE_KEY);
+  const subtitle = localStorage.getItem(HEADER_SUBTITLE_KEY);
+  if (title) {
+    const h1 = document.getElementById("headerTitle");
+    if (h1) h1.textContent = title;
+  }
+  if (subtitle) {
+    const sub = document.getElementById("headerSubtitle");
+    if (sub) sub.textContent = subtitle;
+  }
+}
+
+function editHeaderText() {
+  const titleEl = document.getElementById("headerTitle");
+  const subEl = document.getElementById("headerSubtitle");
+  const curTitle = titleEl ? titleEl.textContent : "";
+  const curSub = subEl ? subEl.textContent : "";
+
+  const d = document.createElement("div");
+  d.className = "reminder-dialog-overlay";
+  d.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center;";
+  d.innerHTML = `
+    <div style="background:var(--card);border-radius:16px;padding:24px;width:90%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <div style="font-size:16px;font-weight:600;margin-bottom:16px;color:var(--text);">Редактировать заголовок</div>
+      <label style="display:block;margin-bottom:12px;">
+        <span style="font-size:12px;color:var(--muted);">Заголовок</span>
+        <input id="hdrTitleInput" value="${curTitle.replace(/"/g, '&quot;')}" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;margin-top:4px;box-sizing:border-box;">
+      </label>
+      <label style="display:block;margin-bottom:16px;">
+        <span style="font-size:12px;color:var(--muted);">Подзаголовок</span>
+        <input id="hdrSubInput" value="${curSub.replace(/"/g, '&quot;')}" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;margin-top:4px;box-sizing:border-box;">
+      </label>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="hdrCancel" style="padding:8px 16px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;">Отмена</button>
+        <button id="hdrSave" style="padding:8px 16px;border:none;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Сохранить</button>
+      </div>
+    </div>`;
+  document.body.appendChild(d);
+
+  d.querySelector("#hdrCancel").onclick = () => d.remove();
+  d.querySelector("#hdrSave").onclick = () => {
+    const newTitle = d.querySelector("#hdrTitleInput").value.trim();
+    const newSub = d.querySelector("#hdrSubInput").value.trim();
+    if (newTitle) {
+      localStorage.setItem(HEADER_TITLE_KEY, newTitle);
+      if (titleEl) titleEl.textContent = newTitle;
+    }
+    if (newSub !== undefined) {
+      localStorage.setItem(HEADER_SUBTITLE_KEY, newSub);
+      if (subEl) subEl.textContent = newSub;
+    }
+    d.remove();
+    if (window.Android) Android.showToast("Заголовок обновлён");
+  };
+}
+
+function addHeaderEditBtn() {
+  const header = document.querySelector(".header > div");
+  if (!header || document.getElementById("editHeaderBtn")) return;
+  const btn = document.createElement("button");
+  btn.id = "editHeaderBtn";
+  btn.textContent = "✏️";
+  btn.title = "Редактировать заголовок";
+  btn.style.cssText = "background:none;border:1.5px solid var(--line);border-radius:6px;padding:2px 6px;cursor:pointer;font-size:12px;margin-left:8px;vertical-align:middle;";
+  btn.onclick = (e) => { e.stopPropagation(); editHeaderText(); };
+  header.insertBefore(btn, header.querySelector(".date"));
 }
 
 function renderStatus() {
@@ -674,6 +787,10 @@ function buildToggles() {
   if (hasPersonal) {
     html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" id="personalToggle" onchange="onToggle()"><span class="toggle-slider"></span></label><label for="personalToggle">Занятия</label></div>`;
   }
+  const customKeys = Object.keys(CUSTOM).filter(k => Object.values(CUSTOM[k] || {}).some(arr => Array.isArray(arr) && arr.length > 0));
+  for (const k of customKeys) {
+    html += `<div class="toggle-item"><label class="toggle"><input type="checkbox" data-custom-key="${k}" onchange="onToggle()"><span class="toggle-slider"></span></label><label>${k}</label></div>`;
+  }
   c.innerHTML = html;
   if (schoolOn && hasSchool) document.getElementById("schoolToggle").checked = true;
   if (extendedOn && hasExtended) document.getElementById("extendedToggle").checked = true;
@@ -681,6 +798,11 @@ function buildToggles() {
     if (localStorage.getItem("personal") === null) { personalOn = true; localStorage.setItem("personal", true); }
     if (personalOn) document.getElementById("personalToggle").checked = true;
   }
+  customKeys.forEach(k => {
+    if (localStorage.getItem("custom_" + k) === null) localStorage.setItem("custom_" + k, "true");
+    const t = document.querySelector('input[data-custom-key="' + k + '"]');
+    if (t && customOn(k)) t.checked = true;
+  });
 }
 
 function onToggle() {
@@ -690,6 +812,9 @@ function onToggle() {
   if (sch) { schoolOn = sch.checked; localStorage.setItem("school", schoolOn); }
   if (ext) { extendedOn = ext.checked; localStorage.setItem("extended", extendedOn); }
   if (pers) { personalOn = pers.checked; localStorage.setItem("personal", personalOn); }
+  document.querySelectorAll("#togglesContainer input[data-custom-key]").forEach(t => {
+    localStorage.setItem("custom_" + t.dataset.customKey, t.checked);
+  });
   renderAll();
   renderProgress();
 }
@@ -743,6 +868,7 @@ function toggleReminder(type, dayIdx, itemIdx, time, subj, when) {
 
 function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
   const labels = { school: "Урок", personal: "Занятие", extended: "Продлёнка" };
+  const typeLabel = labels[type] || type;
   const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
   const existingRem = existing || getReminder(type, dayIdx, itemIdx, time, when || "start");
   const d = document.createElement("div");
@@ -752,7 +878,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
     <div style="background:var(--card);border-radius:16px;padding:20px;width:300px;color:var(--text);max-height:80vh;overflow-y:auto;">
       <div style="font-size:16px;font-weight:600;margin-bottom:12px;">🔔 Напоминание</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
-        ${labels[type]} · ${dayNames[dayIdx]} · ${time}<br>${subj}
+        ${typeLabel} · ${dayNames[dayIdx]} · ${time}<br>${subj}
       </div>
       <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Когда напомнить:</div>
       <div style="display:flex;gap:6px;margin-bottom:12px;" id="whenGroup">
@@ -943,6 +1069,7 @@ function showAddModal() {
   document.getElementById("modalType").value = "Урок";
   populateDatalists();
   initColorPicker("");
+  initIconPicker("");
   document.getElementById("modalOverlay").style.display = "flex";
 }
 
@@ -957,6 +1084,8 @@ function showEditModal(type, dayIdx, itemIdx) {
     item = SCHEDULE[dayIdx].lessons[itemIdx];
   } else if (type === "personal") {
     item = (PERSONAL[dayIdx] || [])[itemIdx];
+  } else if (!isBuiltInType(type)) {
+    item = ((CUSTOM[type] || {})[dayIdx] || [])[itemIdx];
   } else {
     item = EXTENDED[itemIdx];
   }
@@ -969,6 +1098,7 @@ function showEditModal(type, dayIdx, itemIdx) {
   document.getElementById("modalTeacher").value = item.teacher || "";
   populateDatalists();
   initColorPicker(item.color || "");
+  initIconPicker(item.icon || "");
   document.getElementById("modalOverlay").style.display = "flex";
 }
 
@@ -996,6 +1126,25 @@ function initColorPicker(color) {
   });
 }
 
+let _selectedIcon = "";
+
+function initIconPicker(icon) {
+  _selectedIcon = icon || "";
+  const picker = document.getElementById("modalIconPicker");
+  if (!picker) return;
+  picker.innerHTML = `<div class="emoji-grid">${EMOJI_LIST.map(e => {
+    const cls = e === _selectedIcon ? " emoji-swatch active" : "emoji-swatch";
+    return `<div class="${cls}" data-emoji="${e}">${e}</div>`;
+  }).join("")}</div>`;
+  picker.querySelectorAll(".emoji-swatch").forEach(sw => {
+    sw.onclick = () => {
+      picker.querySelectorAll(".emoji-swatch").forEach(s => s.classList.remove("active"));
+      sw.classList.add("active");
+      _selectedIcon = sw.dataset.emoji;
+    };
+  });
+}
+
 function saveModal() {
   const dayIdx = parseInt(document.getElementById("modalDay").value);
   const typeRaw = document.getElementById("modalType").value.trim();
@@ -1007,6 +1156,7 @@ function saveModal() {
   const location = document.getElementById("modalLocation").value.trim();
   const teacher = document.getElementById("modalTeacher").value.trim();
   const color = _selectedColor;
+  const icon = _selectedIcon;
   const errors = [];
   if (!subj) errors.push("предмет");
   if (!time) errors.push("время");
@@ -1029,6 +1179,8 @@ function saveModal() {
     } else if (modalData.type === "extended" && data.extended) {
       data.extended.splice(modalData.itemIdx, 1);
       EXTENDED.splice(modalData.itemIdx, 1);
+    } else if (!isBuiltInType(modalData.type) && data.custom && data.custom[modalData.type] && data.custom[modalData.type][origDay]) {
+      data.custom[modalData.type][origDay].splice(modalData.itemIdx, 1);
     }
   }
   if (type === "school") {
@@ -1038,6 +1190,7 @@ function saveModal() {
     if (location) lesson.location = location;
     if (teacher) lesson.teacher = teacher;
     if (color) lesson.color = color;
+    if (icon) lesson.icon = icon;
     if (typeRaw && typeRaw !== (TYPE_KEY_TO_NAME[type] || "")) lesson.typeLabel = typeRaw;
     while (data.schedule.length <= dayIdx) data.schedule.push({ name: SCHEDULE[data.schedule.length]?.name || "", lessons: [] });
     if (isEdit && modalData.type === type) {
@@ -1047,7 +1200,7 @@ function saveModal() {
       data.schedule[dayIdx].lessons.sort((a, b) => parseTime(a.time) - parseTime(b.time));
     }
   } else if (type === "personal") {
-    const item = { subj, time, icon: "🤸" };
+    const item = { subj, time, icon: icon || "🤸" };
     if (room) item.room = room;
     if (location) item.location = location;
     if (teacher) item.teacher = teacher;
@@ -1061,8 +1214,24 @@ function saveModal() {
       data.personal[dayIdx].push(item);
       data.personal[dayIdx].sort((a, b) => parseTime(a.time) - parseTime(b.time));
     }
+  } else if (!isBuiltInType(type)) {
+    const item = { subj, time, icon: icon || "⭐" };
+    if (room) item.room = room;
+    if (location) item.location = location;
+    if (teacher) item.teacher = teacher;
+    if (color) item.color = color;
+    if (typeRaw && typeRaw !== type) item.typeLabel = typeRaw;
+    if (!data.custom) data.custom = {};
+    if (!data.custom[type]) data.custom[type] = {};
+    if (!data.custom[type][dayIdx]) data.custom[type][dayIdx] = [];
+    if (isEdit && modalData.type === type) {
+      data.custom[type][dayIdx][modalData.itemIdx] = item;
+    } else {
+      data.custom[type][dayIdx].push(item);
+      data.custom[type][dayIdx].sort((a, b) => parseTime(a.time) - parseTime(b.time));
+    }
   } else {
-    const item = { subj, time, icon: "🎒" };
+    const item = { subj, time, icon: icon || "🎒" };
     if (room) item.room = room;
     if (location) item.location = location;
     if (teacher) item.teacher = teacher;
@@ -1079,6 +1248,7 @@ function saveModal() {
   saveLocalData(data);
   if (type === "school") { while (SCHEDULE.length <= dayIdx) SCHEDULE.push({ name: "", lessons: [] }); SCHEDULE[dayIdx].lessons = data.schedule[dayIdx].lessons; }
   else if (type === "personal") { PERSONAL[dayIdx] = data.personal[dayIdx] || []; }
+  else if (!isBuiltInType(type)) { if (!CUSTOM[type]) CUSTOM[type] = {}; CUSTOM[type][dayIdx] = data.custom[type][dayIdx] || []; }
   else { EXTENDED = data.extended; }
   closeModal();
   buildToggles();
@@ -1100,6 +1270,12 @@ function deleteFromModal() {
   } else if (modalData.type === "extended" && modalData.itemIdx >= 0) {
     data.extended.splice(modalData.itemIdx, 1);
     EXTENDED = data.extended;
+  } else if (!isBuiltInType(modalData.type) && modalData.dayIdx >= 0 && modalData.itemIdx >= 0) {
+    if (data.custom && data.custom[modalData.type] && data.custom[modalData.type][modalData.dayIdx]) {
+      data.custom[modalData.type][modalData.dayIdx].splice(modalData.itemIdx, 1);
+      if (!CUSTOM[modalData.type]) CUSTOM[modalData.type] = {};
+      CUSTOM[modalData.type][modalData.dayIdx] = data.custom[modalData.type][modalData.dayIdx];
+    }
   }
   saveLocalData(data);
   closeModal();
@@ -1144,7 +1320,7 @@ function renderAll() {
 
   function renderDayLessons(d, dayIdx) {
     const school = schoolOn ? d.lessons.map((l, li) => ({
-      ...l, _type: "school", _icon: ICONS[l.subj] || "📋", _itemIdx: li,
+      ...l, _type: "school", _icon: l.icon || ICONS[l.subj] || "📋", _itemIdx: li,
       _state: getLessonState(dayIdx, li, d),
       _noMerge: l.subj === "ФКиЗ"
     })) : [];
@@ -1178,7 +1354,22 @@ function renderAll() {
       }
       return true;
     });
-    const all = [...school, ...personal, ...extended];
+    const custom = Object.keys(CUSTOM).filter(customOn).flatMap(k => (((CUSTOM[k] || {})[dayIdx]) || []).map((p, pi) => ({
+      ...p, icon: p.icon || "⭐", _type: k, _icon: p.icon || "📋", _itemIdx: pi,
+      _state: (function() {
+        if (dayIdx < todayIdx) return "past";
+        if (dayIdx > todayIdx) return "future";
+        const now = new Date();
+        const cur = now.getHours() * 60 + now.getMinutes();
+        const s = parseTime(p.time);
+        const e = parseTime(p.time.split(/[–\-]/)[1]);
+        if (cur >= s && cur < e) return "current";
+        if (cur >= e) return "past";
+        if (cur < s && (s - cur) <= 120) return "next";
+        return "future";
+      })()
+    })));
+    const all = [...school, ...personal, ...custom, ...extended];
     if (all.length <= 1) {
       return all.map(item => {
         if (item._type === "school") return renderLesson(item, item._state, dayIdx, item._itemIdx);
@@ -1230,7 +1421,8 @@ function renderAll() {
       const hasSchool = schoolOn && d.lessons.length > 0;
       const hasPersonal = personalOn && PERSONAL[i] && PERSONAL[i].length > 0;
       const hasExtended = extendedOn && EXTENDED.length > 0;
-      if (!hasSchool && !hasPersonal && !hasExtended) {
+      const hasCustom = Object.keys(CUSTOM).some(k => customOn(k) && CUSTOM[k][i] && CUSTOM[k][i].length > 0);
+      if (!hasSchool && !hasPersonal && !hasExtended && !hasCustom) {
         return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
       }
       return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderDayLessons(d, i)}</div>`;
@@ -1243,7 +1435,8 @@ function renderAll() {
       const hasSchool = schoolOn && d.lessons.length > 0;
       const hasPersonal = personalOn && PERSONAL[dayIdx] && PERSONAL[dayIdx].length > 0;
       const hasExtended = extendedOn && EXTENDED.length > 0;
-      if (!hasSchool && !hasPersonal && !hasExtended) {
+      const hasCustom = Object.keys(CUSTOM).some(k => customOn(k) && CUSTOM[k][dayIdx] && CUSTOM[k][dayIdx].length > 0);
+      if (!hasSchool && !hasPersonal && !hasExtended && !hasCustom) {
         return `
           <div class="diary-day">
             <div class="diary-day-name">${d.name}</div>
@@ -1315,6 +1508,7 @@ async function init() {
     SCHEDULE = scheduleData.schedule;
     PERSONAL = scheduleData.personal || {};
     EXTENDED = scheduleData.extended;
+    CUSTOM = scheduleData.custom || {};
     HOLIDAYS = await holidaysRes.json();
   } catch (e) {
     console.error("Failed to load data:", e);
@@ -1339,6 +1533,7 @@ async function init() {
   if (local) {
     if (local.schedule && local.schedule.length) SCHEDULE = local.schedule;
     if (local.personal && Object.keys(local.personal).length) PERSONAL = local.personal;
+    if (local.custom && Object.keys(local.custom).length) CUSTOM = local.custom;
     if (local.extended && local.extended.length) EXTENDED = local.extended;
   }
 
@@ -1349,12 +1544,15 @@ async function init() {
     document.querySelector(".theme-btn").textContent = "☾";
   }
 
+  loadHeaderText();
+
   if (editMode) {
     document.body.classList.add("edit-mode");
     const editBar = document.getElementById("editBar");
     const addBtn = document.getElementById("addBtn");
     if (editBar) editBar.style.display = "flex";
     if (addBtn) addBtn.style.display = "block";
+    addHeaderEditBtn();
   }
 
   currentDayIdx = getTodayIndex();
