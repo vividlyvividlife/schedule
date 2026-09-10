@@ -379,8 +379,10 @@ class MainActivity : AppCompatActivity() {
     // ── Export ─────────────────────────────────────────────────────────
 
     private fun showExportDialog() {
+        // Live CUSTOM globals, not localStorage: after a defaults restore (or on a
+        // clean install) custom entities exist on screen but not in tg_local_data.
         webView.evaluateJavascript(
-            "(function(){ try { return JSON.stringify(Object.keys((JSON.parse(localStorage.getItem('tg_local_data')||'{}').custom)||{})); } catch(e) { return '[]'; } })()"
+            "(function(){ try { return JSON.stringify(Object.keys(typeof CUSTOM !== 'undefined' ? (CUSTOM || {}) : {})); } catch(e) { return '[]'; } })()"
         ) { result ->
             val customKeys = try {
                 val s = org.json.JSONTokener(result ?: "\"[]\"").nextValue().toString()
@@ -417,8 +419,10 @@ class MainActivity : AppCompatActivity() {
                     var sch = (local.schedule && local.schedule.length) ? local.schedule : SCHEDULE;
                     var pers = (local.personal && Object.keys(local.personal).length) ? local.personal : PERSONAL;
                     var ext = (local.extended && local.extended.length) ? local.extended : EXTENDED;
+                    var cust = local.custom;
+                    if (!cust || !Object.keys(cust).length) cust = (typeof CUSTOM !== 'undefined' ? CUSTOM : {});
                     var out = { schedule: sch, personal: pers, extended: ext };
-                    if (local.custom && Object.keys(local.custom).length) out.custom = local.custom;
+                    if (Object.keys(cust).length) out.custom = cust;
                     return JSON.stringify(out, null, 2);
                 } catch(e) { return '{"error":"' + e.message + '"}'; }
             })()"""
@@ -436,7 +440,7 @@ class MainActivity : AppCompatActivity() {
                     if ('$jsType' === 'schedule') { data = d['schedule']; if (!Array.isArray(data) || !data.length) data = SCHEDULE; }
                     else if ('$jsType' === 'personal') { data = d['personal']; if (!data || !Object.keys(data).length) data = PERSONAL; }
                     else if ('$jsType' === 'extended') { data = d['extended']; if (!Array.isArray(data) || !data.length) data = EXTENDED; }
-                    else data = (d.custom && d.custom['$jsType']) ? { __type: '$jsType', days: d.custom['$jsType'] } : [];
+                    else data = (typeof CUSTOM !== 'undefined' && CUSTOM['$jsType']) ? { __type: '$jsType', days: CUSTOM['$jsType'] } : (d.custom && d.custom['$jsType']) ? { __type: '$jsType', days: d.custom['$jsType'] } : [];
                     return JSON.stringify(data, null, 2);
                 } catch(e) { return '{"error":"' + e.message + '"}'; }
             })()"""
