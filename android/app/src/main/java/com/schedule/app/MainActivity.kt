@@ -608,10 +608,9 @@ class MainActivity : AppCompatActivity() {
     // setNoDefaults=true leaves the app empty after reload (no built-in defaults);
     // false restores built-in default schedules on the next load.
     private fun clearWebStorageAndReload(attempt: Int, setNoDefaults: Boolean) {
-        val clearJs = if (setNoDefaults)
-            "try { localStorage.clear(); sessionStorage.clear(); localStorage.setItem('tg_no_defaults','true'); } catch(e) {}"
-        else
-            "try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}"
+        // Pure clearing: the no-defaults flag must be set AFTER all wiping,
+        // otherwise the final wipe erases it and defaults come back (seen in logs).
+        val clearJs = "try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}"
         webView.evaluateJavascript(
             clearJs +
             "(function(){ var k=[]; for (var i=0;i<localStorage.length;i++) k.push(localStorage.key(i));" +
@@ -641,11 +640,11 @@ class MainActivity : AppCompatActivity() {
                     )
                 } catch (e: Exception) {
                     Log.e(TAG, "Per-site wipe error", e)
-                    nativeWipeAndFinish(leftover)
+                    nativeWipeAndFinish(leftover, setNoDefaults)
                 }
                 return@evaluateJavascript
             }
-            nativeWipeAndFinish(leftover)
+            nativeWipeAndFinish(leftover, setNoDefaults)
         }
     }
 
@@ -661,38 +660,43 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Нет", null).show()
     }
 
-    private fun nativeWipeAndFinish(leftover: Int) {
+    private fun nativeWipeAndFinish(leftover: Int, setNoDefaults: Boolean) {
         try {
             androidx.webkit.WebStorageCompat.deleteBrowsingData(
                 android.webkit.WebStorage.getInstance(),
-                Runnable { runOnUiThread { finishReset(leftover) } }
+                Runnable { runOnUiThread { finishReset(leftover, setNoDefaults) } }
             )
         } catch (e: Exception) {
             Log.e(TAG, "Full wipe error", e)
-            finishReset(leftover)
+            finishReset(leftover, setNoDefaults)
         }
     }
 
-    private fun finishReset(leftover: Int) {
+    private fun finishReset(leftover: Int, setNoDefaults: Boolean) {
         runOnUiThread {
             webView.clearCache(true)
             hasSchedule = false; hasPersonal = false; hasExtended = false; customKeys = emptyList()
             Toast.makeText(
                 this,
-                if (leftover > 0) "⚠️ Сброшено, но осталось ключей: $leftover" else "Сброшено! Ключей: 0",
+                if (leftover > 0) "⚠️ Сброшено, но осталось ключей: $leftover" else if (setNoDefaults) "Сброшено — приложение пустое" else "Стандартные расписания восстановлены",
                 Toast.LENGTH_LONG
             ).show()
             invalidateOptionsMenu()
-            webView.reload()
-            // Resurrection detector: nothing must write tg_local_data after a reset.
-            webView.postDelayed({
-                webView.evaluateJavascript("(function(){ return !!localStorage.getItem('tg_local_data'); })()") { r ->
-                    if (r?.trim('"') == "true") {
-                        Log.e(TAG, "RESURRECTION: tg_local_data reappeared after reset")
-                        Toast.makeText(this, "⚠️ Данные вернулись после сброса — сообщи, пожалуйста", Toast.LENGTH_LONG).show()
-                    }
+            // Flag goes in AFTER all wiping, then the page reloads and honors it.
+            webView.evaluateJavascript("try { localStorage.setItem('tg_no_defaults','" + setNoDefaults + "'); } catch(e) {}") {
+                webView.reload()
+                if (setNoDefaults) {
+                    // Resurrection detector: nothing must write tg_local_data after a reset.
+                    webView.postDelayed({
+                        webView.evaluateJavascript("(function(){ return !!localStorage.getItem('tg_local_data'); })()") { r ->
+                            if (r?.trim('"') == "true") {
+                                Log.e(TAG, "RESURRECTION: tg_local_data reappeared after reset")
+                                Toast.makeText(this, "⚠️ Данные вернулись после сброса — сообщи, пожалуйста", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }, 2500)
                 }
-            }, 2500)
+            }
         }
     }
 

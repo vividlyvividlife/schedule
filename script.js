@@ -242,6 +242,7 @@ function getWeekendMessage(dayIdx) {
 }
 
 function getCurrentLesson(day) {
+  if (!day || !day.lessons || day.lessons.length === 0) return null;
   const now = new Date();
   const cur = now.getHours() * 60 + now.getMinutes();
   for (let i = 0; i < day.lessons.length; i++) {
