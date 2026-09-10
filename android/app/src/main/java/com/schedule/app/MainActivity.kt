@@ -426,11 +426,11 @@ class MainActivity : AppCompatActivity() {
                     return JSON.stringify(out, null, 2);
                 } catch(e) { return '{"error":"' + e.message + '"}'; }
             })()"""
-        ) { result -> handleJsonResult(result, "raspisanie_2A.json") }
+        ) { result -> handleJsonResult(result, "raspisanie.json") }
     }
 
     private fun exportPart(type: String) {
-        val names = mapOf("schedule" to "Uroki_2A.json", "personal" to "Zanyatiya_2A.json", "extended" to "Prodlenka_2A.json")
+        val names = mapOf("schedule" to "Uroki.json", "personal" to "Zanyatiya.json", "extended" to "Prodlenka.json")
         val jsType = type.replace("'", "\\'")
         webView.evaluateJavascript(
             """(function() {
