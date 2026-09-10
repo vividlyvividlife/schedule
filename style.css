@@ -329,6 +329,10 @@ body {
 .dark .merge-label.personal { background: #2a2218; color: #ed7d31; }
 .merge-label.extended { background: #e8f5e9; color: #27ae60; }
 .dark .merge-label.extended { background: #1a2a1c; color: #5aaf8a; }
+.merge-icon.custom { background: #e8eaff; }
+.dark .merge-icon.custom { background: #252840; }
+.merge-label.custom { background: #e8eaff; color: #5b6abf; }
+.dark .merge-label.custom { background: #252840; color: #7b8ad4; }
 .merge-countdown { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 2px; }
 
 .weekend-msg {

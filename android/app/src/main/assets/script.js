@@ -486,7 +486,7 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
   })() : "";
   const type = item._type || "extended";
   const typeLabel = item.typeLabel || typeName(type);
-  const typeCls = isBuiltInType(type) ? type : "personal";
+  const typeCls = isBuiltInType(type) ? type : "custom";
   const bellHtml = window.Android ? (() => {
     const hasStart = hasReminder(type, dayIdx, itemIdx, item.time, "start");
     const hasEnd = hasReminder(type, dayIdx, itemIdx, item.time, "end");
@@ -536,7 +536,7 @@ function renderMergeCard(group, dayIdx) {
   const cls = `merge-card ${state}`;
 
   const rows = group.map(item => {
-    const labelCls = item._type;
+    const labelCls = isBuiltInType(item._type) ? item._type : "custom";
     const labelText = item._type === "school" ? (item.subj && item.subj.startsWith("Кружок") ? "Кружок" : "Урок") : item._type === "personal" ? "Занятие" : item._type === "extended" ? "Продлёнка" : item._type;
     const itemStart = parseTime(item.time);
     const itemEnd = parseTime(item.time.split(/[–\-]/)[1]);

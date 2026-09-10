@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "ScheduleApp"
+        private const val GROUP_CUSTOM_DELETE = 9001
     }
 
     private lateinit var webView: WebView
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     private var hasPersonal = false
     private var hasExtended = false
     private var editModeActive = false
+    private var customKeys: List<String> = emptyList()
     internal var _ringtonePlayer: android.media.Ringtone? = null
     internal var pickerCallback: ((android.net.Uri?) -> Unit)? = null
 
@@ -337,7 +339,12 @@ class MainActivity : AppCompatActivity() {
         deleteMenu?.findItem(R.id.menu_delete_schedule)?.isVisible = hasSchedule
         deleteMenu?.findItem(R.id.menu_delete_personal)?.isVisible = hasPersonal
         deleteMenu?.findItem(R.id.menu_delete_extended)?.isVisible = hasExtended
-        menu?.findItem(R.id.menu_reset)?.isVisible = hasSchedule || hasPersonal || hasExtended
+        deleteMenu?.removeGroup(GROUP_CUSTOM_DELETE)
+        for (key in customKeys) {
+            val item = deleteMenu?.add(GROUP_CUSTOM_DELETE, Menu.NONE, Menu.NONE, "❌ $key")
+            item?.setOnMenuItemClickListener { confirmDeleteType(key, key); true }
+        }
+        menu?.findItem(R.id.menu_reset)?.isVisible = hasSchedule || hasPersonal || hasExtended || customKeys.isNotEmpty()
 
         val editItem = menu?.findItem(R.id.menu_edit_mode)
         editItem?.isChecked = editModeActive
@@ -552,13 +559,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun deleteType(type: String) {
         Log.d(TAG, "Delete type: $type")
+        val jsType = type.replace("'", "\\'")
         webView.evaluateJavascript(
             """(function() {
                 try {
-                    var d = JSON.parse(localStorage.getItem('tg_local_data') || '{"schedule":[],"personal":{},"extended":[]}');
-                    if ('$type' === 'schedule') { d.schedule = []; }
-                    else if ('$type' === 'personal') { d.personal = {}; }
-                    else if ('$type' === 'extended') { d.extended = []; }
+                    var d = JSON.parse(localStorage.getItem('tg_local_data') || '{}');
+                    if ('$jsType' === 'schedule') { d.schedule = []; }
+                    else if ('$jsType' === 'personal') { d.personal = {}; }
+                    else if ('$jsType' === 'extended') { d.extended = []; }
+                    else { if (d.custom) delete d.custom['$jsType']; localStorage.removeItem('custom_$jsType'); }
                     localStorage.setItem('tg_local_data', JSON.stringify(d));
                     return 'ok';
                 } catch(e) { return e.message; }
@@ -567,6 +576,7 @@ class MainActivity : AppCompatActivity() {
             val s = r?.trim('"') ?: ""
             if (s == "ok") {
                 Toast.makeText(this, "Удалено!", Toast.LENGTH_SHORT).show()
+                queryDataState {}
                 webView.reload()
             } else Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
         }
@@ -580,9 +590,10 @@ class MainActivity : AppCompatActivity() {
             .setMessage("Удалить все данные?")
             .setPositiveButton("Да") { _, _ ->
                 cancelAllReminders()
-                webView.evaluateJavascript("localStorage.removeItem('tg_local_data'); localStorage.removeItem('tg_reminders'); 'ok'") {
-                    hasSchedule = false; hasPersonal = false; hasExtended = false
-                    Toast.makeText(this, "Сброшено!", Toast.LENGTH_SHORT).show()
+                webView.evaluateJavascript("try { localStorage.clear(); 'ok' } catch(e) { 'err:' + e.message }") {
+                    val s = it?.trim('"') ?: ""
+                    hasSchedule = false; hasPersonal = false; hasExtended = false; customKeys = emptyList()
+                    Toast.makeText(this, if (s == "ok") "Сброшено!" else "Ошибка: $s", Toast.LENGTH_SHORT).show()
                     invalidateOptionsMenu()
                     webView.reload()
                 }
@@ -611,21 +622,32 @@ class MainActivity : AppCompatActivity() {
                     var ext = d.extended || [];
                     var hasExt = ext.length > 0;
                     var editOn = localStorage.getItem('tg_edit_mode') === 'true';
-                    return (hasSch ? '1' : '0') + (hasPers ? '1' : '0') + (hasExt ? '1' : '0') + (editOn ? '1' : '0');
-                } catch(e) { return '0000'; }
+                    return JSON.stringify({ f: (hasSch ? '1' : '0') + (hasPers ? '1' : '0') + (hasExt ? '1' : '0') + (editOn ? '1' : '0'), k: Object.keys(d.custom || {}) });
+                } catch(e) { return '{"f":"0000","k":[]}'; }
             })()"""
         ) { result ->
-            val s = result?.trim('"', ' ') ?: "0000"
-            Log.d(TAG, "queryDataState raw='$s'")
-            if (s.length >= 3) {
-                hasSchedule = s[0] == '1'
-                hasPersonal = s[1] == '1'
-                hasExtended = s[2] == '1'
+            try {
+                val v = org.json.JSONTokener(result ?: "").nextValue()
+                val o = when (v) {
+                    is org.json.JSONObject -> v
+                    is String -> org.json.JSONTokener(v).nextValue() as? org.json.JSONObject
+                    else -> null
+                }
+                val f = o?.optString("f", "0000") ?: "0000"
+                if (f.length >= 4) {
+                    hasSchedule = f[0] == '1'
+                    hasPersonal = f[1] == '1'
+                    hasExtended = f[2] == '1'
+                    editModeActive = f[3] == '1'
+                }
+                val keys = mutableListOf<String>()
+                val ka = o?.optJSONArray("k")
+                if (ka != null) for (i in 0 until ka.length()) keys.add(ka.getString(i))
+                customKeys = keys
+                Log.d(TAG, "Data state: schedule=$hasSchedule personal=$hasPersonal extended=$hasExtended edit=$editModeActive custom=$keys")
+            } catch (e: Exception) {
+                Log.e(TAG, "queryDataState parse error", e)
             }
-            if (s.length >= 4) {
-                editModeActive = s[3] == '1'
-            }
-            Log.d(TAG, "Data state: schedule=$hasSchedule personal=$hasPersonal extended=$hasExtended edit=$editModeActive")
             runOnUiThread {
                 invalidateOptionsMenu()
                 onDone()
