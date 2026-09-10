@@ -460,10 +460,11 @@ fetch("../timeSchedule.json").then(r => r.json()).then(data => {
   CUSTOM = data.custom || {};
   const local = loadLocalData();
   if (local) {
-    if (local.schedule) SCHOOL = local.schedule;
-    if (local.personal) PERSONAL = local.personal;
-    if (local.custom) CUSTOM = local.custom;
-    if (local.extended) EXTENDED = local.extended;
+    // Empty sections must not override built-in defaults (same rule as the main page).
+    if (local.schedule && local.schedule.length) SCHOOL = local.schedule;
+    if (local.personal && Object.keys(local.personal).length) PERSONAL = local.personal;
+    if (local.custom && Object.keys(local.custom).length) CUSTOM = local.custom;
+    if (local.extended && local.extended.length) EXTENDED = local.extended;
   }
   buildToggles();
   renderAll();
