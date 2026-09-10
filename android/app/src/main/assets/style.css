@@ -207,9 +207,10 @@ body {
   align-items: flex-start;
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 .lesson-icon {
-  font-size: 22px;
+  font-size: 16px;
   flex-shrink: 0;
   width: 34px;
   height: 34px;
@@ -218,7 +219,20 @@ body {
   justify-content: center;
   background: var(--active-bg);
   border-radius: 8px;
+  white-space: nowrap;
+  line-height: 1;
 }
+.lesson-icon.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0;
+  font-size: 13px;
+  line-height: 1;
+  text-align: center;
+  overflow: hidden;
+}
+.lesson-icon.grid span { display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .lesson-num {
   font-size: 13px;
   font-weight: 700;
@@ -226,7 +240,7 @@ body {
   min-width: 20px;
   padding-top: 1px;
 }
-.lesson-info { flex: 1; }
+.lesson-info { flex: 1; min-width: 0; }
 .lesson-time { font-size: 12px; color: var(--muted); }
 .lesson-subject { font-size: 15px; font-weight: 500; }
 .lesson-countdown {
@@ -263,11 +277,10 @@ body {
 .merge-row {
   display: flex; gap: 10px; align-items: flex-start;
   padding: 10px 14px;
-  position: relative; overflow: hidden;
+  position: relative;
   border-radius: 8px;
 }
 .merge-row.current {
-  overflow: hidden;
 }
 .merge-row .row-progress {
   position: absolute;
@@ -293,7 +306,15 @@ body {
 .dark .merge-icon.personal { background: #2a2218; }
 .merge-icon.extended { background: #e8f5e9; }
 .dark .merge-icon.extended { background: #1a2a1c; }
-.merge-info { flex: 1; position: relative; z-index: 1; }
+.merge-info { flex: 1; position: relative; z-index: 1; min-width: 0; }
+.merge-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 3;
+  position: relative;
+}
 .merge-time { font-size: 11px; color: var(--muted); }
 .merge-subj { font-size: 14px; font-weight: 600; }
 .merge-room { font-size: 11px; color: var(--muted); margin-top: 1px; }
@@ -576,6 +597,9 @@ body {
   display: flex;
   gap: 4px;
   margin-left: auto;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
 }
 .edit-btn-sm {
   width: 28px;
@@ -621,7 +645,8 @@ body.edit-mode .merge-row:hover { opacity: 0.85; }
   .header h1 { font-size: 18px; }
   .header .date { font-size: 14px; }
   .lesson-body { padding: 10px 10px; gap: 8px; }
-  .lesson-icon { width: 28px; height: 28px; font-size: 18px; }
+  .lesson-icon { width: 28px; height: 28px; font-size: 14px; }
+  .lesson-icon.grid { font-size: 11px; }
   .lesson-subject { font-size: 13px; }
   .lesson-num { font-size: 12px; min-width: 16px; }
   .merge-row { padding: 8px 10px; }
@@ -703,7 +728,7 @@ body.edit-mode .merge-row:hover { opacity: 0.85; }
   flex-shrink: 0;
   align-self: center;
   position: relative;
-  z-index: 1;
+  z-index: 3;
 }
 .bell-btn:hover { opacity: 0.8; transform: scale(1.2); }
 .bell-btn.bell-active { opacity: 1; animation: bellRing 0.5s; }
@@ -719,3 +744,30 @@ body.edit-mode .merge-row:hover { opacity: 0.85; }
 .reminder-chip {
   transition: background 0.2s, color 0.2s;
 }
+
+.ac-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 1000;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: none;
+}
+.ac-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover, .ac-item.active {
+  background: var(--active-bg);
+  color: var(--accent);
+}
+.modal-label { position: relative; }

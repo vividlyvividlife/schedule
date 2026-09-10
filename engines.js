@@ -407,10 +407,19 @@ function closeModal() {
 
 /* ===== ЗАПУСК ДВИЖКА ===== */
 
+let _enginesTimer = null;
+
 function startEngines(onTick) {
   updateClocks();
   updateCountdowns();
   if (onTick) onTick();
-  setInterval(() => { updateCountdowns(); updateCardStates(); if (onTick) onTick(); }, 1000);
-  setInterval(updateProgressBars, 200);
+  if (_enginesTimer) clearInterval(_enginesTimer);
+  // Single shared ticker; updateCountdowns() already refreshes progress bars.
+  // Hidden document (background app / screen off) gets no work at all.
+  _enginesTimer = setInterval(() => {
+    if (document.hidden) return;
+    updateCountdowns();
+    updateCardStates();
+    if (onTick) onTick();
+  }, 5000);
 }

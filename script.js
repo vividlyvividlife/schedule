@@ -51,7 +51,7 @@ const ICONS = {
   "Русская литература": "📚",
   "Русский язык": "✏️",
   "Математика": "🔢",
-  "Трудовое обучение": "🔧",
+  "Трудовое обучение": ["🧵","✂️","🔧","🔨"],
   "ОБЖ": "🛡️",
   "Музыка": "🎵",
   "Человек и мир": "🌍",
@@ -82,6 +82,127 @@ const COLOR_NAMES = [
   "Тёмно-зелёный","Тёмно-синий","Тёмно-фиолетовый","Пурпурный","Тёмно-пурпурный"
 ];
 
+const DEFAULT_SUBJECTS = [
+  "Английский язык","Белорусская литература","Белорусский язык",
+  "Вокал","Гимнастика","География","История",
+  "Изобразительное искусство","Классный час","Литература",
+  "Математика","Музыка","Музыкальная литература",
+  "ОБЖ","Физика","Физическая культура","Фортепиано",
+  "Химия","Человек и мир","Чтение",
+  "Русская литература","Русский язык",
+  "Сольфеджио","Специальность","Трудовое обучение",
+  "ФКиЗ","Французский язык","Немецкий язык","Шахматы"
+];
+
+const DEFAULT_TYPES = [
+  "Урок","Занятие","Продлёнка","Музыкальная школа",
+  "Спортивная школа","Кружок","Факультатив","Секция",
+  "Тренировка","Репетитор","Курс","Консультация"
+];
+
+const DEFAULT_ROOMS = [
+  "ауд. 1-3","спортзал","актовый зал","музыкальный зал","столовая"
+];
+
+function collectUniqueValues(key) {
+  const values = new Set();
+  const allSchedules = [SCHEDULE];
+  const local = loadLocalData();
+  if (local && local.schedule) allSchedules.push(local.schedule);
+  allSchedules.forEach(sch => {
+    if (!sch) return;
+    sch.forEach(day => {
+      if (!day || !day.lessons) return;
+      day.lessons.forEach(l => { if (l[key]) values.add(l[key]); });
+    });
+  });
+  if (key === "subj") {
+    if (local && local.personal) {
+      Object.values(local.personal).forEach(arr => {
+        if (Array.isArray(arr)) arr.forEach(p => { if (p.subj) values.add(p.subj); });
+      });
+    }
+    if (local && local.extended) {
+      local.extended.forEach(e => { if (e.subj) values.add(e.subj); });
+    }
+  }
+  return [...values].sort((a, b) => a.localeCompare(b, "ru"));
+}
+
+function fillDatalist(datalistId, defaults, extraValues) {
+}
+
+const TYPE_NAME_TO_KEY = { "Урок": "school", "Занятие": "personal", "Продлёнка": "extended" };
+const TYPE_KEY_TO_NAME = { "school": "Урок", "personal": "Занятие", "extended": "Продлёнка" };
+
+function resolveTypeKey(val) {
+  if (TYPE_NAME_TO_KEY[val]) return TYPE_NAME_TO_KEY[val];
+  for (const [k, v] of Object.entries(TYPE_NAME_TO_KEY)) {
+    if (v.toLowerCase() === val.toLowerCase()) return k;
+  }
+  return "school";
+}
+
+const _acInstances = {};
+function setupAutocomplete(inputId, getOptions) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (_acInstances[inputId]) {
+    const old = _acInstances[inputId].dropdown;
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+  }
+  let dropdown = document.createElement("div");
+  dropdown.className = "ac-dropdown";
+  input.parentNode.appendChild(dropdown);
+  _acInstances[inputId] = { dropdown };
+  let activeIdx = -1;
+  let focused = false;
+  function render() {
+    const val = input.value.trim().toLowerCase();
+    const allOpts = getOptions();
+    let opts;
+    if (!val) {
+      opts = focused ? allOpts : [];
+    } else {
+      opts = allOpts.filter(o => o.toLowerCase().includes(val));
+    }
+    if (!opts.length) { dropdown.style.display = "none"; activeIdx = -1; return; }
+    activeIdx = -1;
+    dropdown.innerHTML = opts.map((o, i) => `<div class="ac-item" data-val="${o.replace(/"/g, '&quot;')}" data-idx="${i}">${o}</div>`).join("");
+    dropdown.style.display = "block";
+    dropdown.querySelectorAll(".ac-item").forEach(item => {
+      item.onmousedown = (e) => {
+        e.preventDefault();
+        input.value = item.dataset.val;
+        dropdown.style.display = "none";
+      };
+    });
+  }
+  input.addEventListener("input", render);
+  input.addEventListener("focus", () => { focused = true; render(); });
+  input.addEventListener("blur", () => { focused = false; setTimeout(() => { dropdown.style.display = "none"; }, 150); });
+  input.addEventListener("keydown", (e) => {
+    const items = dropdown.querySelectorAll(".ac-item");
+    if (!items.length) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); items.forEach((it, i) => it.classList.toggle("active", i === activeIdx)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); items.forEach((it, i) => it.classList.toggle("active", i === activeIdx)); }
+    else if (e.key === "Enter" && activeIdx >= 0) { e.preventDefault(); input.value = items[activeIdx].dataset.val; dropdown.style.display = "none"; }
+  });
+}
+
+function populateDatalists() {
+  const allSubj = [...new Set([...DEFAULT_SUBJECTS, ...collectUniqueValues("subj")])].sort((a, b) => a.localeCompare(b, "ru"));
+  const allRoom = [...new Set([...DEFAULT_ROOMS, ...collectUniqueValues("room")])].sort((a, b) => a.localeCompare(b, "ru"));
+  const allLoc = [...new Set(collectUniqueValues("location"))].sort((a, b) => a.localeCompare(b, "ru"));
+  const allTeacher = [...new Set(collectUniqueValues("teacher"))].sort((a, b) => a.localeCompare(b, "ru"));
+  const allType = [...new Set([...DEFAULT_TYPES])].sort((a, b) => a.localeCompare(b, "ru"));
+  setupAutocomplete("modalSubj", () => allSubj);
+  setupAutocomplete("modalRoom", () => allRoom);
+  setupAutocomplete("modalLocation", () => allLoc);
+  setupAutocomplete("modalTeacher", () => allTeacher);
+  setupAutocomplete("modalType", () => allType);
+}
+
 let SCHEDULE = [];
 let PERSONAL = {};
 let EXTENDED = [];
@@ -110,11 +231,12 @@ function getCurrentLesson(day) {
   const cur = now.getHours() * 60 + now.getMinutes();
   for (let i = 0; i < day.lessons.length; i++) {
     const s = parseTime(day.lessons[i].time);
-    const end = s + 45;
+    const end = parseTime(day.lessons[i].time.split(/[–\-]/)[1]) || s + 45;
     if (cur >= s && cur < end) return { idx: i, type: "current" };
     if (cur < s && (s - cur) <= 120) return { idx: i, type: "next" };
   }
-  if (day.lessons.length && cur >= parseTime(day.lessons[day.lessons.length - 1].time) + 45) {
+  const lastEnd = parseTime(day.lessons[day.lessons.length - 1].time.split(/[–\-]/)[1]) || parseTime(day.lessons[day.lessons.length - 1].time) + 45;
+  if (day.lessons.length && cur >= lastEnd) {
     return { idx: day.lessons.length - 1, type: "past" };
   }
   return null;
@@ -257,7 +379,10 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const cls = state === "current" ? " current" : state === "past" ? " past" : state === "next" ? " next" : " future";
   const startTime = parseTime(l.time);
   const endTime = parseTime(l.time.split(/[–\-]/)[1]);
-  const icon = ICONS[l.subj] || "📋";
+  const rawIcon = ICONS[l.subj] || "📋";
+  const iconHtml = Array.isArray(rawIcon)
+    ? `<div class="lesson-icon grid">${rawIcon.map(c => `<span>${c}</span>`).join("")}</div>`
+    : `<div class="lesson-icon">${rawIcon}</div>`;
   const paidBadge = l.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
   const num = (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) ? "⭐" : (l.n != null ? l.n : "");
   const progressAttr = state === "current" ? `data-progress="${startTime}" data-end="${endTime}"` : "";
@@ -270,11 +395,15 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const cdAttr = state === "next" ? `data-cd="${startTime}"` : state === "current" ? `data-cd-end="${endTime}"` : "";
   const cdText = state === "next" ? countdownSec(startTime) : state === "current" ? remainingSec(endTime) : "";
   const roomText = l.room ? `<div class="lesson-room">${l.room}</div>` : "";
-  const typeLabel = l.subj && l.subj.startsWith("Кружок") ? "Кружок" : l.subj && l.subj.startsWith("Факультатив") ? "Факультатив" : "Урок";
+  const typeLabel = l.typeLabel || (l.subj && l.subj.startsWith("Кружок") ? "Кружок" : l.subj && l.subj.startsWith("Факультатив") ? "Факультатив" : "Урок");
   const bellHtml = window.Android ? (() => {
-    const bellActive = hasReminder("school", dayIdx, itemIdx, l.time, "start") || hasReminder("school", dayIdx, itemIdx, l.time, "end");
-    const bellCls = bellActive ? " bell-active" : "";
-    return `<button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${(l.subj||'').replace(/'/g,"\\'")}')">🔔</button>`;
+    const hasStart = hasReminder("school", dayIdx, itemIdx, l.time, "start");
+    const hasEnd = hasReminder("school", dayIdx, itemIdx, l.time, "end");
+    const startCls = hasStart ? " bell-active" : "";
+    const endCls = hasEnd ? " bell-active" : "";
+    const subjEsc = (l.subj||'').replace(/'/g,"\\'");
+    return `<button class="bell-btn${startCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${subjEsc}','start')" title="До начала">🔔</button>` +
+           `<button class="bell-btn${endCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${subjEsc}','end')" title="До конца">⏰</button>`;
   })() : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('school',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   const colorStyle = l.color ? `border-left:4px solid ${l.color};` : "";
@@ -284,7 +413,7 @@ function renderLesson(l, state, dayIdx, itemIdx) {
     <div class="lesson${cls}" ${colorStyle ? `style="${colorStyle}"` : ""} data-start="${startTime}" data-end="${endTime}" data-day="${dayIdx}" data-state="${state}" ${progressAttr} ${editMode ? 'onclick="showEditModal(\'school\',' + dayIdx + ',' + itemIdx + ')"' : ''}>
       ${progressDiv}
       <div class="lesson-body" style="position:relative;z-index:1;">
-        <div class="lesson-icon">${icon}</div>
+        ${iconHtml}
         <div class="lesson-num">${num}</div>
         <div class="lesson-info">
           <div class="merge-label school">${typeLabel}</div>
@@ -315,12 +444,16 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
     return `<div class="row-progress" style="width:${100 - pct}%"></div>`;
   })() : "";
   const type = item._type || "extended";
-  const typeLabel = type === "personal" ? "Занятие" : "Продлёнка";
+  const typeLabel = item.typeLabel || (type === "personal" ? "Занятие" : "Продлёнка");
   const typeCls = type === "personal" ? "personal" : "extended";
   const bellHtml = window.Android ? (() => {
-    const bellActive = hasReminder(type, dayIdx, itemIdx, item.time, "start") || hasReminder(type, dayIdx, itemIdx, item.time, "end");
-    const bellCls = bellActive ? " bell-active" : "";
-    return `<button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${(item.subj||'').replace(/'/g,"\\'")}')">🔔</button>`;
+    const hasStart = hasReminder(type, dayIdx, itemIdx, item.time, "start");
+    const hasEnd = hasReminder(type, dayIdx, itemIdx, item.time, "end");
+    const startCls = hasStart ? " bell-active" : "";
+    const endCls = hasEnd ? " bell-active" : "";
+    const subjEsc = (item.subj||'').replace(/'/g,"\\'");
+    return `<button class="bell-btn${startCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${subjEsc}','start')" title="До начала">🔔</button>` +
+           `<button class="bell-btn${endCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${subjEsc}','end')" title="До конца">⏰</button>`;
   })() : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${type}',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   const colorStyle = item.color ? `border-left:4px solid ${item.color};` : "";
@@ -373,9 +506,13 @@ function renderMergeCard(group, dayIdx) {
     const num = item._type === "school" ? (item.subj && (item.subj.startsWith("Факультатив") || item.subj.startsWith("Кружок")) ? "⭐" : (item.n != null ? item.n : "")) : "⏰";
     const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
     const bellHtml = window.Android ? (() => {
-      const bellActive = hasReminder(item._type, dayIdx, item._itemIdx, item.time, "start") || hasReminder(item._type, dayIdx, item._itemIdx, item.time, "end");
-      const bellCls = bellActive ? " bell-active" : "";
-      return `<button class="bell-btn${bellCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${(item.subj||'').replace(/'/g,"\\'")}')">🔔</button>`;
+      const subjEsc = (item.subj||'').replace(/'/g,"\\'");
+      const hasStart = hasReminder(item._type, dayIdx, item._itemIdx, item.time, "start");
+      const hasEnd = hasReminder(item._type, dayIdx, item._itemIdx, item.time, "end");
+      const startCls = hasStart ? " bell-active" : "";
+      const endCls = hasEnd ? " bell-active" : "";
+      return `<button class="bell-btn${startCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${subjEsc}','start')" title="До начала">🔔</button>` +
+             `<button class="bell-btn${endCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${subjEsc}','end')" title="До конца">⏰</button>`;
     })() : "";
     const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${item._type}',${dayIdx},${item._itemIdx})">✏️</button></div>` : "";
     const colorStyle = item.color ? `border-left:3px solid ${item.color};` : "";
@@ -398,8 +535,10 @@ function renderMergeCard(group, dayIdx) {
           ${item.location ? `<div class="lesson-location">${item.location}</div>` : ""}
           ${cdAttr ? `<div class="merge-countdown" ${cdAttr}>${cdText}</div>` : ""}
         </div>
-        ${bellHtml}
-        ${editBtn}
+        <div class="merge-actions">
+          ${bellHtml}
+          ${editBtn}
+        </div>
       </div>`;
   }).join("");
 
@@ -568,8 +707,13 @@ let reminders = JSON.parse(localStorage.getItem("tg_reminders") || "[]");
 
 function saveReminders() {
   localStorage.setItem("tg_reminders", JSON.stringify(reminders));
+  console.log("[Reminders] saveReminders called, count=" + reminders.length + ", keys=" + reminders.map(r => r.key).join(", "));
   if (window.Android) {
+    console.log("[Reminders] Calling Android.syncReminders with " + reminders.length + " items");
     Android.syncReminders(JSON.stringify(reminders));
+    console.log("[Reminders] Android.syncReminders returned");
+  } else {
+    console.log("[Reminders] No Android bridge, skipping native sync");
   }
 }
 
@@ -582,22 +726,25 @@ function getReminder(type, dayIdx, itemIdx, time, when) {
   return reminders.find(r => r.key === key);
 }
 
-function toggleReminder(type, dayIdx, itemIdx, time, subj) {
-  const existing = getReminder(type, dayIdx, itemIdx, time, "start") || getReminder(type, dayIdx, itemIdx, time, "end");
+function toggleReminder(type, dayIdx, itemIdx, time, subj, when) {
+  when = when || "start";
+  console.log("[Reminders] toggleReminder: type=" + type + " dayIdx=" + dayIdx + " itemIdx=" + itemIdx + " time=" + time + " when=" + when);
+  const existing = getReminder(type, dayIdx, itemIdx, time, when);
   if (existing) {
+    console.log("[Reminders] Removing existing reminder: " + existing.key);
     reminders = reminders.filter(r => r.key !== existing.key);
     saveReminders();
     renderAll();
     if (window.Android) Android.showToast("Напоминание отменено");
     return;
   }
-  showReminderDialog(type, dayIdx, itemIdx, time, subj, null);
+  showReminderDialog(type, dayIdx, itemIdx, time, subj, null, when);
 }
 
-function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
+function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
   const labels = { school: "Урок", personal: "Занятие", extended: "Продлёнка" };
   const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-  const existing = getReminder(type, dayIdx, itemIdx, time);
+  const existingRem = existing || getReminder(type, dayIdx, itemIdx, time, when || "start");
   const d = document.createElement("div");
   d.className = "reminder-dialog-overlay";
   d.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center;";
@@ -649,7 +796,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
   d._selectedMin = existing ? existing.mins : null;
   d._selectedSound = existing ? (existing.sound || "android.resource://com.schedule.app/raw/notif_ding") : "android.resource://com.schedule.app/raw/notif_ding";
   d._selectedVibro = existing ? (existing.vibro !== false) : true;
-  d._selectedWhen = existing ? (existing.when || "start") : "start";
+  d._selectedWhen = existingRem ? (existingRem.when || when || "start") : (when || "start");
 
   d.querySelectorAll(".when-chip").forEach(chip => {
     chip.style.cssText = "padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
@@ -698,11 +845,11 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
 
   if (window.Android) {
     const bundled = [
-      { title: "🔔 Ding", uri: "android.resource://com.schedule.app/raw/notif_ding" },
-      { title: "🎵 Chime", uri: "android.resource://com.schedule.app/raw/notif_chime" },
-      { title: "🌿 Gentle", uri: "android.resource://com.schedule.app/raw/notif_gentle" },
-      { title: "⚡ Urgent", uri: "android.resource://com.schedule.app/raw/notif_urgent" },
-      { title: "🛎 Bell", uri: "android.resource://com.schedule.app/raw/notif_bell" }
+      { title: "🎵 Nice Melodic", uri: "android.resource://com.schedule.app/raw/notif_ding" },
+      { title: "🫐 Contentment", uri: "android.resource://com.schedule.app/raw/notif_chime" },
+      { title: "🫐 Spirit", uri: "android.resource://com.schedule.app/raw/notif_gentle" },
+      { title: "💬 Soft Tune", uri: "android.resource://com.schedule.app/raw/notif_urgent" },
+      { title: "💥 Dramatic", uri: "android.resource://com.schedule.app/raw/notif_dramatic" }
     ];
     const list = d.querySelector("#ringtoneList");
     list.innerHTML = "";
@@ -732,7 +879,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
     pickBtn.onclick = () => { if (window.Android) Android.openRingtonePicker(); };
     list.appendChild(pickBtn);
   } else {
-    d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">🔔 Ding (по умолчанию)</div>';
+    d.querySelector("#ringtoneList").innerHTML = '<div style="padding:10px;color:var(--muted);font-size:12px;">🔔 Мелодия по умолчанию</div>';
   }
 
   d.querySelector("#reminderSaveBtn").onclick = () => {
@@ -740,7 +887,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj) {
     const custom = parseInt(d.querySelector("#reminderCustomMin").value);
     const mins = custom || d._selectedMin;
     if (!mins || mins < 1) { if (window.Android) Android.showToast("Укажи минуты"); return; }
-    const key = getReminderKey(type, dayIdx, itemIdx, time);
+    const key = getReminderKey(type, dayIdx, itemIdx, time, d._selectedWhen);
     reminders = reminders.filter(r => r.key !== key);
     reminders.push({ key, type, dayIdx, itemIdx, time, subj, mins, repeat: d._selectedRepeat, sound: d._selectedSound, vibro: d._selectedVibro, when: d._selectedWhen });
     saveReminders();
@@ -793,7 +940,8 @@ function showAddModal() {
   document.getElementById("modalRoom").value = "";
   document.getElementById("modalLocation").value = "";
   document.getElementById("modalTeacher").value = "";
-  document.getElementById("modalType").value = "school";
+  document.getElementById("modalType").value = "Урок";
+  populateDatalists();
   initColorPicker("");
   document.getElementById("modalOverlay").style.display = "flex";
 }
@@ -804,36 +952,23 @@ function showEditModal(type, dayIdx, itemIdx) {
   document.getElementById("modalDeleteBtn").style.display = "inline-block";
   const daySelect = document.getElementById("modalDay");
   daySelect.innerHTML = SCHEDULE.map((d, i) => `<option value="${i}" ${i === dayIdx ? 'selected' : ''}>${d.name}</option>`).join("");
-  document.getElementById("modalType").value = type;
   let item;
   if (type === "school") {
     item = SCHEDULE[dayIdx].lessons[itemIdx];
-    document.getElementById("modalNum").value = item.n || "";
-    document.getElementById("modalSubj").value = item.subj || "";
-    document.getElementById("modalTime").value = item.time || "";
-    document.getElementById("modalRoom").value = item.room || "";
-    document.getElementById("modalLocation").value = item.location || "";
-    document.getElementById("modalTeacher").value = item.teacher || "";
-    initColorPicker(item.color || "");
   } else if (type === "personal") {
     item = (PERSONAL[dayIdx] || [])[itemIdx];
-    document.getElementById("modalNum").value = "";
-    document.getElementById("modalSubj").value = item.subj || "";
-    document.getElementById("modalTime").value = item.time || "";
-    document.getElementById("modalRoom").value = item.room || "";
-    document.getElementById("modalLocation").value = item.location || "";
-    document.getElementById("modalTeacher").value = item.teacher || "";
-    initColorPicker(item.color || "");
   } else {
     item = EXTENDED[itemIdx];
-    document.getElementById("modalNum").value = "";
-    document.getElementById("modalSubj").value = item.subj || "";
-    document.getElementById("modalTime").value = item.time || "";
-    document.getElementById("modalRoom").value = item.room || "";
-    document.getElementById("modalLocation").value = item.location || "";
-    document.getElementById("modalTeacher").value = item.teacher || "";
-    initColorPicker(item.color || "");
   }
+  document.getElementById("modalType").value = item.typeLabel || TYPE_KEY_TO_NAME[type] || type;
+  document.getElementById("modalNum").value = (type === "school" && item.n) ? item.n : "";
+  document.getElementById("modalSubj").value = item.subj || "";
+  document.getElementById("modalTime").value = item.time || "";
+  document.getElementById("modalRoom").value = item.room || "";
+  document.getElementById("modalLocation").value = item.location || "";
+  document.getElementById("modalTeacher").value = item.teacher || "";
+  populateDatalists();
+  initColorPicker(item.color || "");
   document.getElementById("modalOverlay").style.display = "flex";
 }
 
@@ -863,7 +998,8 @@ function initColorPicker(color) {
 
 function saveModal() {
   const dayIdx = parseInt(document.getElementById("modalDay").value);
-  const type = document.getElementById("modalType").value;
+  const typeRaw = document.getElementById("modalType").value.trim();
+  const type = resolveTypeKey(typeRaw);
   const num = document.getElementById("modalNum").value.trim();
   const subj = document.getElementById("modalSubj").value.trim();
   const time = document.getElementById("modalTime").value.trim();
@@ -871,12 +1007,30 @@ function saveModal() {
   const location = document.getElementById("modalLocation").value.trim();
   const teacher = document.getElementById("modalTeacher").value.trim();
   const color = _selectedColor;
-  if (!subj || !time) {
-    if (window.Android) Android.showToast("Заполните предмет и время");
-    else alert("Заполните предмет и время");
+  const errors = [];
+  if (!subj) errors.push("предмет");
+  if (!time) errors.push("время");
+  if (errors.length) {
+    const msg = "Заполните: " + errors.join(", ");
+    if (window.Android) Android.showToast(msg);
+    else alert(msg);
     return;
   }
   const data = loadLocalData() || { schedule: JSON.parse(JSON.stringify(SCHEDULE)), personal: JSON.parse(JSON.stringify(PERSONAL)), extended: JSON.parse(JSON.stringify(EXTENDED)) };
+  const isEdit = modalData.itemIdx >= 0;
+  if (isEdit && modalData.type !== type) {
+    const origDay = modalData.dayIdx;
+    if (modalData.type === "school" && data.schedule[origDay]) {
+      data.schedule[origDay].lessons.splice(modalData.itemIdx, 1);
+      if (SCHEDULE[origDay]) SCHEDULE[origDay].lessons.splice(modalData.itemIdx, 1);
+    } else if (modalData.type === "personal" && data.personal && data.personal[origDay]) {
+      data.personal[origDay].splice(modalData.itemIdx, 1);
+      if (PERSONAL[origDay]) PERSONAL[origDay].splice(modalData.itemIdx, 1);
+    } else if (modalData.type === "extended" && data.extended) {
+      data.extended.splice(modalData.itemIdx, 1);
+      EXTENDED.splice(modalData.itemIdx, 1);
+    }
+  }
   if (type === "school") {
     const lesson = { subj, time };
     if (num) lesson.n = parseInt(num);
@@ -884,8 +1038,9 @@ function saveModal() {
     if (location) lesson.location = location;
     if (teacher) lesson.teacher = teacher;
     if (color) lesson.color = color;
+    if (typeRaw && typeRaw !== (TYPE_KEY_TO_NAME[type] || "")) lesson.typeLabel = typeRaw;
     while (data.schedule.length <= dayIdx) data.schedule.push({ name: SCHEDULE[data.schedule.length]?.name || "", lessons: [] });
-    if (modalData.itemIdx >= 0) {
+    if (isEdit && modalData.type === type) {
       data.schedule[dayIdx].lessons[modalData.itemIdx] = lesson;
     } else {
       data.schedule[dayIdx].lessons.push(lesson);
@@ -897,9 +1052,10 @@ function saveModal() {
     if (location) item.location = location;
     if (teacher) item.teacher = teacher;
     if (color) item.color = color;
+    if (typeRaw && typeRaw !== (TYPE_KEY_TO_NAME[type] || "")) item.typeLabel = typeRaw;
     if (!data.personal) data.personal = {};
     if (!data.personal[dayIdx]) data.personal[dayIdx] = [];
-    if (modalData.itemIdx >= 0) {
+    if (isEdit && modalData.type === type) {
       data.personal[dayIdx][modalData.itemIdx] = item;
     } else {
       data.personal[dayIdx].push(item);
@@ -911,8 +1067,9 @@ function saveModal() {
     if (location) item.location = location;
     if (teacher) item.teacher = teacher;
     if (color) item.color = color;
+    if (typeRaw && typeRaw !== (TYPE_KEY_TO_NAME[type] || "")) item.typeLabel = typeRaw;
     if (!data.extended) data.extended = [];
-    if (modalData.itemIdx >= 0) {
+    if (isEdit && modalData.type === type) {
       data.extended[modalData.itemIdx] = item;
     } else {
       data.extended.push(item);
@@ -960,7 +1117,10 @@ function renderAll() {
     if (dayIdx > todayIdx) return "future";
     const info = getCurrentLesson(day);
     if (!info) {
-      if (day.lessons.length && Date.now() / 60000 > parseTime(day.lessons[day.lessons.length - 1].time) + 45) return "past";
+      const now = new Date();
+      const cur = now.getHours() * 60 + now.getMinutes();
+      const lastEnd = parseTime(day.lessons[day.lessons.length - 1].time.split(/[–\-]/)[1]) || parseTime(day.lessons[day.lessons.length - 1].time) + 45;
+      if (day.lessons.length && cur >= lastEnd) return "past";
       return "future";
     }
     if (lessonIdx < info.idx) return "past";

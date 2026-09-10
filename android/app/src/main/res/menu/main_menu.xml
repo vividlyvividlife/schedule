@@ -38,6 +38,11 @@
     </item>
 
     <item
+        android:id="@+id/menu_notifications"
+        android:title="🔔 Проверить уведомления"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_reset"
         android:title="🔄 Сбросить всё"
         app:showAsAction="never" />
