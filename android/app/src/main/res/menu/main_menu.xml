@@ -44,6 +44,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/menu_load_defaults"
+        android:title="🏫 Восстановить стандартные"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_reset"
         android:title="🔄 Сбросить всё"
         app:showAsAction="never" />

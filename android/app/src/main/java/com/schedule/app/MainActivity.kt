@@ -367,6 +367,7 @@ class MainActivity : AppCompatActivity() {
             R.id.menu_import -> { openFilePicker(); true }
             R.id.menu_edit_mode -> { toggleEditMode(); true }
             R.id.menu_notifications -> { logPermissionDiagnostics(force = true); true }
+            R.id.menu_load_defaults -> { confirmLoadDefaults(); true }
             R.id.menu_delete_schedule -> { confirmDeleteType("schedule", "все уроки"); true }
             R.id.menu_delete_personal -> { confirmDeleteType("personal", "все занятия"); true }
             R.id.menu_delete_extended -> { confirmDeleteType("extended", "продлёнку"); true }
@@ -597,16 +598,22 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Да") { _, _ ->
                 Log.w(TAG, "Reset: user confirmed — wiping web storage")
                 cancelAllReminders()
-                clearWebStorageAndReload(1)
+                clearWebStorageAndReload(1, setNoDefaults = true)
             }
             .setNegativeButton("Нет", null).show()
     }
 
     // Clears WebView storage with verification and escalation; honest reporting
     // instead of a blind "done" toast — the point is to SEE failures on-device.
-    private fun clearWebStorageAndReload(attempt: Int) {
+    // setNoDefaults=true leaves the app empty after reload (no built-in defaults);
+    // false restores built-in default schedules on the next load.
+    private fun clearWebStorageAndReload(attempt: Int, setNoDefaults: Boolean) {
+        val clearJs = if (setNoDefaults)
+            "try { localStorage.clear(); sessionStorage.clear(); localStorage.setItem('tg_no_defaults','true'); } catch(e) {}"
+        else
+            "try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}"
         webView.evaluateJavascript(
-            "try { localStorage.clear(); sessionStorage.clear(); localStorage.setItem('tg_no_defaults','true'); } catch(e) {}" +
+            clearJs +
             "(function(){ var k=[]; for (var i=0;i<localStorage.length;i++) k.push(localStorage.key(i));" +
             " return JSON.stringify({ n: localStorage.length, tg: !!localStorage.getItem('tg_local_data') }); })()"
         ) { result ->
@@ -630,7 +637,7 @@ class MainActivity : AppCompatActivity() {
                     androidx.webkit.WebStorageCompat.deleteBrowsingDataForSite(
                         android.webkit.WebStorage.getInstance(),
                         "https://appassets.androidplatform.net",
-                        Runnable { runOnUiThread { clearWebStorageAndReload(attempt + 1) } }
+                        Runnable { runOnUiThread { clearWebStorageAndReload(attempt + 1, setNoDefaults) } }
                     )
                 } catch (e: Exception) {
                     Log.e(TAG, "Per-site wipe error", e)
@@ -640,6 +647,18 @@ class MainActivity : AppCompatActivity() {
             }
             nativeWipeAndFinish(leftover)
         }
+    }
+
+    private fun confirmLoadDefaults() {
+        AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
+            .setTitle("Восстановить стандартные?")
+            .setMessage("Текущие расписания будут заменены стандартными:\nУроки, Продлёнка, Кружок по интересам, Факультативы.\n\nНапоминания нужно настроить заново.")
+            .setPositiveButton("Да") { _, _ ->
+                Log.w(TAG, "Load defaults: user confirmed")
+                cancelAllReminders()
+                clearWebStorageAndReload(1, setNoDefaults = false)
+            }
+            .setNegativeButton("Нет", null).show()
     }
 
     private fun nativeWipeAndFinish(leftover: Int) {
