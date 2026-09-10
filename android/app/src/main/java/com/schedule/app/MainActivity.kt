@@ -122,6 +122,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         webView.onResume()
         webView.resumeTimers()
+        if (this::webView.isInitialized) queryDataState {}
     }
 
     override fun onPause() {
@@ -344,7 +345,8 @@ class MainActivity : AppCompatActivity() {
             val item = deleteMenu?.add(GROUP_CUSTOM_DELETE, Menu.NONE, Menu.NONE, "❌ $key")
             item?.setOnMenuItemClickListener { confirmDeleteType(key, key); true }
         }
-        menu?.findItem(R.id.menu_reset)?.isVisible = hasSchedule || hasPersonal || hasExtended || customKeys.isNotEmpty()
+        menu?.findItem(R.id.menu_delete)?.isVisible = hasSchedule || hasPersonal || hasExtended || customKeys.isNotEmpty()
+        menu?.findItem(R.id.menu_reset)?.isVisible = true
 
         val editItem = menu?.findItem(R.id.menu_edit_mode)
         editItem?.isChecked = editModeActive
@@ -563,7 +565,8 @@ class MainActivity : AppCompatActivity() {
         webView.evaluateJavascript(
             """(function() {
                 try {
-                    var d = JSON.parse(localStorage.getItem('tg_local_data') || '{}');
+                    var d = JSON.parse(localStorage.getItem('tg_local_data') || 'null') ||
+                        { schedule: JSON.parse(JSON.stringify(SCHEDULE)), personal: JSON.parse(JSON.stringify(PERSONAL)), extended: JSON.parse(JSON.stringify(EXTENDED)), custom: JSON.parse(JSON.stringify(typeof CUSTOM !== 'undefined' ? CUSTOM : {})) };
                     if ('$jsType' === 'schedule') { d.schedule = []; }
                     else if ('$jsType' === 'personal') { d.personal = {}; }
                     else if ('$jsType' === 'extended') { d.extended = []; }
@@ -590,10 +593,12 @@ class MainActivity : AppCompatActivity() {
             .setMessage("Удалить все данные?")
             .setPositiveButton("Да") { _, _ ->
                 cancelAllReminders()
-                webView.evaluateJavascript("try { localStorage.clear(); 'ok' } catch(e) { 'err:' + e.message }") {
-                    val s = it?.trim('"') ?: ""
+                webView.evaluateJavascript("try { localStorage.clear(); sessionStorage.clear(); 'ok' } catch(e) { 'err:' + e.message }") {
+                    // Native wipe — guarantees WebView storage is gone even if JS clear is async/ignored.
+                    try { android.webkit.WebStorage.getInstance().deleteAllData() } catch (e: Exception) { Log.e(TAG, "WebStorage wipe error", e) }
+                    webView.clearCache(true)
                     hasSchedule = false; hasPersonal = false; hasExtended = false; customKeys = emptyList()
-                    Toast.makeText(this, if (s == "ok") "Сброшено!" else "Ошибка: $s", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, if (it?.trim('"') == "ok") "Сброшено!" else "Сброшено (нативно)", Toast.LENGTH_SHORT).show()
                     invalidateOptionsMenu()
                     webView.reload()
                 }
@@ -607,22 +612,17 @@ class MainActivity : AppCompatActivity() {
         webView.evaluateJavascript(
             """(function() {
                 try {
-                    var d = JSON.parse(localStorage.getItem('tg_local_data') || '{}');
-                    var sch = d.schedule || [];
-                    var hasSch = false;
-                    for (var i = 0; i < sch.length; i++) {
-                        if (sch[i] && sch[i].lessons && sch[i].lessons.length > 0) { hasSch = true; break; }
+                    var hasSch = false, hasPers = false, hasExt = false, keys = [];
+                    if (typeof SCHEDULE !== 'undefined' && SCHEDULE) hasSch = SCHEDULE.some(function(d){ return d && d.lessons && d.lessons.length > 0; });
+                    if (typeof PERSONAL !== 'undefined' && PERSONAL) hasPers = Object.keys(PERSONAL).some(function(k){ return Array.isArray(PERSONAL[k]) && PERSONAL[k].length > 0; });
+                    if (typeof EXTENDED !== 'undefined' && EXTENDED) hasExt = EXTENDED.length > 0;
+                    if (typeof CUSTOM !== 'undefined' && CUSTOM) {
+                        keys = Object.keys(CUSTOM).filter(function(k){
+                            return CUSTOM[k] && Object.keys(CUSTOM[k]).length > 0;
+                        });
                     }
-                    var pers = d.personal || {};
-                    var hasPers = false;
-                    var keys = Object.keys(pers);
-                    for (var i = 0; i < keys.length; i++) {
-                        if (Array.isArray(pers[keys[i]]) && pers[keys[i]].length > 0) { hasPers = true; break; }
-                    }
-                    var ext = d.extended || [];
-                    var hasExt = ext.length > 0;
                     var editOn = localStorage.getItem('tg_edit_mode') === 'true';
-                    return JSON.stringify({ f: (hasSch ? '1' : '0') + (hasPers ? '1' : '0') + (hasExt ? '1' : '0') + (editOn ? '1' : '0'), k: Object.keys(d.custom || {}) });
+                    return JSON.stringify({ f: (hasSch ? '1' : '0') + (hasPers ? '1' : '0') + (hasExt ? '1' : '0') + (editOn ? '1' : '0'), k: keys });
                 } catch(e) { return '{"f":"0000","k":[]}'; }
             })()"""
         ) { result ->

@@ -454,6 +454,7 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
   const type = item._type || "extended";
   const typeLabel = item.typeLabel || typeName(type);
   const typeCls = isBuiltInType(type) ? type : "custom";
+  const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
   const bellHtml = window.Android ? (() => {
     const hasStart = hasReminder(type, dayIdx, itemIdx, item.time, "start");
     const hasEnd = hasReminder(type, dayIdx, itemIdx, item.time, "end");
@@ -474,7 +475,7 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
         <div class="lesson-info">
           <div class="merge-label ${typeCls}">${typeLabel}</div>
           <div class="lesson-time">${item.time}</div>
-          <div class="lesson-subject">${item.subj}</div>
+          <div class="lesson-subject">${item.subj}${paidBadge}</div>
           ${item.room ? `<div class="lesson-room">${item.room}</div>` : ""}
           ${item.teacher ? `<div class="lesson-teacher">${item.teacher}</div>` : ""}
           ${item.location ? `<div class="lesson-location">${item.location}</div>` : ""}
@@ -983,6 +984,7 @@ function showEditModal(type, dayIdx, itemIdx) {
   } else {
     item = EXTENDED[itemIdx];
   }
+  modalData.orig = item;
   document.getElementById("modalType").value = item.typeLabel || TYPE_KEY_TO_NAME[type] || type;
   document.getElementById("modalNum").value = (type === "school" && item.n) ? item.n : "";
   document.getElementById("modalSubj").value = item.subj || "";
@@ -1115,6 +1117,17 @@ function saveModal() {
     } else {
       data.extended.push(item);
       data.extended.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+    }
+  }
+  if (isEdit && modalData.type === type && modalData.orig) {
+    let stored = null;
+    if (type === "school") stored = data.schedule[dayIdx] && data.schedule[dayIdx].lessons[modalData.itemIdx];
+    else if (type === "personal") stored = data.personal && data.personal[dayIdx] && data.personal[dayIdx][modalData.itemIdx];
+    else if (type === "extended") stored = data.extended && data.extended[modalData.itemIdx];
+    else stored = data.custom && data.custom[type] && data.custom[type][dayIdx] && data.custom[type][dayIdx][modalData.itemIdx];
+    if (stored) {
+      if (modalData.orig.paid) stored.paid = modalData.orig.paid;
+      if (modalData.orig.days) stored.days = modalData.orig.days;
     }
   }
   saveLocalData(data);
