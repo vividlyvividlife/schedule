@@ -430,7 +430,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun exportPart(type: String) {
-        val names = mapOf("schedule" to "Uroki.json", "personal" to "Zanyatiya.json", "extended" to "Prodlenka.json")
+        val names = mapOf("schedule" to "uroki.json", "personal" to "zanyatiya.json", "extended" to "prodlenka.json")
         val jsType = type.replace("'", "\\'")
         webView.evaluateJavascript(
             """(function() {
