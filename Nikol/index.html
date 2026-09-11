@@ -14,6 +14,10 @@
     <div class="sub">2 «А» · СОШ №12 · 2026–2027</div>
     <div class="date" id="dateDisplay" data-clock></div>
     <a href="../" style="font-size:12px;color:var(--accent);text-decoration:none;margin-top:4px;display:inline-block;">← Основное расписание</a>
+    <div style="margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <a id="webDocsLink" href="https://github.com/vividlyvividlife/schedule#-как-пользоваться" target="_blank" style="font-size:12px;color:var(--accent);text-decoration:none;">📖 Как пользоваться</a>
+      <a id="webApkLink" href="https://github.com/vividlyvividlife/schedule/releases/latest/download/schedule.apk" style="font-size:12px;color:var(--accent);text-decoration:none;">⬇️ APK</a>
+    </div>
   </div>
   <button class="theme-btn" onclick="toggleTheme()" title="Тёмная тема">☀</button>
 </div>
@@ -33,5 +37,12 @@
 
 <script src="../engines.js?v=6"></script>
 <script src="nikol.js?v=7"></script>
+<script>
+// GitHub links are web-only: hide them inside the Android WebView.
+if (window.Android) ["webDocsLink", "webApkLink"].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = "none";
+});
+</script>
 </body>
 </html>
