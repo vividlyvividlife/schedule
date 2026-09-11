@@ -96,19 +96,6 @@
 - 🔄 **Сбросить всё** — полное очищение, приложение станет пустым
 - После сброса всё возвращается импортом ранее экспортированного файла
 
-## 🛠 Сборка из исходников
-
-```bash
-cd android
-./gradlew assembleRelease
-# → android/app/build/outputs/apk/release/schedule.apk
-```
-
-Требуется JDK 17 и Android SDK (compileSdk 35). Release-ключ хранится вне репозитория:
-пути и алиас — в `android/app/build.gradle`, пароли — в `~/.gradle/gradle.properties`
-(`SCHEDULE_RELEASE_STORE_PASSWORD`, `SCHEDULE_RELEASE_KEY_PASSWORD`). Без них сборка
-автоматически подписывается отладочным ключом.
-
 ## 📁 Структура
 
 ```
