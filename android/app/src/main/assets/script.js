@@ -446,13 +446,13 @@ function renderLesson(l, state, dayIdx, itemIdx) {
   const roomText = l.room ? `<div class="lesson-room">${l.room}</div>` : "";
   const typeLabel = l.typeLabel || (l.subj && l.subj.startsWith("Кружок") ? "Кружок" : l.subj && l.subj.startsWith("Факультатив") ? "Факультатив" : "Урок");
   const bellHtml = window.Android ? (() => {
-    const hasStart = hasReminder("school", dayIdx, itemIdx, l.time, "start");
-    const hasEnd = hasReminder("school", dayIdx, itemIdx, l.time, "end");
-    const startCls = hasStart ? " bell-active" : "";
-    const endCls = hasEnd ? " bell-active" : "";
+    const startRem = getReminder("school", dayIdx, itemIdx, l.time, "start");
+    const endRem = getReminder("school", dayIdx, itemIdx, l.time, "end");
+    const startCls = startRem ? " bell-active" : "";
+    const endCls = endRem ? " bell-active" : "";
     const subjEsc = (l.subj||'').replace(/'/g,"\\'");
-    return `<button class="bell-btn${startCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${subjEsc}','start')" title="До начала">🔔</button>` +
-           `<button class="bell-btn${endCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${subjEsc}','end')" title="До конца">⏰</button>`;
+    return `<button class="bell-btn${startCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${subjEsc}','start')" title="До начала">🔔${bellMinsHtml(startRem)}</button>` +
+           `<button class="bell-btn${endCls}" onclick="event.stopPropagation();toggleReminder('school',${dayIdx},${itemIdx},'${l.time}','${subjEsc}','end')" title="До конца">⏰${bellMinsHtml(endRem)}</button>`;
   })() : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('school',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   const colorStyle = l.color ? `border-left:4px solid ${l.color};` : "";
@@ -497,13 +497,13 @@ function renderExtendedItem(item, state, dayIdx, itemIdx) {
   const typeCls = typeClsOf(type);
   const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
   const bellHtml = window.Android ? (() => {
-    const hasStart = hasReminder(type, dayIdx, itemIdx, item.time, "start");
-    const hasEnd = hasReminder(type, dayIdx, itemIdx, item.time, "end");
-    const startCls = hasStart ? " bell-active" : "";
-    const endCls = hasEnd ? " bell-active" : "";
+    const startRem = getReminder(type, dayIdx, itemIdx, item.time, "start");
+    const endRem = getReminder(type, dayIdx, itemIdx, item.time, "end");
+    const startCls = startRem ? " bell-active" : "";
+    const endCls = endRem ? " bell-active" : "";
     const subjEsc = (item.subj||'').replace(/'/g,"\\'");
-    return `<button class="bell-btn${startCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${subjEsc}','start')" title="До начала">🔔</button>` +
-           `<button class="bell-btn${endCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${subjEsc}','end')" title="До конца">⏰</button>`;
+    return `<button class="bell-btn${startCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${subjEsc}','start')" title="До начала">🔔${bellMinsHtml(startRem)}</button>` +
+           `<button class="bell-btn${endCls}" onclick="event.stopPropagation();toggleReminder('${type}',${dayIdx},${itemIdx},'${item.time}','${subjEsc}','end')" title="До конца">⏰${bellMinsHtml(endRem)}</button>`;
   })() : "";
   const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${type}',${dayIdx},${itemIdx})">✏️</button></div>` : "";
   const colorStyle = item.color ? `border-left:4px solid ${item.color};` : "";
@@ -557,12 +557,12 @@ function renderMergeCard(group, dayIdx) {
     const paidBadge = item.paid ? ' <span style="font-size:11px;color:#e8a84c;" title="Платный">💰</span>' : "";
     const bellHtml = window.Android ? (() => {
       const subjEsc = (item.subj||'').replace(/'/g,"\\'");
-      const hasStart = hasReminder(item._type, dayIdx, item._itemIdx, item.time, "start");
-      const hasEnd = hasReminder(item._type, dayIdx, item._itemIdx, item.time, "end");
-      const startCls = hasStart ? " bell-active" : "";
-      const endCls = hasEnd ? " bell-active" : "";
-      return `<button class="bell-btn${startCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${subjEsc}','start')" title="До начала">🔔</button>` +
-             `<button class="bell-btn${endCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${subjEsc}','end')" title="До конца">⏰</button>`;
+      const startRem = getReminder(item._type, dayIdx, item._itemIdx, item.time, "start");
+      const endRem = getReminder(item._type, dayIdx, item._itemIdx, item.time, "end");
+      const startCls = startRem ? " bell-active" : "";
+      const endCls = endRem ? " bell-active" : "";
+      return `<button class="bell-btn${startCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${subjEsc}','start')" title="До начала">🔔${bellMinsHtml(startRem)}</button>` +
+             `<button class="bell-btn${endCls}" onclick="event.stopPropagation();toggleReminder('${item._type}',${dayIdx},${item._itemIdx},'${item.time}','${subjEsc}','end')" title="До конца">⏰${bellMinsHtml(endRem)}</button>`;
     })() : "";
     const editBtn = editMode ? `<div class="edit-actions"><button class="edit-btn-sm" onclick="event.stopPropagation();showEditModal('${item._type}',${dayIdx},${item._itemIdx})">✏️</button></div>` : "";
     const colorStyle = item.color ? `border-left:3px solid ${item.color};` : "";
@@ -687,11 +687,12 @@ function renderStatus() {
   const el = document.getElementById("status");
   const today = getTodayIndex();
   const day = SCHEDULE[today];
-  const info = getCurrentLesson(day);
+  const items = getTodayItems(today);
+  const info = items.length ? getCurrentLesson({ lessons: items }) : null;
   const now = new Date();
   const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-  if (day.lessons.length === 0) {
+  if (!items.length) {
     const msg = getWeekendMessage(today);
     const tip = today === 5
       ? "Отдыхай — ты заслужил!"
@@ -703,7 +704,7 @@ function renderStatus() {
     el.innerHTML = `${day.name} · ${timeStr} · Уроков на сегодня нет`;
     return;
   }
-  const l = day.lessons[info.idx];
+  const l = items[info.idx];
   if (info.type === "current") {
     const endTime = parseTime(l.time.split(/[–\-]/)[1]);
     el.innerHTML = `Сейчас: <span class="highlight">${l.subj}</span> · ${l.time} · <span data-cd-end="${endTime}">${remainingSec(endTime)}</span>`;
@@ -714,24 +715,22 @@ function renderStatus() {
   }
 }
 
-function renderProgress() {
-  try {
-  const today = getTodayIndex();
-  const day = SCHEDULE[today];
-  const fill = document.getElementById("progressFill");
-  const lbl = document.getElementById("progressLabel");
-  if (!fill) return;
-  if (!day || !day.lessons || !day.lessons.length) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
-  const now = new Date();
-  const cur = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-
-  const allItems = [...day.lessons];
+// All visible schedules for a day: school + personal + custom + extended.
+// Shared by the top progress bar and the status line so they always agree.
+function getTodayItems(today) {
+  const day = SCHEDULE[today] || { lessons: [] };
+  const allItems = schoolOn ? [...(day.lessons || [])] : [];
+  if (personalOn) allItems.push(...(PERSONAL[today] || []));
+  for (const k of Object.keys(CUSTOM)) {
+    if (!customOn(k)) continue;
+    allItems.push(...(((CUSTOM[k] || {})[today]) || []));
+  }
   if (extendedOn) {
     for (const e of EXTENDED) {
       if (e.days && !e.days.includes(today)) continue;
       const eS = parseTime(e.time) * 60;
       let overlaps = false;
-      for (const l of day.lessons) {
+      for (const l of (day.lessons || [])) {
         if (l.subj && (l.subj.startsWith("Факультатив") || l.subj.startsWith("Кружок"))) continue;
         const lS = parseTime(l.time) * 60;
         const lE = parseTime(l.time.split(/[–\-]/)[1] || "") * 60;
@@ -741,6 +740,19 @@ function renderProgress() {
       if (!overlaps) allItems.push(e);
     }
   }
+  return allItems;
+}
+
+function renderProgress() {
+  try {
+  const today = getTodayIndex();
+  const fill = document.getElementById("progressFill");
+  const lbl = document.getElementById("progressLabel");
+  if (!fill) return;
+  const now = new Date();
+  const cur = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+  const allItems = getTodayItems(today);
 
   if (!allItems.length) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
   let first = Infinity, last = 0;
@@ -903,6 +915,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
       </div>
       <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Напомнить за:</div>
       <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;" id="minGroup">
+        <button class="reminder-chip min-chip" data-min="0">0 мин</button>
         <button class="reminder-chip min-chip" data-min="5">5 мин</button>
         <button class="reminder-chip min-chip" data-min="10">10 мин</button>
         <button class="reminder-chip min-chip" data-min="15">15 мин</button>
@@ -910,7 +923,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <span style="font-size:13px;color:var(--text);">Своё:</span>
-        <input id="reminderCustomMin" type="number" min="1" max="1440" placeholder="мин"
+        <input id="reminderCustomMin" type="number" min="0" max="1440" placeholder="мин"
           style="flex:1;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;">
       </div>
       <div style="font-size:13px;color:var(--text);margin-bottom:6px;">Вибрация:</div>
@@ -959,7 +972,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
 
   d.querySelectorAll(".min-chip").forEach(chip => {
     chip.style.cssText = "padding:6px 12px;border:1.5px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;";
-    if (d._selectedMin && parseInt(chip.dataset.min) === d._selectedMin) { chip.style.background = "var(--accent)"; chip.style.color = "#fff"; }
+    if (d._selectedMin !== null && parseInt(chip.dataset.min) === d._selectedMin) { chip.style.background = "var(--accent)"; chip.style.color = "#fff"; }
     chip.onclick = () => {
       d.querySelectorAll(".min-chip").forEach(c => { c.style.background = "transparent"; c.style.color = "var(--text)"; });
       chip.style.background = "var(--accent)";
@@ -1021,9 +1034,10 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
 
   d.querySelector("#reminderSaveBtn").onclick = () => {
     if (window.Android) Android.stopRingtone();
-    const custom = parseInt(d.querySelector("#reminderCustomMin").value);
-    const mins = custom || d._selectedMin;
-    if (!mins || mins < 1) { if (window.Android) Android.showToast("Укажи минуты"); return; }
+    const raw = d.querySelector("#reminderCustomMin").value.trim();
+    const custom = raw === "" ? NaN : parseInt(raw);
+    const mins = !isNaN(custom) ? custom : d._selectedMin;
+    if (mins === null || isNaN(mins) || mins < 0) { if (window.Android) Android.showToast("Укажи минуты"); return; }
     const key = getReminderKey(type, dayIdx, itemIdx, time, d._selectedWhen);
     reminders = reminders.filter(r => r.key !== key);
     reminders.push({ key, type, dayIdx, itemIdx, time, subj, mins, repeat: d._selectedRepeat, sound: d._selectedSound, vibro: d._selectedVibro, when: d._selectedWhen });
@@ -1052,6 +1066,11 @@ window._ringtonePicked = function(uri) {
 
 function hasReminder(type, dayIdx, itemIdx, time, when) {
   return !!getReminder(type, dayIdx, itemIdx, time, when);
+}
+
+// Small "за N мин" label shown under an active bell icon.
+function bellMinsHtml(r) {
+  return r ? `<span style="display:block;font-size:9px;line-height:1;">за ${r.mins} мин</span>` : "";
 }
 
 function toggleEditMode() {

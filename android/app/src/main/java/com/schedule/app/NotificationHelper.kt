@@ -26,9 +26,11 @@ object NotificationHelper {
 
     fun reminderText(type: String, dayIdx: Int, time: String, subj: String, mins: Int, whenType: String): String {
         val action = if (whenType == "end") {
-            "Заканчивается через $mins ${minutesWord(mins, accusative = true)}"
+            if (mins == 0) "Заканчивается сейчас"
+            else "Заканчивается через $mins ${minutesWord(mins, accusative = true)}"
         } else {
-            "До начала $mins ${minutesWord(mins, accusative = false)}"
+            if (mins == 0) "Начинается сейчас"
+            else "До начала $mins ${minutesWord(mins, accusative = false)}"
         }
         return listOf(action, DAY_NAMES.getOrNull(dayIdx), time, subj)
             .filter { !it.isNullOrBlank() }

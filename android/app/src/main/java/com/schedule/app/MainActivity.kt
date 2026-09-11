@@ -438,7 +438,18 @@ class MainActivity : AppCompatActivity() {
                     var d = JSON.parse(localStorage.getItem('tg_local_data') || '{}');
                     var data;
                     if ('$jsType' === 'schedule') { data = d['schedule']; if (!Array.isArray(data) || !data.length) data = SCHEDULE; }
-                    else if ('$jsType' === 'personal') { data = d['personal']; if (!data || !Object.keys(data).length) data = PERSONAL; }
+                    else if ('$jsType' === 'personal') {
+                        // "Занятия" for the user includes custom types (e.g. Худ школа);
+                        // {personal, custom} keeps them separated on import.
+                        var p = d['personal'];
+                        if (!p || !Object.keys(p).length) p = PERSONAL;
+                        var c = (d.custom && Object.keys(d.custom).length) ? d.custom : (typeof CUSTOM !== 'undefined' ? CUSTOM : {});
+                        var hasP = p && Object.keys(p).length > 0;
+                        var hasC = c && Object.keys(c).length > 0;
+                        if (hasP && hasC) data = { personal: p, custom: c };
+                        else if (hasC) data = { custom: c };
+                        else data = p || {};
+                    }
                     else if ('$jsType' === 'extended') { data = d['extended']; if (!Array.isArray(data) || !data.length) data = EXTENDED; }
                     else data = (typeof CUSTOM !== 'undefined' && CUSTOM['$jsType']) ? { __type: '$jsType', days: CUSTOM['$jsType'] } : (d.custom && d.custom['$jsType']) ? { __type: '$jsType', days: d.custom['$jsType'] } : [];
                     return JSON.stringify(data, null, 2);
@@ -499,6 +510,13 @@ class MainActivity : AppCompatActivity() {
                 try {
                     var data = JSON.parse('$escaped');
                     var merged = JSON.parse(localStorage.getItem('tg_local_data') || '{"schedule":[],"personal":{},"extended":[]}');
+                    // Built-in custom types (Кружок, Факультативы) live only in the
+                    // timeSchedule.json globals — tg_local_data has no custom until an
+                    // import/edit. Seed from live CUSTOM: script.js replaces CUSTOM with
+                    // local.custom on reload, so a partial import would erase the defaults.
+                    if (!merged.custom || !Object.keys(merged.custom).length) {
+                        merged.custom = JSON.parse(JSON.stringify(typeof CUSTOM !== 'undefined' ? CUSTOM : {}));
+                    }
                     var what = '';
                     if (Array.isArray(data) && data.length > 0 && data[0] && data[0].lessons) {
                         merged.schedule = data;
@@ -506,22 +524,26 @@ class MainActivity : AppCompatActivity() {
                     } else if (Array.isArray(data) && data.length > 0 && data[0] && data[0].time && data[0].subj && !data[0].lessons) {
                         merged.extended = data;
                         what = 'Продлёнка';
-                    } else if (typeof data === 'object' && !Array.isArray(data) && data[0] && Array.isArray(data[0])) {
-                        merged.personal = data;
-                        what = 'Личные занятия';
-                    } else if (typeof data === 'object' && !Array.isArray(data) && data.custom) {
-                        merged.custom = merged.custom || {};
-                        for (var k in data.custom) merged.custom[k] = data.custom[k];
-                        what = 'Доп. расписания';
+                    } else if (typeof data === 'object' && !Array.isArray(data) && (data.schedule || data.personal || data.extended || data.custom)) {
+                        // Container files (full export, zanyatiya.json with custom) —
+                        // must be matched before legacy keyed-personal and __type checks.
+                        var parts = [];
+                        if (data.schedule) { merged.schedule = data.schedule; parts.push('Уроки'); }
+                        if (data.personal) { merged.personal = data.personal; parts.push('Занятия'); }
+                        if (data.extended) { merged.extended = data.extended; parts.push('Продлёнка'); }
+                        if (data.custom) {
+                            merged.custom = merged.custom || {};
+                            for (var k in data.custom) merged.custom[k] = data.custom[k];
+                            parts.push('Доп. расписания');
+                        }
+                        what = parts.join(' + ');
                     } else if (typeof data === 'object' && !Array.isArray(data) && data.__type && data.days) {
                         merged.custom = merged.custom || {};
                         merged.custom[data.__type] = data.days;
                         what = data.__type;
-                    } else if (data.schedule || data.extended || data.personal) {
-                        if (data.schedule) merged.schedule = data.schedule;
-                        if (data.personal) merged.personal = data.personal;
-                        if (data.extended) merged.extended = data.extended;
-                        what = 'Всё';
+                    } else if (typeof data === 'object' && !Array.isArray(data) && data[0] && Array.isArray(data[0])) {
+                        merged.personal = data;
+                        what = 'Личные занятия';
                     } else {
                         throw new Error('Не удалось определить тип данных');
                     }
@@ -571,12 +593,21 @@ class MainActivity : AppCompatActivity() {
         webView.evaluateJavascript(
             """(function() {
                 try {
-                    var d = JSON.parse(localStorage.getItem('tg_local_data') || 'null') ||
-                        { schedule: JSON.parse(JSON.stringify(SCHEDULE)), personal: JSON.parse(JSON.stringify(PERSONAL)), extended: JSON.parse(JSON.stringify(EXTENDED)), custom: JSON.parse(JSON.stringify(typeof CUSTOM !== 'undefined' ? CUSTOM : {})) };
+                    var d = JSON.parse(localStorage.getItem('tg_local_data') || 'null') || {};
+                    var cp = function(v) { return JSON.parse(JSON.stringify(v)); };
+                    // Backfill from the live in-memory state: a partial tg_local_data
+                    // (import-only data on a clean install) must not lose the other
+                    // schedules when tg_no_defaults wipes built-in defaults on reload.
+                    if (!d.schedule || !d.schedule.length) d.schedule = cp(typeof SCHEDULE !== 'undefined' ? SCHEDULE : []);
+                    if (!d.personal || !Object.keys(d.personal).length) d.personal = cp(typeof PERSONAL !== 'undefined' ? PERSONAL : {});
+                    if (!d.extended || !d.extended.length) d.extended = cp(typeof EXTENDED !== 'undefined' ? EXTENDED : []);
+                    d.custom = d.custom || {};
+                    var cust = (typeof CUSTOM !== 'undefined' && CUSTOM) ? CUSTOM : {};
+                    for (var k in cust) if (!d.custom[k]) d.custom[k] = cp(cust[k]);
                     if ('$jsType' === 'schedule') { d.schedule = []; }
                     else if ('$jsType' === 'personal') { d.personal = {}; }
                     else if ('$jsType' === 'extended') { d.extended = []; }
-                    else { if (d.custom) delete d.custom['$jsType']; localStorage.removeItem('custom_$jsType'); }
+                    else { delete d.custom['$jsType']; localStorage.removeItem('custom_$jsType'); }
                     localStorage.setItem('tg_no_defaults', 'true');
                     localStorage.setItem('tg_local_data', JSON.stringify(d));
                     return 'ok';
