@@ -58,12 +58,22 @@ if (window.Android) ["webDocsLink", "webApkLink"].forEach(function(id) {
   var el = document.getElementById(id);
   if (el) el.style.display = "none";
 });
-// Web: show the latest release tag next to the APK link.
+// Web: show the latest release tag next to the APK link, and call out
+// an update if the visitor last downloaded an older one.
 else fetch("https://api.github.com/repos/vividlyvividlife/schedule/releases/latest")
   .then(function(r) { return r.json(); })
   .then(function(d) {
     var el = document.getElementById("webApkLink");
-    if (el && d && d.tag_name) el.textContent = "⬇️ APK " + d.tag_name;
+    if (!el || !d || !d.tag_name) return;
+    var tag = d.tag_name;
+    el.textContent = "⬇️ APK " + tag;
+    var seen = null;
+    try { seen = localStorage.getItem("apk_version"); } catch (e) {}
+    if (seen && seen !== tag) {
+      el.textContent = "⬆️ Обновите приложение — вышла версия " + tag;
+      el.style.fontWeight = "bold";
+    }
+    el.addEventListener("click", function() { try { localStorage.setItem("apk_version", tag); } catch (e) {} });
   })
   .catch(function() {});
 </script>
