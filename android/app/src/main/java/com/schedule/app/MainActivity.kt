@@ -509,7 +509,9 @@ class MainActivity : AppCompatActivity() {
             """(function() {
                 try {
                     var data = JSON.parse('$escaped');
-                    var merged = JSON.parse(localStorage.getItem('tg_local_data') || '{"schedule":[],"personal":{},"extended":[]}');
+                    var raw = localStorage.getItem('tg_local_data');
+                    var hadLocalData = !!raw;
+                    var merged = JSON.parse(raw || '{"schedule":[],"personal":{},"extended":[]}');
                     // Built-in custom types (Кружок, Факультативы) live only in the
                     // timeSchedule.json globals — tg_local_data has no custom until an
                     // import/edit. Seed from live CUSTOM: script.js replaces CUSTOM with
@@ -542,8 +544,16 @@ class MainActivity : AppCompatActivity() {
                         if (data.extended) { merged.extended = data.extended; parts.push('Продлёнка'); }
                         if (data.custom) {
                             merged.custom = merged.custom || {};
-                            for (var k in data.custom) merged.custom[customTargetKey(k)] = data.custom[k];
-                            parts.push('Доп. расписания');
+                            var addedCustom = 0;
+                            for (var k in data.custom) {
+                                var tk = customTargetKey(k);
+                                // Refresh known entities, never resurrect deleted ones;
+                                // a device without local data takes everything from the file.
+                                if (hadLocalData && !merged.custom[tk]) continue;
+                                merged.custom[tk] = data.custom[k];
+                                addedCustom++;
+                            }
+                            if (addedCustom) parts.push('Доп. расписания');
                         }
                         what = parts.join(' + ');
                     } else if (typeof data === 'object' && !Array.isArray(data) && data.__type && data.days) {
