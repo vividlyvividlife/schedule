@@ -1232,7 +1232,7 @@ function renderAll() {
         return "future";
       })()
     }));
-    const extended = (extendedOn ? EXTENDED : []).map((ext, ei) => ({
+    const extended = (extendedOn && dayIdx <= 4 ? EXTENDED : []).map((ext, ei) => ({ // Mon-Fri only, Sat/Sun off
       ...ext, _type: "extended", _icon: ext.icon, _itemIdx: ei,
       _state: getExtState(ei, dayIdx)
     })).filter(ext => {
