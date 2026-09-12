@@ -26,6 +26,8 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : AppCompatActivity() {
 
@@ -40,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private var hasPersonal = false
     private var hasExtended = false
     private var editModeActive = false
+    private var updateCheckStarted = false
     private var customKeys: List<String> = emptyList()
     internal var _ringtonePlayer: android.media.Ringtone? = null
     internal var pickerCallback: ((android.net.Uri?) -> Unit)? = null
@@ -74,6 +77,7 @@ class MainActivity : AppCompatActivity() {
                 super.onPageFinished(view, url)
                 Log.d(TAG, "Page loaded: $url")
                 webView.postDelayed({ queryDataState {} }, 1000)
+                maybeCheckForUpdate()
             }
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url?.toString() ?: return false
@@ -836,6 +840,92 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() { if (webView.canGoBack()) webView.goBack() else super.onBackPressed() }
+
+    // ── Update check (GitHub Releases) ───────────────────────────────
+
+    private fun maybeCheckForUpdate() {
+        if (updateCheckStarted) return
+        updateCheckStarted = true
+        webView.postDelayed({ checkForUpdate() }, 2000)
+    }
+
+    private fun checkForUpdate() {
+        Thread {
+            try {
+                val conn = URL("https://api.github.com/repos/vividlyvividlife/schedule/releases/latest")
+                    .openConnection() as HttpURLConnection
+                conn.connectTimeout = 8000
+                conn.readTimeout = 8000
+                conn.setRequestProperty("Accept", "application/vnd.github+json")
+                val tag = org.json.JSONObject(conn.inputStream.bufferedReader().readText()).optString("tag_name")
+                conn.disconnect()
+                if (tag.isEmpty()) return@Thread
+                val latest = tag.trimStart('v', 'V')
+                val current = packageManager.getPackageInfo(packageName, 0).versionName ?: return@Thread
+                if (isNewerVersion(latest, current)) runOnUiThread { showUpdateDialog(latest) }
+            } catch (e: Exception) {
+                Log.d(TAG, "Update check skipped: ${e.message}")
+            }
+        }.start()
+    }
+
+    private fun isNewerVersion(latest: String, current: String): Boolean {
+        val l = latest.split(".").map { it.trim().toIntOrNull() ?: 0 }
+        val c = current.split(".").map { it.trim().toIntOrNull() ?: 0 }
+        for (i in 0 until maxOf(l.size, c.size)) {
+            val a = l.getOrElse(i) { 0 }
+            val b = c.getOrElse(i) { 0 }
+            if (a != b) return a > b
+        }
+        return false
+    }
+
+    private fun showUpdateDialog(version: String) {
+        val current = packageManager.getPackageInfo(packageName, 0).versionName
+        AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
+            .setTitle("⬆️ Доступно обновление $version")
+            .setMessage("Установлена версия $current. Скачать и установить?")
+            .setPositiveButton("⬇️ Скачать") { _, _ -> downloadUpdate(version) }
+            .setNegativeButton("Позже", null)
+            .show()
+    }
+
+    private fun downloadUpdate(version: String) {
+        Toast.makeText(this, "Скачиваю версию $version…", Toast.LENGTH_SHORT).show()
+        Thread {
+            try {
+                val conn = URL("https://github.com/vividlyvividlife/schedule/releases/latest/download/schedule.apk")
+                    .openConnection() as HttpURLConnection
+                conn.connectTimeout = 10000
+                conn.readTimeout = 30000
+                val file = File(filesDir, "updates").also { it.mkdirs() }.let { File(it, "schedule-update.apk") }
+                conn.inputStream.use { input -> FileOutputStream(file).use { output -> input.copyTo(output) } }
+                conn.disconnect()
+                runOnUiThread { installDownloadedApk(file) }
+            } catch (e: Exception) {
+                Log.e(TAG, "Update download failed: ${e.message}")
+                runOnUiThread { Toast.makeText(this, "Ошибка скачивания: ${e.message}", Toast.LENGTH_LONG).show() }
+            }
+        }.start()
+    }
+
+    private fun installDownloadedApk(file: File) {
+        try {
+            if (!packageManager.canRequestPackageInstalls()) {
+                Toast.makeText(this, "Разрешите установку для «Расписание» в открывшихся настройках", Toast.LENGTH_LONG).show()
+                startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
+                return
+            }
+            val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
+            startActivity(Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
+        } catch (e: Exception) {
+            Toast.makeText(this, "Не удалось запустить установку: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
 
     // ── Reminders / Notifications ────────────────────────────────────
 
