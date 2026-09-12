@@ -1086,6 +1086,7 @@ function toggleEditMode() {
   const addBtn = document.getElementById("addBtn");
   if (editBar) editBar.style.display = editMode ? "flex" : "none";
   if (addBtn) addBtn.style.display = editMode ? "block" : "none";
+  if (editMode) addHeaderEditBtn(); else document.getElementById("editHeaderBtn")?.remove();
   renderAll();
 }
 
