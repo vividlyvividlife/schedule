@@ -1467,7 +1467,7 @@ function renderAll() {
     content.innerHTML = SCHEDULE.map((d, i) => {
       const hasSchool = schoolOn && d.lessons.length > 0;
       const hasPersonal = personalOn && PERSONAL[i] && PERSONAL[i].length > 0;
-      const hasExtended = extendedOn && EXTENDED.length > 0;
+      const hasExtended = extendedOn && i <= 4 && EXTENDED.length > 0;
       const hasCustom = Object.keys(CUSTOM).some(k => customOn(k) && CUSTOM[k][i] && CUSTOM[k][i].length > 0);
       if (!hasSchool && !hasPersonal && !hasExtended && !hasCustom) {
         return `<div class="day-panel${i === currentDayIdx ? ' active' : ''}">${renderWeekendMsg(i)}</div>`;
@@ -1481,7 +1481,7 @@ function renderAll() {
       const dayIdx = SCHEDULE.indexOf(d);
       const hasSchool = schoolOn && d.lessons.length > 0;
       const hasPersonal = personalOn && PERSONAL[dayIdx] && PERSONAL[dayIdx].length > 0;
-      const hasExtended = extendedOn && EXTENDED.length > 0;
+      const hasExtended = extendedOn && dayIdx <= 4 && EXTENDED.length > 0;
       const hasCustom = Object.keys(CUSTOM).some(k => customOn(k) && CUSTOM[k][dayIdx] && CUSTOM[k][dayIdx].length > 0);
       if (!hasSchool && !hasPersonal && !hasExtended && !hasCustom) {
         return `
