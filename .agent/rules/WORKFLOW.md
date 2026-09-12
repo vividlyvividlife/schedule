@@ -7,7 +7,7 @@
 - Удалять или комментировать работающий код без явной необходимости.
 - Менять build.gradle, зависимости, манифест, если это не требуется задачей.
 - Выдавать обобщённые советы без привязки к конкретному коду/контексту.
-- Трогать JSON-файлы данных (schedule.json, main_lesson.json, holidays.json, extended.json, timeSchedule.json), если задача не про данные.
+- Трогать JSON-файлы данных (timeSchedule.json, main_lesson.json, holidays.json, extended.json, schedule.json), если задача не про данные.
 - grep/read БЕЗ предварительного query graph.json — КРИТИЧЕСКИЙ ЗАПРЕТ. Сначала graph.json, потом файлы.
 
 1. ЯЗЫК И ТОН
@@ -21,7 +21,7 @@
 Специализация:
 - Web: vanilla HTML + CSS + JavaScript (без фреймворков, без сборщиков, GitHub Pages).
 - Android: Kotlin, WebView-обёртка, AndroidBridge (JS ↔ Kotlin), Material Design, AppCompat, SwipeRefreshLayout.
-- Данные: JSON-файлы, localStorage ( web ), SharedPreferences (Android через JS).
+- Данные: JSON-файлы, localStorage (web), SharedPreferences (Android через JS).
 - Архитектура: Android загружает те же веб-файлы из assets через WebViewAssetLoader.
 
 Подход к решению задачи:
@@ -29,19 +29,27 @@
 - Находить надёжное и минимальное решение.
 - Давать итоговый ответ ясно, коротко, без лишних объяснений.
 
-3. ДВУПЛАТФОРМЕННАЯ АРХИТЕКТУРА (КРИТИЧЕСКИ ВАЖНО)
+3. ДВУХПЛАТФОРМЕННАЯ АРХИТЕКТУРА (КРИТИЧЕСКИ ВАЖНО)
 
-Проект работает на двух платформах, которые РАЗНЫМИ возможностями:
-- Web ( GitHub Pages ) — index.html, script.js, style.css, JSON-файлы в корне.
+Проект работает на двух платформах:
+- Web (GitHub Pages) — index.html, script.js, style.css, engines.js, JSON-файлы в корне.
 - Android (приложение) — Kotlin-обёртка в android/, загружает те же веб-файлы из assets.
 
-ОБЩИЙ КОД: script.js, style.css, index.html, JSON-данные — используются обеими платформами.
-ANDROID-СПЕЦИФИЧНОЕ: MainActivity.kt, NotificationReceiver.kt, AndroidBridge, уведомления, импорт/экспорт файлов, выбор звука, оптимизация батареи.
-WEB-СПЕЦИФИЧНОЕ: прямой доступ к DOM, service workers (если будут), PWA-возможности, кэширование браузером.
+КРИТИЧЕСКИ: общие файлы существуют В ДВУХ КОПИЯХ:
+- корень проекта (веб, GitHub Pages);
+- android\app\src\main\assets\ (то, что РЕАЛЬНО грузит приложение).
+Копии уже разошлись в деталях (в assets-версии есть android-специфичные фиксы).
+ПРАВИЛО: правка общей логики (script.js, style.css, engines.js, index.html) вносится
+В ОБЕ КОПИИ — точечно в то же место, НЕ перезаписывая файл целиком.
+Изменил script.js в корне → сразу та же точечная правка в assets-копии.
+
+ОБЩИЙ КОД: script.js, style.css, engines.js, index.html, JSON-данные.
+ANDROID-СПЕЦИФИЧНОЕ: MainActivity.kt (включая встроенный JS импорта/экспорта), NotificationReceiver.kt, AndroidBridge, уведомления, выбор звука, оптимизация батареи.
+WEB-СПЕЦИФИЧНОЕ: прямой доступ к DOM, Яндекс.Метрика, PWA-возможности, кэширование браузером.
 
 ПРАВИЛО ПЛАТФОРМЫ:
-- Если задание для андроида — решаем ТОЛЬКО для андроида (Kotlin, AndroidManifest, ресурсы).
-- Если задание для веба — решаем ТОЛЬКО для веба (HTML, CSS, JS).
+- Если задание для андроида — решаем ТОЛЬКО для андроида (Kotlin, AndroidManifest, ресурсы, assets-копии).
+- Если задание для веба — решаем ТОЛЬКО для веба (HTML, CSS, JS в корне).
 - Если задание общее (например, «добавить функцию») — сначала определяем: где эта функция должна жить?
   - Логика отображения/расчётов — в script.js (общий код).
   - Нативная функция (уведомления, файлы, звук) — в Kotlin-слое.
@@ -57,25 +65,31 @@ WEB-СПЕЦИФИЧНОЕ: прямой доступ к DOM, service workers (�
 
 D:\code\TGEveryday\
 ├── index.html              ← Точка входа (web + Android)
-├── script.js               ← Вся логика приложения (1200+ строк)
+├── script.js               ← Вся логика приложения (1500+ строк)
 ├── style.css               ← Все стили (700+ строк)
-├── schedule.json            ← Данные уроков (main_lesson.json, holidays.json и т.д.)
-├── extended.json            ← Продлёнка
+├── engines.js              ← Редактирование/импорт/экспорт данных, localStorage CRUD (общий)
+├── timeSchedule.json        ← ОСНОВНОЙ источник данных (schedule, personal, extended, custom)
+├── main_lesson.json         ← Резервные дефолты уроков (когда расписание пустое)
+├── extended.json            ← Резервная дефолтная продлёнка
 ├── holidays.json            ← Каникулы и праздники
-├── timeSchedule.json        ← Времена звонков
+├── schedule.json            ← Legacy (ничем не подгружается; не удалять без спроса)
 ├── template_full.json       ← Шаблон
 ├── zayavlenie.html          ← Заявление директору (отдельная страница)
 ├── mock-merge.html          ← Тестовая страница
 ├── og-image.png             ← OG-картинка для соцсетей
+├── *.mp3, *.gif             ← Звуки уведомлений и иконки загрузки
+├── Nikol\
+│   ├── index.html           ← Страница «Николь» (только веб, в assets НЕ входит)
+│   └── nikol.js             ← Её логика (свои копии EXTENDED и рендера)
 └── android\
     ├── app\
-    │   ├── build.gradle     ← Зависимости: appcompat, material, webkit, swiperefresh
+    │   ├── build.gradle     ← minSdk 26, targetSdk 35; appcompat, material, webkit, swiperefresh
     │   └── src\main\
     │       ├── AndroidManifest.xml
     │       ├── java\com\schedule\app\
-    │       │   ├── MainActivity.kt        ← WebView + AndroidBridge + UI
+    │       │   ├── MainActivity.kt        ← WebView + AndroidBridge + импорт/экспорт JSON (JS внутри строк)
     │       │   └── NotificationReceiver.kt ← BroadcastReceiver для уведомлений
-    │       ├── assets\                    ← Копии JSON-файлов для Android
+    │       ├── assets\                    ← КОПИИ общих файлов: index.html, script.js, style.css, engines.js + JSON
     │       └── res\                       ← Layout, menu, values, xml
     ├── build.gradle
     └── settings.gradle
@@ -90,13 +104,14 @@ D:\code\TGEveryday\
 └─ Определи, какие файлы/строки/блоки нужно редактировать.
 └─ Если файл длинный, прочитай ±30 строк вокруг предполагаемого места правки.
 └─ Для script.js: функции громоздкие, ищи по имени функции или по ключевым словам.
+└─ Общая логика → не забудь вторую копию в assets.
 
 ШАГ 3 — МИНИМАЛЬНАЯ ПРАВКА
 └─ Сформулируй diff → убери всё, что не относится к задаче → финальная версия кода.
 └─ Не трогай то, что не связано с задачей.
 
 ШАГ 4 — ПРОВЕРИТЬ
-└─ Убедись, что код компилируется (Android) / не ломает работу (web).
+└─ Убедись, что код компилируется (Android: gradle assembleDebug) / не ломает работу (web: node --check).
 └─ Прогони мысленно сценарий использования.
 └─ Предложи краткий чек-лист проверки.
 
@@ -111,8 +126,8 @@ D:\code\TGEveryday\
 - Структуру проекта и модулей.
 - build.gradle, settings.gradle, gradle.properties (если не требуется задачей).
 - AndroidManifest.xml (если не требуется задачей).
-- JSON-файлы данных (schedule.json, holidays.json и т.д.) — они статичны и обновляются вручную.
-- Навигацию между страницами (zayavlenie.html, mock-merge.html).
+- JSON-файлы данных (timeSchedule.json, main_lesson.json, extended.json, holidays.json, schedule.json) — статичны и обновляются вручную.
+- Навигацию между страницами (zayavlenie.html, mock-merge.html, Nikol/).
 - Существующие CSS-переменные в :root и .dark (если не требуется задачей).
 - Логику уведомлений / импорта-экспорта (если задача не про это).
 - AndroidBridge-методы (если не требуется новый мост JS ↔ Kotlin).
@@ -122,16 +137,28 @@ D:\code\TGEveryday\
 Web:
 - Язык: vanilla JavaScript (ES6+), без сборщиков, без фреймворков.
 - Стили: CSS (кастомные переменные, тёмная тема через .dark).
-- Хранилище: localStorage (ключи: tg_local_data, tg_reminders, extended, personal, school).
-- Данные: глобальные переменные SCHEDULE, PERSONAL, EXTENDED, HOLIDAYS.
+- Данные: init() грузит timeSchedule.json (schedule, personal, extended, custom) + holidays.json;
+  если расписание пустое — fallback на main_lesson.json + extended.json.
+- Глобальные: SCHEDULE, PERSONAL, CUSTOM (кастомные расписания), EXTENDED, HOLIDAYS.
+- Хранилище (localStorage): tg_local_data (все пользовательские данные), tg_edit_mode,
+  tg_no_defaults, tg_reminders, theme, school, personal, extended, custom_<имя типа>.
+- Аналитика: Яндекс.Метрика (только веб, в Android отключена).
+
+Типы занятий:
+- Встроенные: school (Урок/Уроки), personal (Занятие/Занятия), extended (Продлёнка).
+- Кастомные сущности: CUSTOM[имя] — ключ = имя типа; создаются свободным вводом в модалке.
+- resolveTypeKey() маппит введённое имя на ключ; знает множественные формы и
+  сравнивает кастомные ключи без учёта регистра. При правке типов — учитывать это.
 
 Android:
 - Язык: Kotlin (100% — нет Java-файлов).
-- Минимальный SDK: 26 (Android 8.0).
-- Целевой SDK: 35.
+- Минимальный SDK: 26 (Android 8.0). Целевой SDK: 35.
 - Зависимости: core-ktx, appcompat, material, webkit, swiperefreshlayout.
 - WebView загружает: https://appassets.androidplatform.net/index.html
-- JS-интерфейс: window.Android (AndroidBridge) с методами: exportTxt, showToast, showConfirm, syncReminders, openRingtonePicker, playRingtone, stopRingtone.
+- AndroidBridge (@JavascriptInterface): exportTxt, showToast, showConfirm, syncReminders,
+  getNotificationStatus, openRingtonePicker, playRingtone, stopRingtone.
+- Импорт/экспорт JSON — внутри MainActivity.kt (importJson, exportPart, exportFullJson);
+  в вебе импорта нет.
 
 9. ДИЗАЙН (UI)
 - Современный, чистый, легко читаемый.
@@ -153,13 +180,15 @@ Android:
 - Русский текст: в HTML-контенте, JSON-данных, Toast-сообщениях.
 - Идентификаторы в коде — английские.
 - Комментарии в Kotlin/JS — английские (если нужны).
+- При генерации русских строк в тестах/скриптах — брать строки из реальных файлов
+  или кодовых точек: ручной ввод кириллицы в heredoc/консоли может дать гомоглифы.
 
 ПРИОРИТЕТЫ ЭФФЕКТИВНОСТИ
-- script.js — общий для обеих платформ. Изменения здесь работают и в web, и в Android.
+- script.js — общий для обеих платформ. Изменения здесь работают и в web, и в Android (см. правило двух копий в п.3).
 - Kotlin-код — только для Android. Не дублируй то, что уже есть в JS.
 - При добавлении новой фичи сначала спроси: «Это общее или платформо-специфичное?»
 - Не создавай новые файлы без необходимости — лучше дописать в существующие.
-- JSON-файлы дублируются в корне и в assets/ — при изменении данных обновляй оба места.
+- Общие файлы и JSON дублируются в корне и в assets/ — при изменении обновляй ОБА места.
 
 13. ГРАФИФИКАЦИЯ (GRAPHIFY) — ОБЯЗАТЕЛЬНО
 
