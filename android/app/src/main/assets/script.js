@@ -44,6 +44,71 @@ const SUN_MESSAGES = [
   { emoji: "🤷", text: "Завтра понедельник. Бывает.", anim: "" },
 ];
 
+const MON_MESSAGES = [
+  { emoji: "😤", text: "Понедельник — самый честный день недели", anim: "" },
+  { emoji: "☕", text: "Понедельник. Вдох-выдох. Поехали!", anim: "" },
+  { emoji: "🐌", text: "Понедельник ползёт, а мы уже бежим", anim: "float" },
+  { emoji: "💪", text: "Начало недели — мы всё успеем!", anim: "" },
+  { emoji: "🎒", text: "Понедельник: рюкзак собран, настроение готово", anim: "" },
+  { emoji: "😴", text: "Кто украл выходные? Это понедельник!", anim: "pulse" },
+  { emoji: "🚀", text: "Неделя только началась — разгоняемся!", anim: "" },
+  { emoji: "🧊", text: "Понедельник холодный, а мы — горячие!", anim: "" },
+  { emoji: "📅", text: "Понедельник — это маленькая пятница... нет? Ладно.", anim: "" },
+  { emoji: "🌱", text: "Неделя растёт — и мы растём!", anim: "float" },
+];
+
+const TUE_MESSAGES = [
+  { emoji: "😎", text: "Вторник — уже не понедельник!", anim: "pulse" },
+  { emoji: "🐢", text: "Во вторник всё идёт своим ходом", anim: "" },
+  { emoji: "🍪", text: "Вторник: время печенек", anim: "" },
+  { emoji: "🎯", text: "Вторник — день смелых планов", anim: "float" },
+  { emoji: "⚡", text: "Во вторник мы быстрее всех!", anim: "" },
+  { emoji: "🧗", text: "Вторник: покоряем вершину недели", anim: "" },
+  { emoji: "😌", text: "Вторник спокойно идёт к среде", anim: "" },
+  { emoji: "📚", text: "Во вторник учимся на всю неделю", anim: "" },
+  { emoji: "🛴", text: "Вторник — разогнались и поехали!", anim: "float" },
+  { emoji: "🐣", text: "Неделя ещё молодая, как и мы", anim: "" },
+];
+
+const WED_MESSAGES = [
+  { emoji: "🐸", text: "Среда — середина недели! Держимся", anim: "pulse" },
+  { emoji: "⛰️", text: "Перевалили через гору — скоро пятница", anim: "" },
+  { emoji: "🍕", text: "Среда: пора подкрепиться пиццей", anim: "" },
+  { emoji: "🎠", text: "Середина недели — карусель крутится", anim: "float" },
+  { emoji: "😴", text: "Дожили до среды — можно гордиться", anim: "" },
+  { emoji: "🚂", text: "Среда: неделя едет по расписанию", anim: "" },
+  { emoji: "🌗", text: "Неделя наполовину пройдена!", anim: "pulse" },
+  { emoji: "🐫", text: "Среда — верблюд недели: всё преодолеем", anim: "" },
+  { emoji: "☕", text: "В среду чай вкуснее — проверено", anim: "" },
+  { emoji: "🎈", text: "Половину сделали — остальное по накатанной", anim: "" },
+];
+
+const THU_MESSAGES = [
+  { emoji: "🤏", text: "Четверг — чуть-чуть осталось до пятницы!", anim: "pulse" },
+  { emoji: "👀", text: "Четверг подмигивает: скоро выходные", anim: "" },
+  { emoji: "🏃", text: "Четверг: бежим быстрее — пятница близко", anim: "float" },
+  { emoji: "🍬", text: "В четверг даже уроки слаще", anim: "" },
+  { emoji: "⏰", text: "Четверг — пятница в режиме ожидания", anim: "" },
+  { emoji: "🌟", text: "До пятницы один шаг!", anim: "pulse" },
+  { emoji: "🐿️", text: "Четверг: запасаем силы на финиш", anim: "" },
+  { emoji: "🎲", text: "Четверг — день интересных перемен", anim: "" },
+  { emoji: "😼", text: "Четверг хитро улыбается: пятница рядом", anim: "" },
+  { emoji: "🔥", text: "Неделя на финише — не сбавляем!", anim: "float" },
+];
+
+const FRI_MESSAGES = [
+  { emoji: "🎉", text: "Пятница — маленькая суббота!", anim: "pulse" },
+  { emoji: "💃", text: "Ура, пятница! Танцуем!", anim: "float" },
+  { emoji: "🍦", text: "Пятница = мороженое после уроков", anim: "" },
+  { emoji: "😎", text: "Пятница. Очки надеты. Мы круты", anim: "" },
+  { emoji: "🛼", text: "Пятница — день катания и игр", anim: "" },
+  { emoji: "🌈", text: "За пятницей — выходные!", anim: "pulse" },
+  { emoji: "🥳", text: "Учебная неделя закончена — мы молодцы!", anim: "float" },
+  { emoji: "🚀", text: "Пятница: домой на реактивной тяге!", anim: "" },
+  { emoji: "🍿", text: "Вечер пятницы — мультики и попкорн", anim: "" },
+  { emoji: "⛱️", text: "Пятница открывает дверь в выходные", anim: "" },
+];
+
 const ICONS = {
   "Белорусская литература": "📖",
   "Белорусский язык": "💬",
@@ -273,9 +338,11 @@ function getDaySeed() {
   return now.getFullYear() * 1000 + now.getMonth() * 50 + now.getDate();
 }
 
+const DAY_MESSAGES = [MON_MESSAGES, TUE_MESSAGES, WED_MESSAGES, THU_MESSAGES, FRI_MESSAGES, SAT_MESSAGES, SUN_MESSAGES];
+
 function getWeekendMessage(dayIdx) {
   const seed = getDaySeed();
-  const msgs = dayIdx === 5 ? SAT_MESSAGES : SUN_MESSAGES;
+  const msgs = DAY_MESSAGES[dayIdx] || SUN_MESSAGES;
   return msgs[seed % msgs.length];
 }
 
@@ -607,7 +674,7 @@ function renderWeekendMsg(dayIdx) {
     <div class="weekend-msg${animCls}">
       <span class="emoji">${msg.emoji}</span>
       ${msg.text}
-      <div class="sub">${dayIdx === 5 ? "Суббота" : "Воскресенье"}</div>
+      <div class="sub">${(SCHEDULE[dayIdx] && SCHEDULE[dayIdx].name) || (dayIdx === 5 ? "Суббота" : "Воскресенье")}</div>
     </div>`;
 }
 
@@ -701,7 +768,9 @@ function renderStatus() {
     const msg = getWeekendMessage(today);
     const tip = today === 5
       ? "Отдыхай — ты заслужил!"
-      : "Завтра школа — подготовь рюкзак!";
+      : today === 6
+        ? "Завтра школа — подготовь рюкзак!"
+        : "Включи нужные расписания тоглами ↑";
     el.innerHTML = `${msg.emoji} ${msg.text}<br><span style="font-size:12px;color:var(--muted)">${tip}</span>`;
     return;
   }
@@ -730,7 +799,7 @@ function getTodayItems(today) {
     if (!customOn(k)) continue;
     allItems.push(...(((CUSTOM[k] || {})[today]) || []));
   }
-  if (extendedOn) {
+  if (extendedOn && today <= 4) { // extended care is Mon-Fri only, Sat/Sun off
     for (const e of EXTENDED) {
       if (e.days && !e.days.includes(today)) continue;
       const eS = parseTime(e.time) * 60;
