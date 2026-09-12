@@ -517,6 +517,15 @@ class MainActivity : AppCompatActivity() {
                     if (!merged.custom || !Object.keys(merged.custom).length) {
                         merged.custom = JSON.parse(JSON.stringify(typeof CUSTOM !== 'undefined' ? CUSTOM : {}));
                     }
+                    // Custom keys merge case-insensitively: занятие/Занятия must not
+                    // become two separate toggles after import.
+                    function customTargetKey(k) {
+                        var lk = String(k).toLowerCase();
+                        for (var ek in merged.custom) {
+                            if (String(ek).toLowerCase() === lk) return ek;
+                        }
+                        return k;
+                    }
                     var what = '';
                     if (Array.isArray(data) && data.length > 0 && data[0] && data[0].lessons) {
                         merged.schedule = data;
@@ -533,13 +542,13 @@ class MainActivity : AppCompatActivity() {
                         if (data.extended) { merged.extended = data.extended; parts.push('Продлёнка'); }
                         if (data.custom) {
                             merged.custom = merged.custom || {};
-                            for (var k in data.custom) merged.custom[k] = data.custom[k];
+                            for (var k in data.custom) merged.custom[customTargetKey(k)] = data.custom[k];
                             parts.push('Доп. расписания');
                         }
                         what = parts.join(' + ');
                     } else if (typeof data === 'object' && !Array.isArray(data) && data.__type && data.days) {
                         merged.custom = merged.custom || {};
-                        merged.custom[data.__type] = data.days;
+                        merged.custom[customTargetKey(data.__type)] = data.days;
                         what = data.__type;
                     } else if (typeof data === 'object' && !Array.isArray(data) && data[0] && Array.isArray(data[0])) {
                         merged.personal = data;

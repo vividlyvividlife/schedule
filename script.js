@@ -132,15 +132,20 @@ function collectUniqueValues(key) {
 function fillDatalist(datalistId, defaults, extraValues) {
 }
 
-const TYPE_NAME_TO_KEY = { "Урок": "school", "Занятие": "personal", "Продлёнка": "extended" };
+// Plurals are the toggle labels users type in the modal; without them a new custom entity was created.
+const TYPE_NAME_TO_KEY = { "Урок": "school", "Уроки": "school", "Занятие": "personal", "Занятия": "personal", "Продлёнка": "extended" };
 const TYPE_KEY_TO_NAME = { "school": "Урок", "personal": "Занятие", "extended": "Продлёнка" };
 
 function resolveTypeKey(val) {
   const v = (val || "").trim();
   if (!v) return "school";
   if (TYPE_NAME_TO_KEY[v]) return TYPE_NAME_TO_KEY[v];
-  for (const [k, name] of Object.entries(TYPE_NAME_TO_KEY)) {
-    if (name.toLowerCase() === v.toLowerCase()) return k;
+  for (const [name, key] of Object.entries(TYPE_NAME_TO_KEY)) {
+    if (name.toLowerCase() === v.toLowerCase()) return key;
+  }
+  // Reuse an existing custom entity instead of creating a case-variant duplicate.
+  for (const k of Object.keys(CUSTOM)) {
+    if (k.toLowerCase() === v.toLowerCase()) return k;
   }
   // Any unknown type name becomes its own schedule entity (key = name).
   return v;
