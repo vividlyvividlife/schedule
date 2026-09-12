@@ -121,6 +121,14 @@ if (window.Android) ["webDocsLink", "webApkLink"].forEach(function(id) {
   var el = document.getElementById(id);
   if (el) el.style.display = "none";
 });
+// Web: show the latest release tag next to the APK link.
+else fetch("https://api.github.com/repos/vividlyvividlife/schedule/releases/latest")
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var el = document.getElementById("webApkLink");
+    if (el && d && d.tag_name) el.textContent = "⬇️ APK " + d.tag_name;
+  })
+  .catch(function() {});
 </script>
 </body>
 </html>
