@@ -112,12 +112,18 @@ class MainActivity : AppCompatActivity() {
 
         webView.loadUrl("https://appassets.androidplatform.net/index.html")
 
-        val batteryPrompted = checkBatteryOptimization()
+        val batteryDialogOpen = checkBatteryOptimization()
         createNotificationChannel()
         requestNotificationPermission()
         requestExactAlarmPermission()
         restoreRemindersFromPrefs()
-        if (!batteryPrompted) logPermissionDiagnostics()
+        if (batteryDialogOpen) {
+            // Autostart prompt is chained after the battery dialog (see its OnDismissListener).
+        } else if (shouldPromptAutostart()) {
+            maybePromptAutostart()
+        } else {
+            logPermissionDiagnostics()
+        }
     }
 
     // Alarms die on force-stop / OEM kill / failed boot restore and are NOT
@@ -207,9 +213,11 @@ class MainActivity : AppCompatActivity() {
     private fun logPermissionDiagnostics(force: Boolean = false) {
         val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
 
-        val notifEnabled = if (Build.VERSION.SDK_INT >= 33) {
+        val permGranted = if (Build.VERSION.SDK_INT >= 33) {
             checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
         } else true
+        val notifEnabled = permGranted &&
+            androidx.core.app.NotificationManagerCompat.from(this).areNotificationsEnabled()
         val notifChannelOk = nm.getNotificationChannel(NotificationHelper.CHANNEL_ID)?.let {
             it.importance != android.app.NotificationManager.IMPORTANCE_NONE
         } ?: false
@@ -227,18 +235,26 @@ class MainActivity : AppCompatActivity() {
         Log.w(TAG, "Notification channel ok: $notifChannelOk")
         Log.w(TAG, "canScheduleExactAlarms: $canExact")
         Log.w(TAG, "Battery optimization ignored: $batteryIgnored")
-        Log.w(TAG, "═══════════════════════════════════════════════")
-
-        val issues = mutableListOf<String>()
-        if (!notifEnabled) issues.add("нет разрешения на уведомления")
-        if (!notifChannelOk) issues.add("канал уведомлений отключён")
-        if (!canExact) issues.add("запрещены точные будильники")
-        if (!batteryIgnored) issues.add("оптимизация батареи включена")
-        if (OEMHelper.isAggressiveOEM()) {
-            issues.add("${oemInfo.manufacturer}: требуется автозапуск и «Без ограничений» батареи")
-        }
 
         val prefs = getSharedPreferences("schedule_prefs", MODE_PRIVATE)
+        // No public API can query OEM "autostart" — track a manual confirmation.
+        val autostartOk = !OEMHelper.isAggressiveOEM() || prefs.getBoolean("autostart_confirmed", false)
+        Log.w(TAG, "Autostart confirmed: $autostartOk")
+        Log.w(TAG, "═══════════════════════════════════════════════")
+
+        val checks = mutableListOf(
+            Triple("Разрешение на уведомления", notifEnabled, "notif"),
+            Triple("Канал уведомлений", notifChannelOk, "channel"),
+            Triple("Точные будильники", canExact, "exact"),
+            Triple("Оптимизация батареи отключена", batteryIgnored, "battery")
+        )
+        if (OEMHelper.isAggressiveOEM()) {
+            checks.add(Triple("Автозапуск (${oemInfo.manufacturer})", autostartOk, "autostart"))
+        }
+        val issues = checks.filter { !it.second }
+        val checklist = checks.joinToString("\n") { (name, ok, _) ->
+            (if (ok) "✔ " else "✘ ") + name
+        }
 
         val configured = try {
             org.json.JSONArray(prefs.getString("reminders_json", "[]") ?: "[]").length()
@@ -251,18 +267,12 @@ class MainActivity : AppCompatActivity() {
 
         if (issues.isEmpty()) {
             if (!force) return
-            val extra = if (OEMHelper.isAggressiveOEM())
-                "\n\nНапоминание для ${oemInfo.manufacturer}: если напоминания пропадают, проверьте автозапуск и экономию батареи."
-            else ""
             runOnUiThread {
                 AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
-                    .setTitle("✅ Уведомления настроены")
+                    .setTitle("✅ Все разрешения включены")
                     .setMessage(
                         "Устройство: ${Build.MANUFACTURER} ${Build.MODEL} (${oemInfo.name})\n\n" +
-                        "✔ Разрешение на уведомления\n" +
-                        "✔ Канал уведомлений\n" +
-                        "✔ Точные будильники\n" +
-                        "✔ Оптимизация батареи отключена" + extra + statusBlock
+                        checklist + statusBlock
                     )
                     .setPositiveButton("OK", null)
                     .show()
@@ -273,16 +283,72 @@ class MainActivity : AppCompatActivity() {
         if (!force && prefs.getBoolean("oem_diag_dismissed", false)) return
 
         val stepsText = oemInfo.steps.joinToString("\n")
-        val msg = "Проблемы (${issues.size}): ${issues.joinToString(", ")}.\n\n" +
-            "Как исправить:\n$stepsText" + statusBlock
+        val broken = issues.joinToString(", ") { it.first }
+        val msg = "Не включено (${issues.size}):\n\n$checklist\n\nКак исправить:\n$stepsText" + statusBlock
+        val builder = AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
+            .setTitle("⚠️ Не включено: $broken")
+            .setMessage(msg)
+            .setPositiveButton("Исправить") { _, _ -> openIssueSetting(issues.first().third) }
+            .setNegativeButton("Позже", null)
+        if (issues.any { it.third == "autostart" }) {
+            builder.setNeutralButton("Я включил") { _, _ ->
+                prefs.edit().putBoolean("autostart_confirmed", true).apply()
+                logPermissionDiagnostics(force = true)
+            }
+        } else {
+            builder.setNeutralButton("Не напоминать") { _, _ ->
+                prefs.edit().putBoolean("oem_diag_dismissed", true).apply()
+            }
+        }
+        runOnUiThread { builder.show() }
+    }
+
+    private fun openIssueSetting(issueId: String) {
+        try {
+            when (issueId) {
+                "notif", "channel" -> startActivity(
+                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                )
+                "exact" -> startActivity(
+                    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                        .apply { data = android.net.Uri.parse("package:$packageName") }
+                )
+                "battery" -> startActivity(
+                    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                        .apply { data = android.net.Uri.parse("package:$packageName") }
+                )
+                else -> OEMHelper.openOEMSettings(this)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "openIssueSetting($issueId) failed", e)
+            OEMHelper.openAppSettings(this)
+        }
+    }
+
+    // OEM skins (ColorOS/MIUI/EMUI...) block background start and silently drop
+    // notifications from a closed app until "autostart" is granted. Offer it
+    // once per install/update — there is no API to check it programmatically.
+    private fun shouldPromptAutostart(): Boolean {
+        if (!OEMHelper.isAggressiveOEM()) return false
+        val prefs = getSharedPreferences("schedule_prefs", MODE_PRIVATE)
+        return !prefs.getBoolean("autostart_prompted", false)
+    }
+
+    private fun maybePromptAutostart() {
+        if (!shouldPromptAutostart()) return
+        val prefs = getSharedPreferences("schedule_prefs", MODE_PRIVATE)
+        prefs.edit().putBoolean("autostart_prompted", true).apply()
+        val info = OEMHelper.getOEMInfo()
         runOnUiThread {
             AlertDialog.Builder(this, R.style.Theme_Schedule_Dialog)
-                .setTitle("⚠️ ${oemInfo.manufacturer}: уведомления могут не работать")
-                .setMessage(msg + "\n\nОткрыть настройки?")
-                .setPositiveButton("Настройки") { _, _ -> OEMHelper.openOEMSettings(this) }
-                .setNeutralButton("Не напоминать") { _, _ ->
-                    prefs.edit().putBoolean("oem_diag_dismissed", true).apply()
-                }
+                .setTitle("⚙️ ${info.manufacturer}: включи автозапуск")
+                .setMessage(
+                    "Уведомления из закрытого приложения не придут, " +
+                    "пока не разрешён автозапуск и фоновая работа на ${info.manufacturer}.\n\nКак включить:\n" +
+                    info.steps.joinToString("\n")
+                )
+                .setPositiveButton("Открыть настройки") { _, _ -> OEMHelper.openOEMSettings(this) }
                 .setNegativeButton("Позже", null)
                 .show()
         }
@@ -356,6 +422,8 @@ class MainActivity : AppCompatActivity() {
                 .setNegativeButton("Позже", null)
                 .setOnDismissListener {
                     prefs.edit().putBoolean("battery_prompted", true).apply()
+                    if (shouldPromptAutostart()) maybePromptAutostart()
+                    else logPermissionDiagnostics()
                 }
                 .show()
             return true

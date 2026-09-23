@@ -17,6 +17,10 @@ class BootReceiver : BroadcastReceiver() {
 
         try {
             val prefs = context.getSharedPreferences("schedule_prefs", Context.MODE_PRIVATE)
+            // Re-offer the OEM autostart prompt after every app update.
+            if (intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+                prefs.edit().remove("autostart_prompted").apply()
+            }
             val json = prefs.getString("reminders_json", null)
             if (json.isNullOrEmpty()) {
                 Log.d("ScheduleApp", "No saved reminders")

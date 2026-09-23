@@ -86,6 +86,7 @@ object OEMHelper {
                     "4. Доп. настройки → Отключить «Оптимизацию сна»"
                 ),
                 intents = listOf(
+                    Intent().setComponent(ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity")),
                     Intent().setComponent(ComponentName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppManagerActivity")),
                     Intent().setComponent(ComponentName("com.coloros.safecenter", "com.coloros.privacypermissions.repository.PermissionRepositoryActivity")),
                     Intent("oppo.intent.action.AUTO_START").addCategory(Intent.CATEGORY_DEFAULT)
