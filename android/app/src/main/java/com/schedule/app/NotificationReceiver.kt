@@ -4,10 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.work.Data
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import java.util.concurrent.TimeUnit
 
 class NotificationReceiver : BroadcastReceiver() {
 
@@ -47,30 +43,10 @@ class NotificationReceiver : BroadcastReceiver() {
 
         Log.d(TAG, "NotificationReceiver.onReceive: title=$title, notifId=$notifId, repeat=$repeat, key=$key")
 
-        val inputData = Data.Builder()
-            .putString(NotificationWorker.KEY_TITLE, title)
-            .putString(NotificationWorker.KEY_TEXT, text)
-            .putInt(NotificationWorker.KEY_NOTIF_ID, notifId)
-            .putString(NotificationWorker.KEY_SOUND, soundUri)
-            .putBoolean(NotificationWorker.KEY_VIBRO, vibro)
-            .putString(NotificationWorker.KEY_REPEAT, repeat)
-            .putString(NotificationWorker.KEY_TYPE, type)
-            .putInt(NotificationWorker.KEY_DAY_IDX, dayIdx)
-            .putInt(NotificationWorker.KEY_ITEM_IDX, itemIdx)
-            .putString(NotificationWorker.KEY_TIME, time)
-            .putString(NotificationWorker.KEY_SUBJ, subj)
-            .putInt(NotificationWorker.KEY_MINS, mins)
-            .putString(NotificationWorker.KEY_WHEN, whenType)
-            .putString(NotificationWorker.KEY_KEY, key)
-            .build()
-
-        val workRequest = OneTimeWorkRequestBuilder<NotificationWorker>()
-            .setInputData(inputData)
-            .setInitialDelay(0, TimeUnit.MILLISECONDS)
-            .build()
-
-        WorkManager.getInstance(context).enqueue(workRequest)
-        Log.d(TAG, "NotificationReceiver: delegated to WorkManager, notifId=$notifId")
+        NotificationHelper.showReminder(context, title, text, notifId, soundUri, vibro)
+        if (repeat == "weekly") {
+            NotificationHelper.rescheduleWeekly(context, type, dayIdx, itemIdx, time, subj, mins, whenType, key, soundUri, vibro)
+        }
     }
 
     private val TAG = "ScheduleApp"

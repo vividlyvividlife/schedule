@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
@@ -100,6 +101,76 @@ object NotificationHelper {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
         }
+    }
+
+    // Shown synchronously from the alarm's BroadcastReceiver: WorkManager/JobScheduler
+    // defers jobs for a killed app, so notifications silently never appeared.
+    fun showReminder(context: Context, title: String, text: String, notifId: Int, soundUri: String, vibro: Boolean) {
+        val channelId = channelFor(context, soundUri, vibro)
+
+        val launchIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, notifId, launchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = androidx.core.app.NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(androidx.core.app.NotificationCompat.BigTextStyle().bigText(text))
+            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(notifId, builder.build())
+        Log.d(TAG, "Reminder shown notifId=$notifId channel=$channelId")
+    }
+
+    fun rescheduleWeekly(
+        context: Context, type: String, dayIdx: Int, itemIdx: Int, time: String,
+        subj: String, mins: Int, whenType: String, key: String, sound: String, vibro: Boolean
+    ) {
+        val triggerAt = nextTriggerMillis(dayIdx, time, whenType, mins)
+        if (triggerAt == null) {
+            Log.e(TAG, "Cannot reschedule $key — bad time '$time'")
+            return
+        }
+
+        val notifId = key.hashCode()
+        val intent = Intent(context, NotificationReceiver::class.java).apply {
+            putExtra(NotificationReceiver.EXTRA_TITLE, reminderTitle(type))
+            putExtra(NotificationReceiver.EXTRA_TEXT, reminderText(type, dayIdx, time, subj, mins, whenType))
+            putExtra(NotificationReceiver.EXTRA_NOTIF_ID, notifId)
+            putExtra(NotificationReceiver.EXTRA_SOUND, sound)
+            putExtra(NotificationReceiver.EXTRA_VIBRO, vibro)
+            putExtra(NotificationReceiver.EXTRA_REPEAT, "weekly")
+            putExtra(NotificationReceiver.EXTRA_TYPE, type)
+            putExtra(NotificationReceiver.EXTRA_DAY_IDX, dayIdx)
+            putExtra(NotificationReceiver.EXTRA_ITEM_IDX, itemIdx)
+            putExtra(NotificationReceiver.EXTRA_TIME, time)
+            putExtra(NotificationReceiver.EXTRA_SUBJ, subj)
+            putExtra(NotificationReceiver.EXTRA_MINS, mins)
+            putExtra(NotificationReceiver.EXTRA_WHEN, whenType)
+            putExtra(NotificationReceiver.EXTRA_KEY, key)
+        }
+        val pending = PendingIntent.getBroadcast(
+            context, notifId, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val showIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val showPending = PendingIntent.getActivity(
+            context, notifId, showIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        scheduleExact(context, triggerAt, pending, showPending)
+        Log.d(TAG, "Weekly rescheduled $key → ${java.util.Date(triggerAt)}")
     }
 
     // Since API 26 channel settings override builder.setSound/setVibrate,
