@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Расписание Николь</title>
-<link rel="stylesheet" href="../style.css?v=6">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css?v=9">
 <!-- Yandex.Metrika counter (только веб: в Android-приложении не активируется) -->
 <script type="text/javascript">
     if (!window.Android) {
@@ -23,13 +24,14 @@
 </head>
 <body>
 
+<section class="day-hero" aria-label="Обзор дня">
 <div class="header">
   <div>
     <h1>Расписание Николь</h1>
     <div class="sub">2 «А» · СОШ №12 · 2026–2027</div>
     <div class="date" id="dateDisplay" data-clock></div>
     <a href="../" style="font-size:12px;color:var(--accent);text-decoration:none;margin-top:4px;display:inline-block;">← Основное расписание</a>
-    <div style="margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <div class="header-links" style="margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <a id="webDocsLink" href="https://github.com/vividlyvividlife/schedule#-как-пользоваться" target="_blank" style="font-size:12px;color:var(--accent);text-decoration:none;">📖 Как пользоваться</a>
       <a id="webApkLink" href="https://github.com/vividlyvividlife/schedule/releases/latest/download/schedule.apk" style="font-size:12px;color:var(--accent);text-decoration:none;">⬇️ APK</a>
     </div>
@@ -41,6 +43,8 @@
 
 <div class="status" id="status"></div>
 <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div></div>
+</section>
+
 <div class="day-tabs" id="dayTabs"></div>
 <div class="day-content" id="dayContent"></div>
 
