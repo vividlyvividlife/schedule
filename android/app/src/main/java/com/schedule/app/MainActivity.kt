@@ -994,11 +994,14 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "Скачиваю версию $version…", Toast.LENGTH_SHORT).show()
         Thread {
             try {
-                val conn = URL("https://github.com/vividlyvividlife/schedule/releases/latest/download/schedule.apk")
+                val conn = URL("https://github.com/vividlyvividlife/schedule/releases/latest/download/schedule.apk?t=${System.currentTimeMillis()}")
                     .openConnection() as HttpURLConnection
                 conn.connectTimeout = 10000
                 conn.readTimeout = 30000
+                conn.useCaches = false
+                conn.setRequestProperty("Cache-Control", "no-cache")
                 val file = File(filesDir, "updates").also { it.mkdirs() }.let { File(it, "schedule-update.apk") }
+                file.delete()
                 conn.inputStream.use { input -> FileOutputStream(file).use { output -> input.copyTo(output) } }
                 conn.disconnect()
                 runOnUiThread { installDownloadedApk(file) }
