@@ -118,6 +118,7 @@ object NotificationHelper {
 
         val builder = androidx.core.app.NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setColor(0xFF8EE0C3.toInt())
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(androidx.core.app.NotificationCompat.BigTextStyle().bigText(text))

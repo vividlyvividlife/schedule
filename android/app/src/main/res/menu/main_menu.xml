@@ -39,6 +39,11 @@
     </item>
 
     <item
+        android:id="@+id/menu_reminders"
+        android:title="🔔 Напоминания"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_notifications"
         android:title="🔔 Проверить уведомления"
         app:showAsAction="never" />

@@ -1,33 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Schedule" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#5b6abf</item>
-        <item name="colorPrimaryVariant">#4a5aae</item>
-        <item name="colorOnPrimary">#ffffff</item>
-        <item name="colorSecondary">#8b9de8</item>
-        <item name="android:statusBarColor">#141420</item>
-        <item name="android:navigationBarColor">#141420</item>
+        <item name="colorPrimary">#153035</item>
+        <item name="colorPrimaryVariant">#0d2129</item>
+        <item name="colorOnPrimary">#f4faf8</item>
+        <item name="colorSecondary">#167d70</item>
+        <item name="colorAccent">#167d70</item>
+        <item name="android:statusBarColor">#0d2129</item>
+        <item name="android:navigationBarColor">#0d2129</item>
     </style>
 
     <style name="Theme.Schedule.Dialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
-        <item name="colorPrimary">#5b6abf</item>
-        <item name="colorSecondary">#8b9de8</item>
-        <item name="android:textColorPrimary">#ededf4</item>
-        <item name="android:textColorSecondary">#9595b4</item>
-        <item name="android:background">#1c1c30</item>
+        <item name="colorPrimary">#8ee0c3</item>
+        <item name="colorSecondary">#167d70</item>
+        <item name="colorAccent">#8ee0c3</item>
+        <item name="android:textColorPrimary">#edf5f2</item>
+        <item name="android:textColorSecondary">#a1b6bb</item>
+        <item name="android:background">#192a33</item>
         <item name="buttonBarPositiveButtonStyle">@style/DialogButton</item>
         <item name="buttonBarNegativeButtonStyle">@style/DialogButton</item>
         <item name="dialogCornerRadius">16dp</item>
     </style>
 
     <style name="DialogButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">#8b9de8</item>
+        <item name="android:textColor">#8ee0c3</item>
+    </style>
+
+    <style name="Theme.Schedule.Popup" parent="ThemeOverlay.MaterialComponents.Dark">
+        <item name="colorPrimary">#8ee0c3</item>
+        <item name="colorAccent">#8ee0c3</item>
+        <item name="android:colorBackground">#192a33</item>
+        <item name="android:background">#192a33</item>
+        <item name="android:textColorPrimary">#edf5f2</item>
+        <item name="android:textColorSecondary">#a1b6bb</item>
     </style>
 
     <style name="Theme.Schedule.Menu" parent="ThemeOverlay.MaterialComponents.Dark">
-        <item name="colorPrimary">#5b6abf</item>
-        <item name="android:background">#1c1c30</item>
-        <item name="android:textColorPrimary">#ededf4</item>
-        <item name="android:textColorSecondary">#9595b4</item>
+        <item name="colorPrimary">#8ee0c3</item>
+        <item name="android:background">#192a33</item>
+        <item name="android:textColorPrimary">#edf5f2</item>
+        <item name="android:textColorSecondary">#a1b6bb</item>
     </style>
 </resources>

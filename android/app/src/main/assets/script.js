@@ -476,7 +476,8 @@ function renderCountdowns() {
   const pct = Math.min(100, Math.round(pctRaw * 10) / 10);
   const pctDisplay = pct % 1 === 0 ? pct : pct.toFixed(1);
 
-  const dayWord = daysPassed === 1 ? "день" : (daysPassed >= 2 && daysPassed <= 4 ? "дня" : "дней");
+  const dA = daysPassed % 100, dD = daysPassed % 10;
+  const dayWord = (dA >= 11 && dA <= 19) || dD === 0 || dD > 4 ? "дней" : (dD === 1 ? "день" : "дня");
   const phrases = [
     `📚 ${daysPassed} ${dayWord} учебы — ${pctDisplay}% пути`,
     `📚 ${daysPassed} ${dayWord} за партами — ${pctDisplay}% пути`,
@@ -1144,7 +1145,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
     const mins = !isNaN(custom) ? custom : d._selectedMin;
     if (mins === null || isNaN(mins) || mins < 0) { if (window.Android) Android.showToast("Укажи минуты"); return; }
     const key = getReminderKey(type, dayIdx, itemIdx, time, d._selectedWhen);
-    reminders = reminders.filter(r => r.key !== key);
+    reminders = reminders.filter(r => r.key !== key && (!existing || r.key !== existing.key));
     reminders.push({ key, type, dayIdx, itemIdx, time, subj, mins, repeat: d._selectedRepeat, sound: d._selectedSound, vibro: d._selectedVibro, when: d._selectedWhen });
     saveReminders();
     d.remove();
@@ -1153,6 +1154,7 @@ function showReminderDialog(type, dayIdx, itemIdx, time, subj, existing, when) {
     if (window.Android) Android.showToast("Напоминание за " + mins + " мин ✓ (" + rptLabel + ")");
   };
   d.onclick = (e) => { if (e.target === d) { if (window.Android) Android.stopRingtone(); d.remove(); } };
+  return d;
 }
 
 window._ringtonePicked = function(uri) {
@@ -1176,6 +1178,73 @@ function hasReminder(type, dayIdx, itemIdx, time, when) {
 // Small "за N мин" label shown under an active bell icon.
 function bellMinsHtml(r) {
   return r ? `<span style="display:block;font-size:9px;line-height:1;">за ${r.mins} мин</span>` : "";
+}
+
+function showRemindersMenu() {
+  document.querySelectorAll(".reminders-list-overlay").forEach(el => el.remove());
+  document.body.style.overflow = "";
+  const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+  const labels = { school: "Урок", personal: "Занятие", extended: "Продлёнка" };
+  const d = document.createElement("div");
+  d.className = "reminders-list-overlay";
+  d.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:flex-end;justify-content:center;";
+  const closeList = () => { document.body.style.overflow = ""; d.remove(); };
+  function renderList() {
+    const keep = d.querySelector(".rem-rows");
+    const scrollTop = keep ? keep.scrollTop : 0;
+    const rows = reminders.map((r, i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:600;">${labels[r.type] || r.type} · ${dayNames[r.dayIdx] != null ? dayNames[r.dayIdx] : "?"} · ${r.time}</div>
+          <div style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;">${r.subj} · за ${r.mins} мин · ${r.when === "end" ? "до конца" : "до начала"} · ${r.repeat === "once" ? "один раз" : "еженедельно"}</div>
+        </div>
+        <button data-i="${i}" class="rem-edit" style="min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--active-bg);cursor:pointer;font-size:17px;" title="Редактировать">✏️</button>
+        <button data-i="${i}" class="rem-del" style="min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:#d45555;color:#fff;cursor:pointer;font-size:17px;" title="Удалить">🗑</button>
+      </div>`).join("");
+    d.innerHTML = `
+      <div style="background:var(--card);width:100%;max-width:480px;color:var(--text);max-height:88vh;display:flex;flex-direction:column;border-radius:20px 20px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,0.25);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 10px;flex-shrink:0;">
+          <div style="font-size:17px;font-weight:600;">🔔 Напоминания</div>
+          <button class="rem-close" style="min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--active-bg);cursor:pointer;font-size:18px;">✕</button>
+        </div>
+        <div class="rem-rows" style="overflow-y:auto;overscroll-behavior:contain;padding:0 20px calc(20px + env(safe-area-inset-bottom));">
+          ${rows || '<div style="font-size:13px;color:var(--muted);padding:12px 0;">Нет активных напоминаний</div>'}
+        </div>
+      </div>`;
+    const sc = d.querySelector(".rem-rows");
+    if (sc) sc.scrollTop = scrollTop;
+    d.querySelector(".rem-close").onclick = closeList;
+    d.querySelectorAll(".rem-edit").forEach(btn => {
+      btn.onclick = () => {
+        const r = reminders[parseInt(btn.dataset.i)];
+        if (!r) return;
+        closeList();
+        const dlg = showReminderDialog(r.type, r.dayIdx, r.itemIdx, r.time, r.subj, r, r.when);
+        if (dlg && window.MutationObserver) {
+          const obs = new MutationObserver(() => {
+            if (!dlg.isConnected) { obs.disconnect(); showRemindersMenu(); }
+          });
+          obs.observe(document.body, { childList: true });
+        }
+      };
+    });
+    d.querySelectorAll(".rem-del").forEach(btn => {
+      btn.onclick = () => {
+        const r = reminders[parseInt(btn.dataset.i)];
+        if (!r) return;
+        if (window.Android && !Android.showConfirm("Удалить напоминание?")) return;
+        reminders = reminders.filter(x => x.key !== r.key);
+        saveReminders();
+        renderAll();
+        renderList();
+        if (window.Android) Android.showToast("Напоминание удалено");
+      };
+    });
+  }
+  renderList();
+  d.onclick = (e) => { if (e.target === d) closeList(); };
+  document.body.style.overflow = "hidden";
+  document.body.appendChild(d);
 }
 
 function toggleEditMode() {
@@ -1491,6 +1560,8 @@ function deleteFromModal() {
     }
   }
   saveLocalData(data);
+  reconcileReminders();
+  saveReminders();
   closeModal();
   buildToggles();
   renderAll();

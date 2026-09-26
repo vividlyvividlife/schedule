@@ -103,7 +103,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate: loading schedule")
 
         val swipeRefresh = findViewById<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>(R.id.swipeRefresh)
-        swipeRefresh.setColorSchemeColors(0xFF6200EE.toInt())
+        swipeRefresh.setColorSchemeColors(0xFF167D70.toInt())
         swipeRefresh.setOnRefreshListener {
             webView.clearCache(true)
             webView.loadUrl("https://appassets.androidplatform.net/index.html?t=${System.currentTimeMillis()}")
@@ -470,6 +470,7 @@ class MainActivity : AppCompatActivity() {
             R.id.menu_import -> { openFilePicker(); true }
             R.id.menu_edit_mode -> { toggleEditMode(); true }
             R.id.menu_notifications -> { logPermissionDiagnostics(force = true); true }
+            R.id.menu_reminders -> { webView.evaluateJavascript("showRemindersMenu()", null); true }
             R.id.menu_load_defaults -> { confirmLoadDefaults(); true }
             R.id.menu_delete_schedule -> { confirmDeleteType("schedule", "все уроки"); true }
             R.id.menu_delete_personal -> { confirmDeleteType("personal", "все занятия"); true }
