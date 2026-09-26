@@ -899,7 +899,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,.d
 @media(max-width:767px) {
   .day-hero { margin-top:12px; border-radius:24px; padding:8px 0 20px; }
   .header { padding:18px 18px; gap:10px; }
-  .header h1 { font-size:29px; letter-spacing:-1px; }
+  .header h1 { font-size:24px; letter-spacing:-1px; }
   .header .sub { font-size:10px; letter-spacing:1px; }
   .header .date { font-size:13px; }
   .header-links { margin-top:12px!important; gap:2px 10px!important; }
@@ -911,12 +911,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,.d
   .status { font-size:12px; }
   .countdowns { gap:7px; padding-bottom:18px; }
   .countdown-item { padding:12px 10px; font-size:10px; border-radius:14px; gap:5px; }
-  .lesson-body { padding:16px 12px; gap:8px; flex-wrap:wrap; }
-  .lesson-info { flex-basis:calc(100% - 145px); }
+  .lesson-body { padding:16px 12px; gap:8px; flex-wrap:nowrap; }
+  .lesson-info { flex-basis:calc(100% - 200px); }
   .lesson-icon { width:34px; height:36px; font-size:18px; }
   .lesson-icon.grid { font-size:12px; }
   .lesson-subject { font-size:15px; }
-  .merge-actions { flex-wrap:wrap; max-width:80px; }
+  .merge-actions { flex-wrap:nowrap; max-width:none; }
   .merge-row { padding:14px 12px; gap:8px; }
   .modal-overlay { padding:12px; align-items:flex-end; }
   .modal { max-height:calc(100dvh - 24px); border-radius:24px; }
@@ -924,7 +924,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,.d
 }
 @media(max-width:360px) {
   .day-hero,.countdowns,.day-tabs,.day-content { margin-left:10px; margin-right:10px; }
-  .header h1 { font-size:25px; }
+  .header h1 { font-size:21px; }
   .countdowns { grid-template-columns:1fr; }
   .countdown-item { min-height:48px; font-size:12px; }
 }

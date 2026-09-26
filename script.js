@@ -443,7 +443,8 @@ function renderCountdowns() {
   const pct = Math.min(100, Math.round(pctRaw * 10) / 10);
   const pctDisplay = pct % 1 === 0 ? pct : pct.toFixed(1);
 
-  const dayWord = daysPassed === 1 ? "день" : (daysPassed >= 2 && daysPassed <= 4 ? "дня" : "дней");
+  const dA = daysPassed % 100, dD = daysPassed % 10;
+  const dayWord = (dA >= 11 && dA <= 19) || dD === 0 || dD > 4 ? "дней" : (dD === 1 ? "день" : "дня");
   const phrases = [
     `📚 ${daysPassed} ${dayWord} учебы — ${pctDisplay}% пути`,
     `📚 ${daysPassed} ${dayWord} за партами — ${pctDisplay}% пути`,
