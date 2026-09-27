@@ -994,12 +994,18 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "Скачиваю версию $version…", Toast.LENGTH_SHORT).show()
         Thread {
             try {
-                val conn = URL("https://github.com/vividlyvividlife/schedule/releases/latest/download/schedule.apk?t=${System.currentTimeMillis()}")
-                    .openConnection() as HttpURLConnection
+                // Качаем по тегу, а не releases/latest: latest — редирект на «что сейчас
+                // последнее», и кэш (устройство, прокси оператора, CDN) отдаёт по нему
+                // устаревший ассет. Установщик затем всё равно падал с «Later version
+                // already installed», потому что ставился старый код версии.
+                val url = "https://github.com/vividlyvividlife/schedule/releases/download/$version/schedule.apk?t=${System.currentTimeMillis()}"
+                val conn = URL(url).openConnection() as HttpURLConnection
                 conn.connectTimeout = 10000
                 conn.readTimeout = 30000
                 conn.useCaches = false
-                conn.setRequestProperty("Cache-Control", "no-cache")
+                conn.instanceFollowRedirects = true
+                conn.setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
+                conn.setRequestProperty("Pragma", "no-cache")
                 val file = File(filesDir, "updates").also { it.mkdirs() }.let { File(it, "schedule-update.apk") }
                 file.delete()
                 conn.inputStream.use { input -> FileOutputStream(file).use { output -> input.copyTo(output) } }
@@ -1012,8 +1018,31 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
+    // Скачанный APK обязан быть новее установленного, иначе установщик откажется
+    // с невнятным «Later version already installed». Проверяем до показа диалога.
     private fun installDownloadedApk(file: File) {
         try {
+            val installed = packageManager.getPackageInfo(packageName, 0)
+            val archive = packageManager.getPackageArchiveInfo(file.absolutePath, 0)
+            if (archive == null) {
+                Toast.makeText(this, "Скачанный файл не похож на APK — обновление отменено", Toast.LENGTH_LONG).show()
+                return
+            }
+            val got: Long = if (android.os.Build.VERSION.SDK_INT >= 28) {
+                archive.longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                archive.versionCode.toLong()
+            }
+            if (got <= installed.versionCode) {
+                Toast.makeText(
+                    this,
+                    "Скачалась версия ${archive.versionName} (код $got), а установлена " +
+                        "${installed.versionName} (код ${installed.versionCode}). Обновление отменено.",
+                    Toast.LENGTH_LONG
+                ).show()
+                return
+            }
             if (!packageManager.canRequestPackageInstalls()) {
                 // Remember the APK: install resumes automatically in onResume()
                 // once the user grants the permission and comes back.
