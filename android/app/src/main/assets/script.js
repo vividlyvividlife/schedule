@@ -756,49 +756,14 @@ function addHeaderEditBtn() {
   header.insertBefore(btn, header.querySelector(".date"));
 }
 
-function renderStatus() {
-  const el = document.getElementById("status");
-  const today = getTodayIndex();
-  const day = SCHEDULE[today];
-  const items = getTodayItems(today);
-  const info = items.length ? getCurrentLesson({ lessons: items }) : null;
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-
-  if (!items.length) {
-    const msg = getWeekendMessage(today);
-    const tip = today === 5
-      ? "Отдыхай — ты заслужил!"
-      : today === 6
-        ? "Завтра школа — подготовь рюкзак!"
-        : "Включи нужные расписания тоглами ↑";
-    el.innerHTML = `${msg.emoji} ${msg.text}<br><span style="font-size:12px;color:var(--muted)">${tip}</span>`;
-    return;
-  }
-  if (!info) {
-    el.innerHTML = `${day.name} · ${timeStr} · Уроков на сегодня нет`;
-    return;
-  }
-  const l = items[info.idx];
-  if (info.type === "current") {
-    const endTime = parseTime(l.time.split(/[–\-]/)[1]);
-    el.innerHTML = `Сейчас: <span class="highlight">${l.subj}</span> · ${l.time} · <span data-cd-end="${endTime}">${remainingSec(endTime)}</span>`;
-  } else if (info.type === "next") {
-    el.innerHTML = `Следующий: <span class="highlight">${l.subj}</span> · ${l.time} · <span data-cd="${parseTime(l.time)}">${countdownSec(parseTime(l.time))}</span>`;
-  } else {
-    el.innerHTML = `${day.name} · ${timeStr} · Уроков на сегодня нет`;
-  }
-}
-
-// All visible schedules for a day: school + personal + custom + extended.
-// Shared by the top progress bar and the status line so they always agree.
-function getTodayItems(today) {
+function focusEvents(today) {
   const day = SCHEDULE[today] || { lessons: [] };
-  const allItems = schoolOn ? [...(day.lessons || [])] : [];
-  if (personalOn) allItems.push(...(PERSONAL[today] || []));
+  const out = [];
+  if (schoolOn) for (const l of (day.lessons || [])) out.push({ ...l, typeLabel: "Урок" });
+  if (personalOn) for (const p of (PERSONAL[today] || [])) out.push({ ...p, typeLabel: "Занятие" });
   for (const k of Object.keys(CUSTOM)) {
     if (!customOn(k)) continue;
-    allItems.push(...(((CUSTOM[k] || {})[today]) || []));
+    for (const c of ((CUSTOM[k] || {})[today] || [])) out.push({ ...c, typeLabel: k });
   }
   if (extendedOn && today <= 4) { // extended care is Mon-Fri only, Sat/Sun off
     for (const e of EXTENDED) {
@@ -812,38 +777,97 @@ function getTodayItems(today) {
         const eE = parseTime(e.time.split(/[–\-]/)[1] || "") * 60;
         if (eS < lE && eE > lS) { overlaps = true; break; }
       }
-      if (!overlaps) allItems.push(e);
+      if (!overlaps) out.push({ ...e, typeLabel: "Продлёнка" });
     }
   }
-  return allItems;
+  out.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  return out;
+}
+
+function focusEnd(item) {
+  const end = parseTime((item.time.split(/[–\-]/)[1] || "").trim());
+  return end || parseTime(item.time) + 45;
+}
+
+const FOCUS_EYEBROW = {
+  current: "СЕЙЧАС ИДЁТ",
+  next: "ДАЛЬШЕ ПО ПЛАНУ",
+  past: "СОБЫТИЯ ЗАКОНЧИЛИСЬ",
+  free: "МОЖНО ВЫДОХНУТЬ"
+};
+
+function resolveFocus(events, minute) {
+  const current = events.find(e => parseTime(e.time) <= minute && focusEnd(e) > minute) || null;
+  const next = current ? null : (events.find(e => parseTime(e.time) > minute) || null);
+  if (!current && !next) {
+    return {
+      state: events.length ? "past" : "free",
+      title: events.length ? "До завтра" : "Свободный день",
+      html: events.length
+        ? '<span class="empty">Все события позади. Хорошего отдыха!</span>'
+        : '<span class="empty">На сегодня ничего нет</span>'
+    };
+  }
+  const e = current || next;
+  const target = current ? focusEnd(e) : parseTime(e.time);
+  const cd = current ? "data-cd-end" : "data-cd";
+  const left = current ? remainingSec(target) : countdownSec(target);
+  return {
+    state: current ? "current" : "next",
+    title: e.subj,
+    typeLabel: e.typeLabel,
+    target: target,
+    html: `<span class="focus-type">${e.typeLabel}</span><span class="focus-time">${e.time}</span>` +
+          (e.room ? `<span>${e.room}</span>` : "") +
+          `<span class="countdown" ${cd}="${target}">${left}</span>`
+  };
+}
+
+function focusProgress(events, minute) {
+  if (!events.length) return { pct: 0, label: "Без спешки" };
+  const first = Math.min(...events.map(e => parseTime(e.time)));
+  const last = Math.max(...events.map(focusEnd));
+  const pct = last > first ? Math.max(0, Math.min(100, (minute - first) / (last - first) * 100)) : 0;
+  return { pct: pct, label: Math.round(pct) + "% дня позади" };
+}
+
+function renderStatus() {
+  const card = document.getElementById("focusCard");
+  const meta = document.getElementById("status");
+  if (!card || !meta) return;
+  const today = getTodayIndex();
+  const now = new Date();
+  const minute = now.getHours() * 60 + now.getMinutes();
+  const r = resolveFocus(focusEvents(today), minute);
+  let title = r.title;
+  let html = r.html;
+  let state = r.state;
+  if (state === "free" && today >= 5) {
+    const msg = getWeekendMessage(today);
+    title = `${msg.emoji} ${msg.text}`;
+    html = `<span class="empty">${today === 5 ? "Отдыхай — ты заслужил!" : "Завтра школа — подготовь рюкзак!"}</span>`;
+  }
+  card.dataset.state = state;
+  document.getElementById("focusEyebrow").textContent = FOCUS_EYEBROW[state];
+  document.getElementById("focusTitle").textContent = title;
+  const key = state + "|" + title + "|" + html.replace(/>[^<]*<\/span>$/, ">");
+  if (meta.dataset.key !== key) {
+    meta.innerHTML = html;
+    meta.dataset.key = key;
+  }
 }
 
 function renderProgress() {
-  try {
-  const today = getTodayIndex();
   const fill = document.getElementById("progressFill");
   const lbl = document.getElementById("progressLabel");
   if (!fill) return;
   const now = new Date();
-  const cur = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-
-  const allItems = getTodayItems(today);
-
-  if (!allItems.length) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
-  let first = Infinity, last = 0;
-  for (const item of allItems) {
-    const s = parseTime(item.time) * 60;
-    const endStr = (item.time.split(/[–\-]/)[1] || "").trim();
-    const e = endStr ? parseTime(endStr) * 60 : s + 2700;
-    if (s < first) first = s;
-    if (e > last) last = e;
-  }
-  if (first === Infinity || last <= first) { fill.style.width = "0%"; if (lbl) lbl.textContent = ""; return; }
-  const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
-  fill.style.width = pct + "%";
-  if (lbl) lbl.textContent = Math.round(pct) + "%";
-  } catch(err) {}
+  const minute = now.getHours() * 60 + now.getMinutes();
+  const p = focusProgress(focusEvents(getTodayIndex()), minute);
+  fill.style.width = p.pct + "%";
+  if (lbl) lbl.textContent = p.label;
 }
+
 
 function renderTabs() {
   const wrap = document.getElementById("dayTabs");
@@ -914,7 +938,15 @@ function onToggle() {
   console.log("[Toggles] school=" + schoolOn + " extended=" + extendedOn + " personal=" + personalOn + " custom=" +
     JSON.stringify(Array.from(document.querySelectorAll("#togglesContainer input[data-custom-key]")).map(t => ({ k: t.dataset.customKey, on: t.checked }))));
   renderAll();
+  renderStatus();
   renderProgress();
+}
+
+function setPalette(name) {
+  const indigo = name === "indigo";
+  document.body.classList.toggle("palette-indigo", indigo);
+  localStorage.setItem("palette", indigo ? "indigo" : "teal");
+  document.querySelectorAll(".swatch").forEach(s => s.classList.toggle("on", s.dataset.p === name));
 }
 
 function toggleTheme() {
@@ -1830,6 +1862,8 @@ async function init() {
   if (window.Android) Android.syncReminders(JSON.stringify(reminders));
 
   buildToggles();
+
+  if (localStorage.getItem("palette") === "indigo") setPalette("indigo");
 
   if (localStorage.getItem("theme") === "dark") {
     document.body.classList.add("dark");

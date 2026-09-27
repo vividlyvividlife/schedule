@@ -36,13 +36,41 @@
       <a id="webApkLink" href="https://github.com/vividlyvividlife/schedule/releases/latest/download/schedule.apk" style="font-size:12px;color:var(--accent);text-decoration:none;">⬇️ APK</a>
     </div>
   </div>
-  <button class="theme-btn" onclick="toggleTheme()" title="Тёмная тема">☀</button>
+  <div class="hero-controls">
+    <div class="palette-pill" role="group" aria-label="Палитра">
+      <button class="swatch on" data-p="teal" onclick="setPalette('teal')" title="Бирюзовая палитра" aria-label="Бирюзовая палитра"></button>
+      <button class="swatch" data-p="indigo" onclick="setPalette('indigo')" title="Индиго палитра" aria-label="Индиго палитра"></button>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()" title="Тёмная тема">☀</button>
+  </div>
+</div>
+
+<div class="focus-art" aria-hidden="true">
+  <div class="orbit-stage">
+    <div class="orbit-ring ring-one"></div>
+    <div class="orbit-ring ring-two"></div>
+    <div class="orbit-ring ring-three"></div>
+    <div class="orbit-core">✦</div>
+    <span class="orbit-satellite"></span>
+  </div>
 </div>
 
 <div class="toggles" id="togglesContainer"></div>
 
-<div class="status" id="status"></div>
-<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div></div>
+<section class="focus" id="focusCard" data-state="next" aria-label="Ближайшее событие">
+  <div class="focus-topline">
+    <span class="eyebrow"><i class="live-dot"></i> <span id="focusEyebrow">ДАЛЬШЕ ПО ПЛАНУ</span></span>
+  </div>
+  <h2 class="focus-title" id="focusTitle">—</h2>
+  <div class="status" id="status"></div>
+  <div class="progress-wrap">
+    <div class="progress-caption">
+      <span>Ритм дня</span>
+      <span id="progressLabel">0% дня позади</span>
+    </div>
+    <div class="progress-bar"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+  </div>
+</section>
 </section>
 
 <div class="day-tabs" id="dayTabs"></div>

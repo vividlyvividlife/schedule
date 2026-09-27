@@ -796,13 +796,156 @@ body.edit-mode .merge-row:hover { opacity: 0.85; }
   --shadow:0 4px 24px rgba(0,0,0,.12); --progress-fill:#284b48;
   color-scheme:dark;
 }
+/* ── Переключатель палитры в шапке hero ── */
+.hero-controls { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.palette-pill { display:flex; gap:6px; padding:4px; border-radius:14px; background:#ffffff0d; border:1px solid var(--line); }
+.swatch { width:34px; height:34px; border-radius:10px; border:2px solid transparent; position:relative; transition:transform .2s,border-color .2s; }
+.swatch::after { content:''; position:absolute; inset:5px; border-radius:6px; }
+.swatch[data-p="teal"]::after { background:linear-gradient(135deg,#1c4548,#8fe6cb); }
+.swatch[data-p="indigo"]::after { background:linear-gradient(135deg,#333a72,#a8b4f7); }
+.swatch.on { border-color:var(--hero-accent); }
+@media(hover:hover) { .swatch:hover { transform:scale(1.06); } }
+
+/* ═══════════════════════════════════════════════════════════════
+   СЛОЙ 2 — ГЕРОЙ и СЛОЙ 3 — БЛОК СОБЫТИЯ
+   Четыре набора: бирюза/индиго × светлая/тёмная.
+   Бирюза живёт в :root/.dark (это текущая палитра по умолчанию),
+   индиго — в body.palette-indigo, поэтому переключается без перезагрузки.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --hero-a:#1c4548; --hero-b:#14343a; --hero-c:#1e4f50;
+  --hero-accent:#8fe6cb; --hero-muted:#b6d3d7; --hero-card:#17505a;
+  --hero-active:#5d7a80; --hero-ring:#a7e7d51c;
+  --focus-edge:#ffffff30; --focus-ink:#f4faf8; --focus-accent:#8fe6cb;
+  --focus-dim:#c3dad6; --focus-dimmer:#9dbdb9; --focus-signal:#a8b4f5;
+  --focus-track:#ffffff1f; --focus-grain:#a9e5d2; --focus-ring:#ffffff33;
+}
+.dark {
+  --hero-a:#153035; --hero-b:#0d2129; --hero-c:#183d3f;
+  --hero-accent:#a5ecd2; --hero-muted:#bdd3d7; --hero-card:#174b5a;
+  --hero-active:#778a8c; --hero-ring:#a7e7d51c;
+  --focus-edge:#ffffff29; --focus-ink:#eef7f5; --focus-accent:#a5ecd2;
+  --focus-dim:#b9d0cd; --focus-dimmer:#93adab; --focus-signal:#a8b4f5;
+  --focus-track:#ffffff1a; --focus-grain:#9fe0cd; --focus-ring:#ffffff2e;
+}
+body.palette-indigo {
+  --bg:#f5f5f0; --card:#fff; --text:#1a1a2e; --muted:#8a8a9a;
+  --accent:#5b6abf; --line:#e8e8e3; --active-bg:#f0f1f8;
+  --shadow:0 1px 4px rgba(0,0,0,0.05); --progress-fill:#e0e2f4;
+
+  --hero-a:#333a72; --hero-b:#232a52; --hero-c:#3a4280;
+  --hero-accent:#a8b4f7; --hero-muted:#c3c6e4; --hero-card:#2f3670;
+  --hero-active:#6a6f9c; --hero-ring:#b3bcf51c;
+
+  --focus-edge:#ffffff33; --focus-ink:#f2f3fc; --focus-accent:#a8b4f7;
+  --focus-dim:#c6c9e6; --focus-dimmer:#a0a4c9; --focus-signal:#8ee0c3;
+  --focus-track:#ffffff20; --focus-grain:#b3bcf5; --focus-ring:#ffffff36;
+}
+body.palette-indigo.dark {
+  --bg:#141420; --card:#1c1c30; --text:#ededf4; --muted:#9595b4;
+  --accent:#8b9de8; --line:#333352; --active-bg:#252848;
+  --shadow:0 1px 4px rgba(0,0,0,0.3); --progress-fill:#262c52;
+
+  --hero-a:#2b3358; --hero-b:#171b33; --hero-c:#252c4e;
+  --hero-accent:#8b9de8; --hero-muted:#a2aacd; --hero-card:#283059;
+  --hero-active:#5c6390; --hero-ring:#8f9ee01c;
+
+  --focus-edge:#ffffff2b; --focus-ink:#e9ebf9; --focus-accent:#8b9de8;
+  --focus-dim:#b0b6d3; --focus-dimmer:#878cb4; --focus-signal:#8ee0c3;
+  --focus-track:#ffffff1a; --focus-grain:#8f9ee0; --focus-ring:#ffffff2e;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   БЛОК СОБЫТИЯ — часть day-hero, без рамки, фона и своей высоты.
+   Орбита из форка центрируется в круге hero и вписана в него:
+   .focus-art повторяет бокс .day-hero::before, внутри квадрат 70.71%
+   (вписанный квадрат круга), все размеры считаются от --circle.
+   ═══════════════════════════════════════════════════════════════ */
+.day-hero>.header, .day-hero>.toggles, .day-hero>.focus { position:relative; z-index:1; }
+.focus { position:relative; isolation:isolate; margin:0 16px; padding:2px 0 6px; animation:focus-in .6s cubic-bezier(.2,.8,.2,1) both; }
+.focus::before {
+  content:''; position:absolute; left:0; right:0; bottom:0; height:78%; z-index:-1; opacity:.14;
+  background-image:radial-gradient(var(--focus-grain) 1px,transparent 1px);
+  background-size:20px 20px; mask-image:linear-gradient(transparent,#000);
+  -webkit-mask-image:linear-gradient(transparent,#000);
+}
+.focus-art {
+  position:absolute; z-index:-1; pointer-events:none;
+  right:5%; top:5px; width:var(--circle); height:var(--circle);
+  display:grid; place-items:center; opacity:.55;
+  -webkit-mask-image:radial-gradient(circle at 50% 50%,#000 0%,#000 40%,transparent 72%);
+  mask-image:radial-gradient(circle at 50% 50%,#000 0%,#000 40%,transparent 72%);
+}
+.orbit-stage { position:relative; width:70.71%; height:70.71%; transform:scale(var(--fit,1)); }
+.orbit-core {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:var(--focus-accent); font-size:calc(var(--circle) * .32); line-height:1;
+  filter:drop-shadow(0 0 30px #ffffff1f); animation:star-turn 18s linear infinite;
+}
+.orbit-ring {
+  position:absolute; inset:0; margin:auto;
+  width:calc(var(--circle) * .536); height:calc(var(--circle) * .536);
+  border:1px solid var(--focus-ring); border-radius:50%;
+}
+.ring-one { transform:rotateX(62deg) rotateZ(-28deg); animation:orbit-one 9s ease-in-out infinite alternate; }
+.ring-two { transform:rotateY(62deg) rotateZ(28deg); animation:orbit-two 11s ease-in-out infinite alternate; }
+.ring-three { width:calc(var(--circle) * .657); height:calc(var(--circle) * .657); border-color:var(--focus-ring); opacity:.55; transform:rotateY(25deg); }
+.orbit-satellite {
+  position:absolute;
+  left:calc(50% - var(--circle) * .19); top:calc(50% - var(--circle) * .21);
+  width:11px; height:11px; border-radius:50%;
+  background:var(--focus-signal); box-shadow:0 0 24px var(--focus-signal);
+  animation:satellite-float 5s ease-in-out infinite;
+}
+.focus[data-state="current"] .orbit-core { color:var(--focus-signal); }
+.focus[data-state="current"] .live-dot { animation:signal 2s ease-out infinite; }
+.focus[data-state="past"] .orbit-core, .focus[data-state="free"] .orbit-core { color:var(--focus-dimmer); animation-duration:40s; }
+.focus-topline { display:flex; align-items:center; gap:12px; }
+.focus .eyebrow { display:flex; align-items:center; gap:8px; color:var(--focus-accent); font-size:10px; font-weight:800; letter-spacing:.14em; line-height:1.5; }
+.focus .live-dot { width:6px; height:6px; border-radius:50%; background:var(--focus-accent); box-shadow:0 0 0 4px #ffffff14; }
+.focus .focus-title {
+  position:relative; z-index:2; margin:12px 0 0;
+  font-size:clamp(30px,6.4vw,46px); line-height:1.06; letter-spacing:-1.8px; font-weight:750;
+  max-width:16ch; text-wrap:balance;
+  animation:focus-title-in .7s cubic-bezier(.2,.8,.2,1) .07s both;
+}
+.focus[data-state="current"] .focus-title { animation:focus-title-in .7s cubic-bezier(.2,.8,.2,1) .07s both, focus-breathe 4.5s ease-in-out 1s infinite; }
+.focus[data-state="past"] .focus-title, .focus[data-state="free"] .focus-title { color:var(--focus-dim); }
+.focus .status {
+  position:relative; z-index:2; margin:12px 0 0; padding:0; max-width:none;
+  font-size:13px; line-height:1.6; color:var(--focus-dim); overflow-wrap:break-word;
+  display:flex; flex-wrap:wrap; align-items:center; gap:7px 12px;
+}
+.focus .focus-type {
+  font-size:9px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  padding:3px 7px; border-radius:6px; color:var(--focus-accent);
+  background:#ffffff14; border:1px solid var(--focus-edge);
+}
+.focus .status .focus-time { font-weight:750; color:var(--focus-ink); font-size:15px; font-variant-numeric:tabular-nums; }
+.focus .status .countdown { color:var(--focus-accent); font-variant-numeric:tabular-nums; }
+.focus .status .empty { color:var(--focus-dim); }
+.focus .progress-wrap { position:relative; z-index:2; margin:20px 0 0; padding:0; max-width:none; display:block; }
+.focus .progress-caption { display:flex; justify-content:space-between; gap:8px; color:var(--focus-dim); font-size:10px; margin-bottom:8px; }
+.focus .progress-caption span:last-child { color:var(--focus-accent); font-variant-numeric:tabular-nums; }
+.focus .progress-bar { height:5px; border:0; border-radius:8px; background:var(--focus-track); }
+.focus .progress-fill { height:100%; border-radius:8px; background:var(--focus-accent); box-shadow:0 0 12px #ffffff2e; transition:width .65s cubic-bezier(.2,.8,.2,1); }
+
+@keyframes focus-in { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+@keyframes focus-title-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+@keyframes focus-breathe { 0%,100% { text-shadow:0 0 0 #ffffff00; } 50% { text-shadow:0 0 34px var(--focus-accent); } }
+@keyframes star-turn { to { transform:rotate(360deg); } }
+@keyframes orbit-one { to { transform:rotateX(74deg) rotateZ(45deg); } }
+@keyframes orbit-two { to { transform:rotateY(74deg) rotateZ(-45deg); } }
+@keyframes satellite-float { 50% { transform:translate(15px,8px); opacity:.7; } }
+@keyframes signal { to { box-shadow:0 0 0 9px rgba(255,255,255,0); } }
+
 body { background:var(--bg); font-family:Geist, ui-sans-serif, -apple-system, BlinkMacSystemFont,'Segoe UI',sans-serif; -webkit-font-smoothing:antialiased; }
 button,input,select { font:inherit; }
 button,a,input,select { -webkit-tap-highlight-color:transparent; }
 button { touch-action:manipulation; }
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,.day-tab:focus-visible { outline:3px solid #36ad94; outline-offset:4px; }
-.day-hero { position:relative; overflow:hidden; isolation:isolate; animation:surface-in .45s ease-out; max-width:900px; margin:24px auto 20px; padding:14px 16px 24px; border-radius:30px; background:linear-gradient(120deg,#153035,#0d2129 64%,#183d3f); box-shadow:0 18px 42px #17383320; --accent:#a5ecd2; --muted:#bdd3d7; --line:#ffffff26; --card:#174b5a; --text:#f4faf8; --active-bg:#778a8c; color:var(--text); }
-.day-hero::before { content:''; position:absolute; z-index:-1; pointer-events:none; width:280px; height:280px; border:1px solid #a7e7d51c; border-radius:50%; right:5%; top:5px; box-shadow:0 0 0 34px #a7e7d509,0 0 0 70px #a7e7d505; clip-path:inset(0 -80px 0 -80px); }
+.day-hero { position:relative; overflow:hidden; isolation:isolate; animation:surface-in .45s ease-out; max-width:900px; margin:24px auto 20px; padding:14px 16px 24px; border-radius:30px; background:linear-gradient(120deg,var(--hero-a),var(--hero-b) 64%,var(--hero-c)); box-shadow:0 18px 42px #17383320; --accent:var(--hero-accent); --muted:var(--hero-muted); --line:#ffffff26; --card:var(--hero-card); --text:#f4faf8; --active-bg:var(--hero-active); --circle:280px; color:var(--text); }
+.day-hero::before { content:''; position:absolute; z-index:-1; pointer-events:none; width:var(--circle); height:var(--circle); border:1px solid var(--hero-ring); border-radius:50%; right:5%; top:5px; box-shadow:0 0 0 calc(var(--circle) * .121) var(--hero-ring),0 0 0 calc(var(--circle) * .25) var(--hero-ring); clip-path:inset(0 -80px 0 -80px); }
 .header { padding:20px 16px 22px; gap:16px; }
 .header>div:first-child { min-width:0; flex:1; }
 .header h1 { font-size:clamp(26px,4vw,40px); font-weight:750; letter-spacing:-1.5px; line-height:1.15; max-width:620px; }
@@ -897,7 +1040,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,.d
 }
 @media(max-width:940px) { .day-hero,.countdowns,.day-tabs,.day-content { margin-left:16px; margin-right:16px; } }
 @media(max-width:767px) {
-  .day-hero { margin-top:12px; border-radius:24px; padding:8px 0 20px; }
+.day-hero { --circle:200px; margin-top:12px; border-radius:24px; padding:8px 0 20px; }
   .header { padding:18px 18px; gap:10px; }
   .header h1 { font-size:24px; letter-spacing:-1px; }
   .header .sub { font-size:10px; letter-spacing:1px; }
@@ -907,8 +1050,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,.d
   .theme-btn { width:40px; height:40px; border-radius:12px; }
   .toggles { gap:7px; padding:0 18px 16px; }
   .toggle-item { padding:7px 9px; font-size:11px; }
-  .status,.progress-wrap { padding-left:18px; padding-right:18px; }
-  .status { font-size:12px; }
+.status,.progress-wrap { padding-left:18px; padding-right:18px; }
+.status { font-size:12px; }
+.focus { margin:0 18px; }
+.focus .focus-title { font-size:clamp(27px,8vw,34px); letter-spacing:-1.1px; max-width:100%; margin-top:10px; }
+.focus .status { padding:0; font-size:11px; margin-top:10px; gap:5px 8px; }
+.focus .status .focus-time { font-size:13px; }
+.focus .progress-wrap { margin-top:16px; }
+.focus .progress-caption { font-size:9px; margin-bottom:7px; }
+.focus .eyebrow { font-size:9px; }
   .countdowns { gap:7px; padding-bottom:18px; }
   .countdown-item { padding:12px 10px; font-size:10px; border-radius:14px; gap:5px; }
   .lesson-body { padding:16px 12px; gap:8px; flex-wrap:nowrap; }
@@ -924,8 +1074,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,.d
 }
 @media(max-width:360px) {
   .day-hero,.countdowns,.day-tabs,.day-content { margin-left:10px; margin-right:10px; }
+  .day-hero { --circle:160px; }
   .header h1 { font-size:21px; }
   .countdowns { grid-template-columns:1fr; }
   .countdown-item { min-height:48px; font-size:12px; }
+  .focus { margin:0 14px; }
+  .focus .focus-title { font-size:26px; letter-spacing:-.9px; }
 }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }

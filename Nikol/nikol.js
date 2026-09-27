@@ -242,49 +242,113 @@ function renderWeekendMsg(dayIdx) {
     </div>`;
 }
 
-function renderStatus() {
-  const el = document.getElementById("status");
-  const todayIdx = getTodayIndex();
-  const items = getItemsForDay(todayIdx);
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-  const cur = now.getHours() * 60 + now.getMinutes();
-
-  if (items.length === 0) {
-    const msg = getWeekendMessage(todayIdx);
-    el.innerHTML = `${msg.e} ${msg.t}`;
-    return;
+function focusItemRange(item) {
+  if (item.type !== "merge") {
+    return { time: item.time, start: parseTime(item.time), end: parseTime(item.time.split(/[–\-]/)[1]) };
   }
+  const parts = item.items.map(i => i.time.split(/[–\-]/).map(parseTime));
+  return {
+    time: item.items[0].time,
+    start: Math.min(...parts.map(p => p[0])),
+    end: Math.max(...parts.map(p => p[1]))
+  };
+}
+
+function focusTypeLabel(item) {
+  if (item.type === "merge") return "Смешанно";
+  if (item.type === "school") return "Урок";
+  if (item.type === "personal") return "Занятие";
+  if (item.type === "extended") return "Продлёнка";
+  return item.type;
+}
+
+function focusLabel(item) {
+  return item.type === "merge" ? item.items.map(i => i.subj).join(" + ") : item.subj;
+}
+
+const FOCUS_EYEBROW = {
+  current: "СЕЙЧАС ИДЁТ",
+  next: "ДАЛЬШЕ ПО ПЛАНУ",
+  past: "СОБЫТИЯ ЗАКОНЧИЛИСЬ",
+  free: "МОЖНО ВЫДОХНУТЬ"
+};
+
+function renderStatus() {
+  const card = document.getElementById("focusCard");
+  const meta = document.getElementById("status");
+  if (!card || !meta) return;
+  const todayIdx = getTodayIndex();
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const items = getItemsForDay(todayIdx);
 
   let current = null, next = null;
   for (const item of items) {
-    if (item.type === "merge") {
-      const times = item.items.map(i => i.time.split(/[–\-]/).map(parseTime));
-      const s = Math.min(...times.map(t => t[0]));
-      const e = Math.max(...times.map(t => t[1]));
-      if (cur >= s && cur < e) { current = item; break; }
-      if (!next && cur < s) next = item;
-    } else {
-      const [s, e] = item.time.split(/[–\-]/).map(parseTime);
-      if (cur >= s && cur < e) { current = item; break; }
-      if (!next && cur < s) next = item;
-    }
+    const r = focusItemRange(item);
+    if (cur >= r.start && cur < r.end) { current = { item, r }; break; }
+    if (!next && cur < r.start) next = { item, r };
   }
 
-  if (current) {
-    const label = current.type === "merge"
-      ? current.items.map(i => i.subj).join(" + ")
-      : current.subj;
-    el.innerHTML = `Сейчас: <span class="highlight">${label}</span> · ${timeStr}`;
-  } else if (next) {
-    const label = next.type === "merge"
-      ? next.items.map(i => i.subj).join(" + ")
-      : next.subj;
-    const time = next.type === "merge" ? next.items[0].time : next.time;
-    el.innerHTML = `Следующее: <span class="highlight">${label}</span> · ${time} · <span id="statusCd" data-cd="${parseTime(time)}">${countdownSec(parseTime(time))}</span>`;
+  let state, title, html;
+  const hit = current || next;
+  if (!hit) {
+    state = items.length ? "past" : "free";
+    if (state === "free" && todayIdx >= 5) {
+      const msg = getWeekendMessage(todayIdx);
+      title = msg.e + " " + msg.t;
+      html = '<span class="empty">Отдыхай — это выходной</span>';
+    } else {
+      title = state === "past" ? "До завтра" : "Свободный день";
+      html = state === "past"
+        ? '<span class="empty">Все события позади. Хорошего отдыха!</span>'
+        : '<span class="empty">На сегодня ничего нет</span>';
+    }
   } else {
-    el.innerHTML = `${DAY_NAMES[todayIdx]} · ${timeStr} · Занятий на сегодня нет`;
+    state = current ? "current" : "next";
+    const room = hit.item.type === "merge" ? hit.item.items[0].room : hit.item.room;
+    const target = current ? hit.r.end : hit.r.start;
+    const cd = current ? "data-cd-end" : "data-cd";
+    const left = current ? remainingSec(target) : countdownSec(target);
+    title = focusLabel(hit.item);
+    html = '<span class="focus-type">' + focusTypeLabel(hit.item) + '</span>' +
+          '<span class="focus-time">' + hit.r.time + '</span>' +
+          (room ? '<span>' + room + '</span>' : '') +
+          '<span class="countdown" ' + cd + '="' + target + '">' + left + '</span>';
   }
+
+  card.dataset.state = state;
+  document.getElementById("focusEyebrow").textContent = FOCUS_EYEBROW[state];
+  document.getElementById("focusTitle").textContent = title;
+  const key = state + "|" + title + "|" + html.replace(/>[^<]*<\/span>$/, ">");
+  if (meta.dataset.key !== key) {
+    meta.innerHTML = html;
+    meta.dataset.key = key;
+  }
+}
+
+function renderProgress() {
+  const fill = document.getElementById("progressFill");
+  const lbl = document.getElementById("progressLabel");
+  if (!fill) return;
+  const items = getItemsForDay(getTodayIndex());
+  const p = focusProgress(items, nowMinutes());
+  fill.style.width = p.pct + "%";
+  if (lbl) lbl.textContent = p.label;
+}
+
+function nowMinutes() {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+function focusProgress(items, minute) {
+  if (!items.length) return { pct: 0, label: "Без спешки" };
+  const ranges = items.map(focusItemRange);
+  const first = Math.min(...ranges.map(r => r.start));
+  const last = Math.max(...ranges.map(r => r.end));
+  if (last <= first) return { pct: 0, label: "0% дня позади" };
+  const pct = Math.max(0, Math.min(100, (minute - first) / (last - first) * 100));
+  return { pct: pct, label: Math.round(pct) + "% дня позади" };
 }
 
 function renderAll() {
@@ -380,6 +444,14 @@ function onToggle() {
   });
   renderAll();
   renderStatus();
+  renderProgress();
+}
+
+function setPalette(name) {
+  const indigo = name === "indigo";
+  document.body.classList.toggle("palette-indigo", indigo);
+  localStorage.setItem("nikol_palette", indigo ? "indigo" : "teal");
+  document.querySelectorAll(".swatch").forEach(s => s.classList.toggle("on", s.dataset.p === name));
 }
 
 function toggleTheme() {
@@ -389,34 +461,6 @@ function toggleTheme() {
   localStorage.setItem("nikol_theme", document.body.classList.contains("dark") ? "dark" : "light");
 }
 
-function renderProgress() {
-  const todayIdx = getTodayIndex();
-  const items = getItemsForDay(todayIdx);
-  const fill = document.getElementById("progressFill");
-  if (!items.length) { fill.style.width = "0%"; return; }
-
-  const now = new Date();
-  const cur = now.getHours() * 60 + now.getMinutes();
-  let first = Infinity, last = 0;
-  items.forEach(item => {
-    if (item.type === "merge") {
-      item.items.forEach(i => {
-        const s = parseTime(i.time);
-        if (s < first) first = s;
-        const e = parseTime(i.time.split(/[–\-]/)[1]);
-        if (e > last) last = e;
-      });
-    } else {
-      const s = parseTime(item.time);
-      const e = parseTime(item.time.split(/[–\-]/)[1]);
-      if (s < first) first = s;
-      if (e > last) last = e;
-    }
-  });
-  if (first === Infinity) { fill.style.width = "0%"; return; }
-  const pct = Math.max(0, Math.min(100, ((cur - first) / (last - first)) * 100));
-  fill.style.width = pct + "%";
-}
 
 let touchStartX = 0;
 let touchStartY = 0;
@@ -443,6 +487,8 @@ document.addEventListener("touchend", (e) => {
     }
   }
 }, { passive: true });
+
+if (localStorage.getItem("nikol_palette") === "indigo") setPalette("indigo");
 
 if (localStorage.getItem("nikol_theme") === "dark") {
   document.body.classList.add("dark");
